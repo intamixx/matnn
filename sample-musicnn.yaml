@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: sample-job-
+  namespace: default
+  labels:
+    kueue.x-k8s.io/queue-name: user-queue
+spec:
+  parallelism: 1
+  completions: 1
+  suspend: true
+  template:
+    spec:
+      #volumes:
+      #- name: data
+      #  persistentVolumeClaim:
+      #    claimName: nfs-pvc
+      containers:
+      - name: musicnn-job
+        image: intamixx/musicnn
+        args: ["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", "/mnt/out.tags"]
+        resources:
+          requests:
+            cpu: 1
+            memory: "200Mi"
+        volumeMounts:
+        - name: nfs
+          mountPath: /mnt
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.42.3.214
+          path: /exports
+      restartPolicy: Never
