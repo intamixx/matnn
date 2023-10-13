@@ -1,0 +1,232 @@
+# If you intended to deploy Kubernetes in an air-gapped environment,
+# please consult the documentation on how to configure custom RKE images.
+nodes:
+- address: 10.0.0.7
+  port: "22"
+  internal_address: 10.0.0.7
+  role:
+  - controlplane
+  - etcd
+  hostname_override: "k01"
+  user: root
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels: {}
+  taints: []
+- address: 10.0.0.8
+  port: "22"
+  internal_address: 10.0.0.8
+  role:
+  - worker
+  - etcd
+  hostname_override: "k02"
+  user: root
+  docker_socket: /var/run/docker.sock
+  ssh_key: ""
+  ssh_key_path: ~/.ssh/id_rsa
+  ssh_cert: ""
+  ssh_cert_path: ""
+  labels: {}
+  taints: []
+services:
+  etcd:
+    image: ""
+    extra_args: {}
+    extra_args_array: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_args_array: {}
+    win_extra_binds: []
+    win_extra_env: []
+    external_urls: []
+    ca_cert: ""
+    cert: ""
+    key: ""
+    path: ""
+    uid: 0
+    gid: 0
+    snapshot: null
+    retention: ""
+    creation: ""
+    backup_config: null
+  kube-api:
+    image: ""
+    extra_args: {}
+    extra_args_array: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_args_array: {}
+    win_extra_binds: []
+    win_extra_env: []
+    service_cluster_ip_range: 10.43.0.0/16
+    service_node_port_range: ""
+    pod_security_policy: false
+    pod_security_configuration: ""
+    always_pull_images: false
+    secrets_encryption_config: null
+    audit_log: null
+    admission_configuration: null
+    event_rate_limit: null
+  kube-controller:
+    image: ""
+    extra_args: {}
+    extra_args_array: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_args_array: {}
+    win_extra_binds: []
+    win_extra_env: []
+    cluster_cidr: 10.42.0.0/16
+    service_cluster_ip_range: 10.43.0.0/16
+  scheduler:
+    image: ""
+    extra_args: {}
+    extra_args_array: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_args_array: {}
+    win_extra_binds: []
+    win_extra_env: []
+  kubelet:
+    image: ""
+    extra_args: {}
+    extra_args_array: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_args_array: {}
+    win_extra_binds: []
+    win_extra_env: []
+    cluster_domain: cluster.local
+    infra_container_image: ""
+    cluster_dns_server: 10.43.0.10
+    fail_swap_on: false
+    generate_serving_certificate: false
+  kubeproxy:
+    image: ""
+    extra_args: {}
+    extra_args_array: {}
+    extra_binds: []
+    extra_env: []
+    win_extra_args: {}
+    win_extra_args_array: {}
+    win_extra_binds: []
+    win_extra_env: []
+network:
+  plugin: canal
+  options: {}
+  mtu: 0
+  node_selector: {}
+  update_strategy: null
+  tolerations: []
+authentication:
+  strategy: x509
+  sans: []
+  webhook: null
+addons: ""
+addons_include: []
+system_images:
+  etcd: rancher/mirrored-coreos-etcd:v3.5.6
+  alpine: rancher/rke-tools:v0.1.89
+  nginx_proxy: rancher/rke-tools:v0.1.89
+  cert_downloader: rancher/rke-tools:v0.1.89
+  kubernetes_services_sidecar: rancher/rke-tools:v0.1.89
+  kubedns: rancher/mirrored-k8s-dns-kube-dns:1.22.20
+  dnsmasq: rancher/mirrored-k8s-dns-dnsmasq-nanny:1.22.20
+  kubedns_sidecar: rancher/mirrored-k8s-dns-sidecar:1.22.20
+  kubedns_autoscaler: rancher/mirrored-cluster-proportional-autoscaler:1.8.6
+  coredns: rancher/mirrored-coredns-coredns:1.9.4
+  coredns_autoscaler: rancher/mirrored-cluster-proportional-autoscaler:1.8.6
+  nodelocal: rancher/mirrored-k8s-dns-node-cache:1.22.20
+  kubernetes: rancher/hyperkube:v1.26.4-rancher2
+  flannel: rancher/mirrored-flannel-flannel:v0.21.4
+  flannel_cni: rancher/flannel-cni:v0.3.0-rancher8
+  calico_node: rancher/mirrored-calico-node:v3.25.0
+  calico_cni: rancher/calico-cni:v3.25.0-rancher1
+  calico_controllers: rancher/mirrored-calico-kube-controllers:v3.25.0
+  calico_ctl: rancher/mirrored-calico-ctl:v3.25.0
+  calico_flexvol: rancher/mirrored-calico-pod2daemon-flexvol:v3.25.0
+  canal_node: rancher/mirrored-calico-node:v3.25.0
+  canal_cni: rancher/calico-cni:v3.25.0-rancher1
+  canal_controllers: rancher/mirrored-calico-kube-controllers:v3.25.0
+  canal_flannel: rancher/mirrored-flannel-flannel:v0.21.4
+  canal_flexvol: rancher/mirrored-calico-pod2daemon-flexvol:v3.25.0
+  weave_node: weaveworks/weave-kube:2.8.1
+  weave_cni: weaveworks/weave-npc:2.8.1
+  pod_infra_container: rancher/mirrored-pause:3.7
+  ingress: rancher/nginx-ingress-controller:nginx-1.7.0-rancher1
+  ingress_backend: rancher/mirrored-nginx-ingress-controller-defaultbackend:1.5-rancher1
+  ingress_webhook: rancher/mirrored-ingress-nginx-kube-webhook-certgen:v20230312-helm-chart-4.5.2-28-g66a760794
+  metrics_server: rancher/mirrored-metrics-server:v0.6.3
+  windows_pod_infra_container: rancher/mirrored-pause:3.7
+  aci_cni_deploy_container: noiro/cnideploy:5.2.7.1.81c2369
+  aci_host_container: noiro/aci-containers-host:5.2.7.1.81c2369
+  aci_opflex_container: noiro/opflex:5.2.7.1.81c2369
+  aci_mcast_container: noiro/opflex:5.2.7.1.81c2369
+  aci_ovs_container: noiro/openvswitch:5.2.7.1.81c2369
+  aci_controller_container: noiro/aci-containers-controller:5.2.7.1.81c2369
+  aci_gbp_server_container: noiro/gbp-server:5.2.7.1.81c2369
+  aci_opflex_server_container: noiro/opflex-server:5.2.7.1.81c2369
+ssh_key_path: ~/.ssh/id_rsa
+ssh_cert_path: ""
+ssh_agent_auth: false
+authorization:
+  mode: rbac
+  options: {}
+ignore_docker_version: null
+enable_cri_dockerd: null
+kubernetes_version: ""
+private_registries: []
+ingress:
+  provider: ""
+  options: {}
+  node_selector: {}
+  extra_args: {}
+  dns_policy: ""
+  extra_envs: []
+  extra_volumes: []
+  extra_volume_mounts: []
+  update_strategy: null
+  http_port: 0
+  https_port: 0
+  network_mode: ""
+  tolerations: []
+  default_backend: null
+  default_http_backend_priority_class_name: ""
+  nginx_ingress_controller_priority_class_name: ""
+  default_ingress_class: null
+cluster_name: ""
+cloud_provider:
+  name: ""
+prefix_path: ""
+win_prefix_path: ""
+addon_job_timeout: 0
+bastion_host:
+  address: ""
+  port: ""
+  user: ""
+  ssh_key: ""
+  ssh_key_path: ""
+  ssh_cert: ""
+  ssh_cert_path: ""
+  ignore_proxy_env_vars: false
+monitoring:
+  provider: ""
+  options: {}
+  node_selector: {}
+  update_strategy: null
+  replicas: null
+  tolerations: []
+  metrics_server_priority_class_name: ""
+restore:
+  restore: false
+  snapshot_name: ""
+rotate_encryption_key: false
+dns: null
