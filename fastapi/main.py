@@ -1,8 +1,7 @@
-from fastapi import FastAPI, File, Request, UploadFile, HTTPException, status
+from fastapi import FastAPI, File, Request, UploadFile, HTTPException, status, Header, Depends
 from fastapi.responses import HTMLResponse
 import aiofiles
 
-import argparse
 from kubernetes import config, client
 import hashlib, sys, os, shutil
 
@@ -22,24 +21,48 @@ config.load_kube_config()
 async def read_item(matt_id):
     return {"matt_id": matt_id}
 
-# Upload the file and submit new job
-@app.post('/upload')
-async def upload(file: UploadFile):
+async def valid_content_length(content_length: int = Header(..., lt=8000_000)):
+    return content_length
+@app.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...), file_size: int = Depends(valid_content_length)
+):
+    output_file = f"{file.filename}"
+    real_file_size = 0
     try:
-        contents = await file.read()
-        async with aiofiles.open(file.filename, 'wb') as f:
-            await f.write(contents)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail='There was an error uploading the file',
-        )
-    finally:
-        await file.close()
+        async with aiofiles.open(f"{output_file}", "wb") as out_file:
+            while content := await file.read(1024):  # async read chunk
+                real_file_size += len(content)
+                if real_file_size > file_size:
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail="Too large",
+                    )
+                await out_file.write(content)  # async write chunk
+        job_id = submit_job(file.filename)
+        msg = f"Successfully uploaded {file.filename} as {job_id}"
+    except IOError:
+        msg = "There was an error uploading your file"
+    return {"message": msg}
+
+# Upload the file and submit new job
+#@app.post('/upload')
+#async def upload(file: UploadFile):
+#    try:
+#        contents = await file.read()
+#        async with aiofiles.open(file.filename, 'wb') as f:
+#            await f.write(contents)
+#    except Exception:
+#        raise HTTPException(
+#            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#            detail='There was an error uploading the file',
+#        )
+#    finally:
+#        await file.close()
 
     # Submit Kueue Job
-    job_id = submit_job(file.filename)
-    return {'message': f'Successfully uploaded {file.filename} as {job_id}'}
+    #job_id = submit_job(file.filename)
+#    return {'message': f'Successfully uploaded {file.filename} as {job_id}'}
 
 # A utility function that can be used in your code
 def compute_md5(file_name):
