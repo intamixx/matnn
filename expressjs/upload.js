@@ -1,6 +1,28 @@
 const express = require('express');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' })
+
+const whitelist = [
+	  'audio/mpeg'
+]
+const storage = multer.diskStorage({
+          destination: (req, file, cb)=>{
+                      // This part defines where the files need to be saved
+                      cb(null, 'uploads/')
+                    },
+          filename: (req, file, cb)=>{
+                      // This part sets the file name of the file
+                      cb(null, file.originalname)
+                    }
+})
+
+const upload = multer({ dest: 'uploads/', storage: storage, limits: { fileSize: 8000000, fields: 1, fieldSize: 10, fieldNameSize: 10 }, fileFilter: function (req, file, cb) {
+ if (file.mimetype !== 'audio/mpeg') {
+   req.fileValidationError = '{"detail": "goes wrong on the mimetype"}';
+   return cb(null, false, new Error('goes wrong on the mimetype'));
+  }
+ cb(null, true);
+}
+})
 const app =express()
 var fs = require('fs');
 //const FormData = require('form-data');
@@ -77,8 +99,16 @@ app.get('/upload', function(req, res){
 app.post('/upload',upload.single('file'),(req,res)=>{
 	    // The req.file will contain your file data
 	    // The req.body will contain your text data
+	        if(req.fileValidationError) {
+			              return res.end(req.fileValidationError);
+			        }
 	    console.log(req.file);
+	    if (!req.file) {
+		    console.log("BAD FILE"); 
+		res.status(400).json({detail: "Rejected"});
+	    }
 	    filepath = req.file['path'];
+	    filename = req.file['originalname'];
 	    filename = req.file['originalname'];
 	    console.log(filepath);
 	    console.log(filename);
@@ -95,36 +125,25 @@ app.post('/upload',upload.single('file'),(req,res)=>{
 			  console.log('after start ' + fast_api_response);
 			  switch(fast_api_response) {
 				  case 200:
-					  res.status(fast_api_response).json("ok");
+					  res.status(fast_api_response).json({detail: "ok"});
 					  break;
 				  case 413:
-					  res.status(fast_api_response).json("Too Big");
+					  res.status(fast_api_response).json({detail: "Too Big"});
 					  break;
 				  case 422:
-			  		res.status(fast_api_response).json("Fast API rejected");
+			  		res.status(fast_api_response).json({detail: "Fast API rejected"});
 					  break;
 				  case 404:
-			  		res.status(fast_api_response).json("Not Found");
+			  		res.status(fast_api_response).json({detail: "Not Found"});
 					  break;
 				  default:
-			  		res.status(500).json("Server Issue");
+			  		res.status(500).json({detail: "Server Issue"});
 					  break;
 			}
 		})();
 })
 
 app.listen(9090)
-
-//const storage = multer.diskStorage({
-//	  destination: (req, file, cb)=>{
-//		      // This part defines where the files need to be saved
-//		      cb(null, '/tmp')
-//		    },
-//	  filename: (req, file, cb)=>{
-//		      // This part sets the file name of the file
-//		      cb(null, file.originalname)
-//		    }
-//})
 
 // Then we will set the storage 
 //const upload = multer({ storage: storage })
