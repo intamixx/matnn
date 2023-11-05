@@ -28,7 +28,8 @@ const upload = multer({
     fileFilter: function(req, file, cb) {
     	if (!(file.originalname.match(/\.(mp3|wav|flac)\b/))) {
             //return cb(undefined, true)
-            return cb(null, false, new Error('goes wrong on the extension'));
+	    req.fileValidationError = '{"detail": "Goes wrong on the extension"}';
+            return cb(null, false, new Error('Goes wrong on the extension'));
         }
 	if (file.size > maxFileSizeInBytes) {
 	    req.fileValidationError = '{"detail": "File too large"}';
@@ -145,9 +146,6 @@ module.exports = (error, req, res, next) => {
 	  res.status(status).json(response);
 };
 app.post('/upload', upload.single('file'), (req, res, error) => {
-    if (req.file.size > maxFileSizeInBytes) {
-       return res.status(413).json({detail: "File upload size limit exceeded"});
-    }
     // The req.file will contain your file data
     // The req.body will contain your text data
     if (req.fileValidationError) {
@@ -160,11 +158,13 @@ app.post('/upload', upload.single('file'), (req, res, error) => {
             detail: "Rejected"
         });
     } else {
+    if (req.file.size > maxFileSizeInBytes) {
+       return res.status(413).json({detail: "File upload size limit exceeded"});
+    }
     filepath = req.file['path'];
     filename = req.file['originalname'];
     console.log(filepath);
     console.log(filename);
-    console.log("TUTI");
     //console.log(req.body);
     //status = save(filepath, start); 
     (async () => {
