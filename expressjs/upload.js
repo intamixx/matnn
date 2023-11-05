@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+var maxFileSizeInBytes = 8000000;
 
 const whitelist = [
     'audio/mpeg'
@@ -19,12 +20,20 @@ const upload = multer({
     dest: 'uploads/',
     storage: storage,
     limits: {
-        fileSize: 8000000,
+        //fileSize: maxFileSizeInBytes,
         fields: 1,
         fieldSize: 10,
         fieldNameSize: 10
     },
     fileFilter: function(req, file, cb) {
+    	if (!(file.originalname.match(/\.(mp3|wav|flac)\b/))) {
+            //return cb(undefined, true)
+            return cb(null, false, new Error('goes wrong on the extension'));
+        }
+	if (file.size > maxFileSizeInBytes) {
+	    req.fileValidationError = '{"detail": "File too large"}';
+	    return cb(null, false, new Error('File too large'));
+	}
         if (file.mimetype !== 'audio/mpeg') {
             req.fileValidationError = '{"detail": "goes wrong on the mimetype"}';
             return cb(null, false, new Error('goes wrong on the mimetype'));
@@ -125,7 +134,20 @@ app.get('/upload', function(req, res) {
         '</form>');
 });
 
-app.post('/upload', upload.single('file'), (req, res) => {
+module.exports = (error, req, res, next) => {
+	  if (error instanceof multer.MulterError) {
+		      error.status = 413;
+		      error.message = "image too large, max size is 1mb!";
+	  }
+	  const status = error.status || 500;
+	  const message = error.message;
+	  const response = { status: status, error: message };
+	  res.status(status).json(response);
+};
+app.post('/upload', upload.single('file'), (req, res, error) => {
+    if (req.file.size > maxFileSizeInBytes) {
+       return res.status(413).json({detail: "File upload size limit exceeded"});
+    }
     // The req.file will contain your file data
     // The req.body will contain your text data
     if (req.fileValidationError) {
@@ -137,7 +159,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
         res.status(400).json({
             detail: "Rejected"
         });
-    }
+    } else {
     filepath = req.file['path'];
     filename = req.file['originalname'];
     console.log(filepath);
@@ -175,7 +197,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
                 res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
                 break;
             case 503:
-                // Special case of connection refused error in received in body
+                // Special case of connection refused error to fastapi
                 if (fast_api_response['http_body'] == "ECONNREFUSED") {
                     fast_api_response['http_body'] = String.raw`{"detail": "ECONNREFUSED"}`;
                 }
@@ -187,6 +209,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
                 break;
         }
     })();
+    }
 })
 
 app.listen(9090)
