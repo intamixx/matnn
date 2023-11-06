@@ -41,7 +41,11 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
 
-#WORKDIR "/examples"
+# Add user to container
+RUN useradd -ms /bin/bash web
+#USER web
+#WORKDIR /home/web
+
 # Get application code
 RUN mkdir /fastapi
 RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/fastapi/main.py -O /fastapi/main.py
@@ -52,6 +56,8 @@ RUN cd /nodejs && npm i express multer
 
 # Get example python scripts
 COPY main.py /fastapi
+RUN chown web:web -Rv /fastapi
+RUN chown web:web -Rv /nodejs
 COPY supervisor-app.conf /etc/supervisor/conf.d
 
 # Supervisor
