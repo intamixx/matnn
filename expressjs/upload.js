@@ -20,7 +20,7 @@ const upload = multer({
     dest: 'uploads/',
     storage: storage,
     limits: {
-        //fileSize: maxFileSizeInBytes,
+        fileSize: maxFileSizeInBytes,
         fields: 1,
         fieldSize: 10,
         fieldNameSize: 10
@@ -28,15 +28,17 @@ const upload = multer({
     fileFilter: function(req, file, cb) {
     	if (!(file.originalname.match(/\.(mp3|wav|flac)\b/))) {
             //return cb(undefined, true)
-	    req.fileValidationError = '{"detail": "Goes wrong on the extension"}';
+	    req.fileValidationError = '{detail: Goes wrong on the extension}';
             return cb(null, false, new Error('Goes wrong on the extension'));
         }
-	if (file.size > maxFileSizeInBytes) {
-	    req.fileValidationError = '{"detail": "File too large"}';
-	    return cb(null, false, new Error('File too large'));
-	}
+      // added this
+      const fileSize = parseInt(req.headers['content-length']);
+      	if (fileSize > maxFileSizeInBytes) {
+	    req.fileValidationError = '{detail: File too large}';
+            return cb(null, false, new Error('File too large'));
+      }
         if (file.mimetype !== 'audio/mpeg') {
-            req.fileValidationError = '{"detail": "goes wrong on the mimetype"}';
+            req.fileValidationError = '{detail: goes wrong on the mimetype}';
             return cb(null, false, new Error('goes wrong on the mimetype'));
         }
         cb(null, true);
@@ -92,9 +94,6 @@ var start = async function(filename) {
         if (response.status == "200") {
             console.log(" START WORKED!");
         }
-        if (response.status == "422") {
-            console.log("START Too big!");
-        }
         console.log("I AM HERE START");
         //await foo()
         const body = await response.json();
@@ -145,19 +144,25 @@ module.exports = (error, req, res, next) => {
 	  const response = { status: status, error: message };
 	  res.status(status).json(response);
 };
+
 app.post('/upload', upload.single('file'), (req, res, error) => {
     // The req.file will contain your file data
     // The req.body will contain your text data
     if (req.fileValidationError) {
-        return res.end(req.fileValidationError);
+	    var err = req.fileValidationError;
+	    if (err.match(/large/)) {
+		res.status(413).json(req.fileValidationError);
+	    } else if (err.match(/extension|mimetype/)) {
+		res.status(415).json(req.fileValidationError);
+	    }
     }
-    console.log(req.file);
     if (!req.file) {
         console.log("BAD FILE");
         res.status(400).json({
             detail: "Rejected"
         });
     } else {
+    console.log(req.file);
     if (req.file.size > maxFileSizeInBytes) {
        return res.status(413).json({detail: "File upload size limit exceeded"});
     }
