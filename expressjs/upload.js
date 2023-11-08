@@ -124,13 +124,17 @@ var start = async function(filename) {
     return obj;
 }
 
-
 app.get('/upload', function(req, res) {
-    res.send('<form method="post" enctype="multipart/form-data">'
+    res.send('<!doctype html>' + 
+	    '<html lang="en">' + 
+	      '<head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Bootstrap demo</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> </head> <body> <h1>Matnn (<u>M</u>usic <u>A</u>udio <u>T</u>agger <u>N</u>eural <u>N</u>et)</h1> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>' + 
+	    '<form method="post" enctype="multipart/form-data">' + 
         //+ '<p>Title: <input type="text" name="title" /></p>'
-        +
-        '<p>Image: <input type="file" name="file" /></p>' +
+        '<p>Audio File: <input type="file" name="file" /></p>' +
         '<p><input type="submit" value="Upload" /></p>' +
+	'<h3>AI Powered by Sandman Technologies Inc</h3>' +
+	'      </body>' +
+	 '   </html>' +
         '</form>');
 });
 
@@ -145,15 +149,34 @@ module.exports = (error, req, res, next) => {
 	  res.status(status).json(response);
 };
 
-app.post('/upload', upload.single('file'), (req, res, error) => {
+//const upload = multer().single('avatar')
+
+const uploadSingleImage = upload.single('file');
+
+//app.post('/upload', upload.single('file'), function (req, res) {
+app.post('/upload', function (req, res) {
+    uploadSingleImage(req, res, function (err) {
     // The req.file will contain your file data
     // The req.body will contain your text data
+    // An unknown error occurred when uploading.
+    if (err instanceof multer.MulterError) {
+	console.log("TUTI" + err);
+	res.status(400).json(err);
+	return;
+      // A Multer error occurred when uploading.
+    } else if (err) {
+	console.log("BUD" + err);
+	res.status(400).json(err);
+	return;
+    } 
     if (req.fileValidationError) {
 	    var err = req.fileValidationError;
 	    if (err.match(/large/)) {
 		res.status(413).json(req.fileValidationError);
+		return;
 	    } else if (err.match(/extension|mimetype/)) {
 		res.status(415).json(req.fileValidationError);
+		return;
 	    }
     }
     if (!req.file) {
@@ -161,6 +184,7 @@ app.post('/upload', upload.single('file'), (req, res, error) => {
         res.status(400).json({
             detail: "Rejected"
         });
+    	return;
     } else {
     console.log(req.file);
     if (req.file.size > maxFileSizeInBytes) {
@@ -215,6 +239,7 @@ app.post('/upload', upload.single('file'), (req, res, error) => {
         }
     })();
     }
+})
 })
 
 app.listen(9090)
