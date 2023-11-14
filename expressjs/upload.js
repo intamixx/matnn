@@ -1,6 +1,16 @@
 const express = require('express');
 const multer = require('multer');
+const https = require('https');
+const app = express();
+var fs = require('fs');
+
 var maxFileSizeInBytes = 8000000;
+
+var options = {
+	    key: fs.readFileSync('./ssl/privatekey.pem'),
+	    cert: fs.readFileSync('./ssl/certificate.pem'),
+};
+var port = 9090;
 
 const whitelist = [
     'audio/mpeg'
@@ -44,8 +54,6 @@ const upload = multer({
         cb(null, true);
     }
 })
-const app = express()
-var fs = require('fs');
 //const FormData = require('form-data');
 //const form = new FormData();
 //let fetch = require('node-fetch');
@@ -242,7 +250,11 @@ app.post('/upload', function (req, res) {
 })
 })
 
-app.listen(9090)
+//app.listen(9090)
+var server = https.createServer(options, app).listen(port, function(){
+  console.log("Express server listening on port " + port);
+  });
+
 
 // Then we will set the storage 
 //const upload = multer({ storage: storage })
