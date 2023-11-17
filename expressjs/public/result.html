@@ -1,0 +1,58 @@
+<html>
+<head>
+	<title>Matnn Job Result</title>
+	<body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+	function resultMatnn(){
+             $.ajax({ 
+	url: "api/result/" + kid,
+	dataType: "json",
+	cache: false,
+        statusCode: {
+		200: function(JSONObject) { 
+			console.log(JSONObject)
+			console.log("Done")
+			//const substr = 'Successful';
+			//if (html.includes(substr)) {
+			//		console.log("Found shit");
+			//	}
+			//result = JSON.stringify(JSON.parse(html));
+			//const json = JSON.parse(JSONObject)
+			console.log(JSONObject.detail);
+			$("#resultJob").html(JSONObject.detail); 
+			},
+		201: function(JSONObject) { 
+			console.log(JSONObject)
+			console.log("Processing")
+			//const substr = 'Successful';
+			//if (html.includes(substr)) {
+			//		console.log("Found shit");
+			//	}
+			//result = JSON.stringify(JSON.parse(html));
+			console.log(JSONObject.detail);
+			$("#resultJob").html(JSONObject.detail); 
+			},
+		404: function(JSONObject, textStatus, errorThrown) { 
+			console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+			console.log(JSONObject)
+			console.log("TUTI")
+			//const substr = 'Successful';
+			//if (html.includes(substr)) {
+			//		console.log("Found shit");
+			//	}
+			//result = JSON.stringify(JSON.parse(html));
+			$("#resultJob").html(JSONObject.status + " " + errorThrown);
+			},
+		}
+		     });
+                    };
+        resultMatnn();
+        setInterval( "resultMatnn()", 10000 ); // refreshed every 60 sec
+</script>
+		<p>Matnn Job Result</p>
+		<!-- <div id="h1_coverart"></div> -->
+		<div id="resultJob"></div>
+	</body>
+</head>
+</html>
