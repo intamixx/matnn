@@ -1,0 +1,74 @@
+<html>
+<head>
+	<title>The is the test of the year!"</title>
+	<body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+var fetch = true;
+var url = 'http://20.166.58.151:9090/status/0ba3c83ce691d814ee31c3b944177d96-u8jgk';
+$.ajax(
+{
+    // Post the variable fetch to url.
+    type : 'get',
+    url : url,
+    dataType : 'json', // expected returned data format.
+    data : 
+    {
+        'fetch' : fetch // You might want to indicate what you're requesting.
+    },
+    success : function(data)
+    {
+        // This happens AFTER the backend has returned an JSON array (or other object type)
+        var res1, res2;
+
+        for(var i = 0; i < data.length; i++)
+        {
+            // Parse through the JSON array which was returned.
+            // A proper error handling should be added here (check if
+            // everything went successful or not)
+
+            res1 = data[i].res1;
+            res2 = data[i].res2;
+
+		console.log(res1);
+
+            // Do something with the returned data
+            $('#h1_coverart').html(res1);
+        }
+    },
+    complete : function(data)
+    {
+        // do something, not critical.
+    }
+});
+</script>
+<script>
+	function updateCurrentPlaying(){
+             $.ajax({ 
+	url: "/api/status/0ba3c83ce691d814ee31c3b944177d96-u8jg",
+	cache: false,
+	success: function(html) { 
+			console.log(html)
+			//const substr = 'Successful';
+			//if (html.includes(substr)) {
+			//		console.log("Found shit");
+			//	}
+			//result = JSON.stringify(JSON.parse(html));
+			$("#currentPlaying").html(html); 
+			},
+	error: function(html, textStatus, errorThrown) {
+			console.log(textStatus + ": " + html.status + " " + errorThrown);
+			$("#currentPlaying").html(html.status + " " + errorThrown); 
+			console.log(html);
+		}
+		     });
+                    };
+        updateCurrentPlaying();
+        setInterval( "updateCurrentPlaying()", 60000 ); // refreshed every 60 sec
+</script>
+		<p>testing 1234</p>
+		<!-- <div id="h1_coverart"></div> -->
+		<div id="currentPlaying"></div>
+	</body>
+</head>
+</html>
