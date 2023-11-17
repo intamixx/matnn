@@ -1,0 +1,61 @@
+<html>
+<head>
+	<title>The is the test of the year!</title>
+	<body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+//jobid = "00ba46e6fd66e7eae9ec9c43d0828580-opuft";
+	function updateMatnn(){
+             $.ajax({ 
+	url: "/api/result/<%= id %>",
+	dataType: "json",
+	cache: false,
+        statusCode: {
+		200: function(JSONObject) { 
+			console.log(JSONObject)
+			console.log("Done")
+			//const substr = 'Successful';
+			//if (html.includes(substr)) {
+			//		console.log("Found shit");
+			//	}
+			//result = JSON.stringify(JSON.parse(html));
+			//const json = JSON.parse(JSONObject)
+			console.log(JSONObject.result);
+			$("#currentJob").html(JSONObject.result); 
+			//delay()
+			//location.replace("/test2.html");
+			},
+		201: function(JSONObject) { 
+			console.log(JSONObject)
+			console.log("Processing")
+			//const substr = 'Successful';
+			//if (html.includes(substr)) {
+			//		console.log("Found shit");
+			//	}
+			//result = JSON.stringify(JSON.parse(html));
+			console.log(JSONObject.detail);
+			$("#currentJob").html(JSONObject.detail); 
+			},
+		404: function(JSONObject, textStatus, errorThrown) { 
+			console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+			console.log(JSONObject)
+			console.log("TUTI")
+			//const substr = 'Successful';
+			//if (html.includes(substr)) {
+			//		console.log("Found shit");
+			//	}
+			//result = JSON.stringify(JSON.parse(html));
+			$("#currentJob").html(JSONObject.status + " " + errorThrown);
+			},
+		}
+		     });
+                    };
+        updateMatnn();
+        //setInterval( "updateMatnn()", 10000 ); // refreshed every 60 sec
+</script>
+		<p>Matnn Job</p>
+		<!-- <div id="h1_coverart"></div> -->
+		<div id="currentJob"></div>
+	</body>
+</head>
+</html>
