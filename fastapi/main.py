@@ -13,7 +13,7 @@ import string
 
 app = FastAPI()
 
-config.load_kube_config()
+#config.load_kube_config()
 ##crd_api = client.CustomObjectsApi()
 #api_client = crd_api.api_client
 
@@ -39,9 +39,13 @@ async def upload_file(
                         detail="Too large",
                     )
                 await out_file.write(content)  # async write chunk
-        job_id = submit_job(file.filename)
+        #job_id = submit_job(file.filename)
+        #return
+        #sys.exit(0)
+        job_id = "iosdfjiosdjfiodfjiwejr-we334r"
         msg = f"Successfully uploaded {file.filename} as {job_id}"
     except IOError:
+        raise HTTPException(status_code=400, detail=f'There was an error uploading your file')
         msg = "There was an error uploading your file"
     return {"message": msg}
 
@@ -88,7 +92,8 @@ def status_kueue_job(listing, job_id):
             )
             ready = job["status"]["ready"]
             if ready == 1:
-                return {'status': f'Preparing Job {jobname}'}
+                raise HTTPException(status_code=201, detail=f'Processing Job {jobname}')
+                return {'detail': f'Processing Job {jobname}'}
             try:
                 if job["status"]["succeeded"] == 1:
                     #print (job["status"])
@@ -98,9 +103,10 @@ def status_kueue_job(listing, job_id):
                     #else:
                     #    tags = (read_tags(job_id))
                     db_update('', job_id, '', "True", '')
-                    return {'status': f'Successful Job {jobname}'}
+                    return {'detail': f'Successful Job {jobname}'}
             except:
-                return {'status': f'Finalising Job {jobname}'}
+                raise HTTPException(status_code=201, detail=f'Finalising Job {jobname}')
+                return {'detail': f'Finalising Job {jobname}'}
 
             #print(f"Found job {jobname}")
             #print(f"  Succeeded: {status}")
@@ -117,7 +123,7 @@ def read_tags(job_id):
     except FileNotFoundError:
         return False
     last_line = last_line.replace('\n', '').replace('\r', '')
-    last_line = last_line.split(',')
+    last_line = last_line.split(',') 
     last_line = (last_line[-3:])
     return (', '.join(last_line))
 
@@ -160,13 +166,15 @@ def db_update(filename, job_id, epoch, completed, tags):
         try:
             db.upsert({'job_id': job_id, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
         except:
-            return {'message': f'Database insertion error'}
+            raise HTTPException(status_code=400, detail=f'Database insertion error')
+            return {'detail': f'Database insertion error'}
         return
     # update whole record
     try:
         db.upsert({'audiofile': filename, 'job_id': job_id, 'epoch': epoch, 'completed': completed}, audio.job_id == job_id)
     except:
-        return {'message': f'Database insertion error'}
+        raise HTTPException(status_code=400, detail=f'Database insertion error')
+        return {'detail': f'Database insertion error'}
 
 def db_search(job_id):
     # Check if file md5 exists in database
@@ -180,8 +188,10 @@ def db_search(job_id):
 async def result_job(job_id):
     # Check if in database and completed flag set to 1
     result = db_search(job_id)
-    #print (result.tags)
-    if (result[0]['completed']) == "True":
+    if not result:
+        raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
+        return {'detail': f'Result {job_id} not found'}
+    elif (result[0]['completed']) == "True":
         # See if tags already set
         tags = result[0]['tags']
         if tags != "":
@@ -191,18 +201,20 @@ async def result_job(job_id):
             # Get the tags from filesystem
             tags = (read_tags(job_id))
             if tags == False:
-                return {'status': f'Reading tags for {jobname} failed'}
+                raise HTTPException(status_code=400, detail=f'Reading tags for {job_id} failed')
+                return {'detail': f'Reading tags for {job_id} failed'}
             else:
                 db_update('', job_id, '', "True", tags)
-                return {'result': f'{tags}'}
+                return {'detail': f'{tags}'}
     else:
-        return {''}
+        raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
+        return {'detail': f'Result {job_id} not found'}
 
 def check_uploaded_file_exists(job_id):
     if os.path.isdir('/data/nfs'):
         # Extract filename (md5 based) from job_id
-        fn = job_id.split('-')
-        uploaded_file="{}/{}".format("/data/nfs",fn[0])
+        fn = job_id.split('-') 
+        uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
         if os.path.exists(uploaded_file):
            return uploaded_file
         else:
@@ -230,26 +242,30 @@ async def status_job(job_id):
         if job_epoch:
             #print (job_epoch)
             #print (curr_epoch)
-            result = (curr_epoch - job_epoch)
-            if result > 180000:
-                return {'status': f'Job status not available, try calling result api or please try again later'}
+            result = (curr_epoch - job_epoch) 
+            if result > 18000000:
+                raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
+                return {'detail': f'Job status not available, try calling result api or please try again later'}
                 # UPDATE STATUS OF JOB
-                return
+                #return
             #else:
             #    print ("Job {} processing ....".format(job_id))
     else:
-        print ({'status': f'job_id {job_id} not found'})
-        return {'status': f'job_id {job_id} not found'}
+        #print ({'status': f'job_id {job_id} not found'})
+        #raise HTTPException(status_code=404, detail={'status': f'job_id {job_id} not found'})
+        raise HTTPException(status_code=404, detail=f'job_id {job_id} not found')
+        return {'detail': f'job_id {job_id} not found'}
     #print ("-------------")
 
     # Check if file exists in nfs mount directory, if it does then jobs completed!!
     # This will run in a pod soon and will change here
     if (check_uploaded_file_exists(job_id)) == False:
-           return {'status': f'Upload for {job_id} not found'}
+           raise HTTPException(status_code=404, detail=f'Upload for {job_id} not found')
+           return {'detail': f'Upload for {job_id} not found'}
     #if os.path.isdir('/data/nfs'):
     #    # Extract filename (md5 based) from job_id
-    #    fn = job_id.split('-')
-    #    uploaded_file="{}/{}".format("/data/nfs",fn[0])
+    #    fn = job_id.split('-') 
+    #    uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
     #    if not os.path.exists(uploaded_file):
     #       #print ({'message': f'Filename {fn[0]} not found'})
     #       return {'message': f'Filename {fn[0]} not found'}
@@ -288,7 +304,7 @@ def submit_job(filename):
 
     md5=compute_md5(filename)
     # This will run in a pod soon and will change here
-    nfs_file="/data/nfs/{}".format(md5)
+    nfs_file="/mnt/{}".format(md5)
     #nfs_file="/mnt/{}".format(md5)
     matnn_pod_nfs_file="/mnt/{}".format(md5)
 
@@ -304,7 +320,8 @@ def submit_job(filename):
         shutil.copy(filename, nfs_file)
         #print("File %s copied successfully into %s" % (filename, output_file))
     except:
-        return {'message': f'Error copying upload file {filename}'}
+        raise HTTPException(status_code=400, detail=f'Error copying upload file {filename}')
+        return {'detail': f'Error copying upload file {filename}'}
         #sys.exit(1)
 
     #return
@@ -319,7 +336,7 @@ def submit_job(filename):
     #job_name="musicnn-%s-%s" % (md5, rand_id)
     job_id = "{}-{}".format(md5, rand_id)
     job_name="musicnn-{}".format(job_id)
-
+    
     # Generate a CRD spec
     try:
         crd = generate_job_crd(job_name, image, cmdargs)
@@ -328,7 +345,8 @@ def submit_job(filename):
         #print(f"⭐️ Creating sample job with prefix {job_name}...")
         batch_api.create_namespaced_job("default", crd)
     except:
-        return {'message': f'Error creating CRD for {job_id}'}
+        raise HTTPException(status_code=400, detail=f'Error creating CRD for {job_id}')
+        return {'detail': f'Error creating CRD for {job_id}'}
     #print(
     #    'Use:\n"kubectl get queue" to see queue assignment\n"kubectl get jobs" to see jobs'
     #)
