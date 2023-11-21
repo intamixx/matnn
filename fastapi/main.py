@@ -13,7 +13,7 @@ import string
 
 app = FastAPI()
 
-#config.load_kube_config()
+config.load_kube_config()
 ##crd_api = client.CustomObjectsApi()
 #api_client = crd_api.api_client
 
@@ -39,10 +39,10 @@ async def upload_file(
                         detail="Too large",
                     )
                 await out_file.write(content)  # async write chunk
-        #job_id = submit_job(file.filename)
+        job_id = submit_job(file.filename)
         #return
         #sys.exit(0)
-        job_id = "iosdfjiosdjfiodfjiwejr-we334r"
+        #job_id = "iosdfjiosdjfiodfjiwejr-we334r"
         msg = f"Successfully uploaded {file.filename} as {job_id}"
     except IOError:
         raise HTTPException(status_code=400, detail=f'There was an error uploading your file')
@@ -92,7 +92,7 @@ def status_kueue_job(listing, job_id):
             )
             ready = job["status"]["ready"]
             if ready == 1:
-                raise HTTPException(status_code=201, detail=f'Processing Job {jobname}')
+                raise HTTPException(status_code=202, detail=f'Processing Job {jobname}')
                 return {'detail': f'Processing Job {jobname}'}
             try:
                 if job["status"]["succeeded"] == 1:
@@ -102,18 +102,24 @@ def status_kueue_job(listing, job_id):
                     #    return {'status': f'Reading tags for {jobname} failed'}
                     #else:
                     #    tags = (read_tags(job_id))
-                    db_update('', job_id, '', "True", '')
+                    result = db_search(job_id)
+                    if (result[0]['completed']) == "False":
+                       db_update('', job_id, '', "True", '')
                     return {'detail': f'Successful Job {jobname}'}
             except:
-                raise HTTPException(status_code=201, detail=f'Finalising Job {jobname}')
+                raise HTTPException(status_code=202, detail=f'Finalising Job {jobname}')
                 return {'detail': f'Finalising Job {jobname}'}
-
+    raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
+    return {'detail': f'Job status not available, try calling result api or please try again later'}
             #print(f"Found job {jobname}")
             #print(f"  Succeeded: {status}")
             #print(f"  Ready: {ready}")
 
 def read_tags(job_id):
     filename = check_uploaded_file_exists(job_id)
+    if filename == False:
+        raise HTTPException(status_code=404, detail=f'Upload for {job_id} not found')
+        return {'detail': f'Upload for {job_id} not found'}
     tagfilename = filename+".tags"
     try:
         with open(tagfilename) as f_obj:
@@ -144,7 +150,7 @@ def generate_job_crd(job_name, image, args):
         #security_context=client.V1SecurityContext(run_as_user=1000),
         volume_mounts=[client.V1VolumeMount(name='nfs',mount_path='/mnt')],
         )
-    nfsvol = client.V1NFSVolumeSource(path="/exports", server="10.42.3.76")
+    nfsvol = client.V1NFSVolumeSource(path="/exports", server="10.42.3.107")
     volume = client.V1Volume(name='nfs', nfs=nfsvol)
 
     # Job template
@@ -192,11 +198,12 @@ async def result_job(job_id):
         raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
         return {'detail': f'Result {job_id} not found'}
     elif (result[0]['completed']) == "True":
+        audiofile = (result[0]['audiofile'])
         # See if tags already set
         tags = result[0]['tags']
         if tags != "":
             #tag set
-            return {'result': f'{tags}'}
+            return {'audiofile': f'{audiofile}', 'result': f'{tags}'}
         else:
             # Get the tags from filesystem
             tags = (read_tags(job_id))
@@ -205,21 +212,33 @@ async def result_job(job_id):
                 return {'detail': f'Reading tags for {job_id} failed'}
             else:
                 db_update('', job_id, '', "True", tags)
-                return {'detail': f'{tags}'}
+                return {'audiofile': f'{audiofile}', 'detail': f'{tags}'}
+    elif (result[0]['completed']) == "False":
+        audiofile = (result[0]['audiofile'])
+        # Get the tags from filesystem
+        tags = (read_tags(job_id))
+        if tags == False:
+            raise HTTPException(status_code=400, detail=f'Reading tags for {job_id} failed')
+            return {'detail': f'Reading tags for {job_id} failed'}
+        else:
+            db_update('', job_id, '', "True", tags)
+            return {'audiofile': f'{audiofile}', 'detail': f'{tags}'}
     else:
         raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
         return {'detail': f'Result {job_id} not found'}
 
 def check_uploaded_file_exists(job_id):
-    if os.path.isdir('/data/nfs'):
-        # Extract filename (md5 based) from job_id
-        fn = job_id.split('-') 
-        uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
-        if os.path.exists(uploaded_file):
-           return uploaded_file
-        else:
-           return False
-
+    try:
+        if os.path.isdir('/data/nfs'):
+            # Extract filename (md5 based) from job_id
+            fn = job_id.split('-') 
+            uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
+            if os.path.exists(uploaded_file):
+               return uploaded_file
+            else:
+               return False
+    except:
+        return False
 
 # Get the status of the job
 @app.get("/status/{job_id}")
@@ -304,7 +323,7 @@ def submit_job(filename):
 
     md5=compute_md5(filename)
     # This will run in a pod soon and will change here
-    nfs_file="/mnt/{}".format(md5)
+    nfs_file="/data/nfs/{}".format(md5)
     #nfs_file="/mnt/{}".format(md5)
     matnn_pod_nfs_file="/mnt/{}".format(md5)
 
