@@ -99,7 +99,10 @@ http.get('http://localhost:8000/' + global.stype + '/' + global.id, res => {
   });
 }).on('error', err => {
   console.log('Error: ', err.message);
-  callback(err.message, null);
+  //callback(err.message, null);
+  //var errmsg = ("{" + err.message + "}")
+  callback(500, err.message);
+  //callback(500, errmsg);
 });
 
 }
@@ -262,7 +265,7 @@ var start = async function(filename) {
 app.get('/upload', function(req, res) {
     res.send('<!doctype html>' + 
 	    '<html lang="en">' + 
-	      '<head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Bootstrap demo</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> </head> <body> <h1>Matnn (<u>M</u>usic <u>A</u>udio <u>T</u>agger <u>N</u>eural <u>N</u>et)</h1> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>' + 
+	      '<head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Matnn Demo</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> </head> <body> <h1>Matnn (<u>M</u>usic <u>A</u>udio <u>T</u>agger <u>N</u>eural <u>N</u>et)</h1> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>' + 
 	    '<form method="post" enctype="multipart/form-data">' + 
         //+ '<p>Title: <input type="text" name="title" /></p>'
         '<p>Audio File: <input type="file" name="file" /></p>' +
@@ -346,9 +349,9 @@ app.post('/upload', function (req, res) {
         console.log(typeof(fast_api_response['http_status']));
 	var tokens = JSON.stringify(fast_api_response['http_body']).split(" ");
 	var id = tokens[tokens.length - 1];
-	id = id.replace('}', '');
-	id = id.replace('{', '');
-	id = id.replace('"', '');
+	//id = id.replace('}', '');
+	//id = id.replace('{', '');
+	id = id.replace(/["{}]/g, '');
 	console.log(id);
 
         if (!fast_api_response) {
@@ -381,7 +384,8 @@ app.post('/upload', function (req, res) {
             case 503:
                 // Special case of connection refused error to fastapi
                 if (fast_api_response['http_body'] == "ECONNREFUSED") {
-                    fast_api_response['http_body'] = String.raw`{"detail": "ECONNREFUSED"}`;
+                    //fast_api_response['http_body'] = String.raw`{"detail": "ECONNREFUSED"}`;
+                    fast_api_response['http_body'] = JSON.stringify({detail: 'ECONNREFUSED'});
                 }
                 res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
                 break;
@@ -414,8 +418,8 @@ app.get('/status/:id', (req, res) => {
     //var data = "";
     gethttp_api(function(err, status, id) {
         if (err) console.log('error', err)//error handling
-	console.log(err);
-        console.log(status);
+	console.log("statuscode is " + err);
+        console.log("status msg is " + status);
   		res.status(err).render('status-wrapper', {
 		    users: users,
 		    id: global.id,
@@ -456,7 +460,7 @@ app.get('/api/status/:id', (req, res) => {
     //var status = "";
     //var data = "";
     gethttp_api(function(err, status, id) {
-        if (err) console.log('error', err)//error handling
+        //if (err) console.log('error', err)//error handling
 	console.log(err);
         console.log(status);
 	        res.status(err).send(status);
