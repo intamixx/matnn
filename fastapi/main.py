@@ -45,7 +45,7 @@ async def upload_file(
         #job_id = "iosdfjiosdjfiodfjiwejr-we334r"
         msg = f"Successfully uploaded {file.filename} as {job_id}"
     except IOError:
-        raise HTTPException(status_code=400, detail=f'There was an error uploading your file')
+        raise HTTPException(status_code=500, detail=f'There was an error uploading your file')
         msg = "There was an error uploading your file"
     return {"message": msg}
 
@@ -122,16 +122,20 @@ def read_tags(job_id):
         return {'detail': f'Upload for {job_id} not found'}
     tagfilename = filename+".tags"
     try:
-        with open(tagfilename) as f_obj:
+        with open(tagfilename, 'r') as f_obj:
             #contents = f_obj.read()
             last_line = f_obj.readlines()[-1]
             f_obj.close()
+            last_line = last_line.replace('\n', '').replace('\r', '')
+            last_line = last_line.split(',') 
+            last_line = (last_line[-3:])
+            return (', '.join(last_line))
     except FileNotFoundError:
         return False
-    last_line = last_line.replace('\n', '').replace('\r', '')
-    last_line = last_line.split(',') 
-    last_line = (last_line[-3:])
-    return (', '.join(last_line))
+    #last_line = last_line.replace('\n', '').replace('\r', '')
+    #last_line = last_line.split(',') 
+    #last_line = (last_line[-3:])
+    #return (', '.join(last_line))
 
 def generate_job_crd(job_name, image, args):
     """
@@ -172,15 +176,16 @@ def db_update(filename, job_id, epoch, completed, tags):
         try:
             db.upsert({'job_id': job_id, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
         except:
-            raise HTTPException(status_code=400, detail=f'Database insertion error')
+            raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
         return
     # update whole record
     try:
         db.upsert({'audiofile': filename, 'job_id': job_id, 'epoch': epoch, 'completed': completed}, audio.job_id == job_id)
     except:
-        raise HTTPException(status_code=400, detail=f'Database insertion error')
+        raise HTTPException(status_code=500, detail=f'Database insertion error')
         return {'detail': f'Database insertion error'}
+    return
 
 def db_search(job_id):
     # Check if file md5 exists in database
@@ -208,7 +213,7 @@ async def result_job(job_id):
             # Get the tags from filesystem
             tags = (read_tags(job_id))
             if tags == False:
-                raise HTTPException(status_code=400, detail=f'Reading tags for {job_id} failed')
+                raise HTTPException(status_code=404, detail=f'Reading tags for {job_id} failed')
                 return {'detail': f'Reading tags for {job_id} failed'}
             else:
                 db_update('', job_id, '', "True", tags)
@@ -218,8 +223,8 @@ async def result_job(job_id):
         # Get the tags from filesystem
         tags = (read_tags(job_id))
         if tags == False:
-            raise HTTPException(status_code=400, detail=f'Reading tags for {job_id} failed')
-            return {'detail': f'Reading tags for {job_id} failed'}
+            raise HTTPException(status_code=202, detail=f'Reading tags for {job_id} processing')
+            return {'detail': f'Reading tags for {job_id} processing'}
         else:
             db_update('', job_id, '', "True", tags)
             return {'audiofile': f'{audiofile}', 'detail': f'{tags}'}
@@ -339,7 +344,7 @@ def submit_job(filename):
         shutil.copy(filename, nfs_file)
         #print("File %s copied successfully into %s" % (filename, output_file))
     except:
-        raise HTTPException(status_code=400, detail=f'Error copying upload file {filename}')
+        raise HTTPException(status_code=500, detail=f'Error copying upload file {filename}')
         return {'detail': f'Error copying upload file {filename}'}
         #sys.exit(1)
 
@@ -364,7 +369,7 @@ def submit_job(filename):
         #print(f"⭐️ Creating sample job with prefix {job_name}...")
         batch_api.create_namespaced_job("default", crd)
     except:
-        raise HTTPException(status_code=400, detail=f'Error creating CRD for {job_id}')
+        raise HTTPException(status_code=500, detail=f'Error creating CRD for {job_id}')
         return {'detail': f'Error creating CRD for {job_id}'}
     #print(
     #    'Use:\n"kubectl get queue" to see queue assignment\n"kubectl get jobs" to see jobs'
