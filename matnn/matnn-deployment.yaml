@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matnn
+    #  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: matnn
+  template:
+    metadata:
+      labels:
+        app: matnn
+    spec:
+      containers:
+      - name: matnn
+        image: intamixx/matnn
+        ports:
+        - name: nodejs
+          containerPort: 9090
+        - name: fastapi
+          containerPort: 8000
+        securityContext:
+          privileged: true       
+        volumeMounts:
+        - name: nfs
+          mountPath: /mnt
+      volumes:
+      - name: nfs
+        nfs:
+          server: 10.42.3.107
+          path: /exports
+      restartPolicy: Always
