@@ -328,8 +328,8 @@ def submit_job(filename):
 
     md5=compute_md5(filename)
     # This will run in a pod soon and will change here
-    nfs_file="/data/nfs/{}".format(md5)
-    #nfs_file="/mnt/{}".format(md5)
+    #nfs_file="/data/nfs/{}".format(md5)
+    nfs_file="/mnt/{}".format(md5)
     matnn_pod_nfs_file="/mnt/{}".format(md5)
 
     # Inside matnn container
