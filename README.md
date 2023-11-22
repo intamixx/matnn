@@ -1,5 +1,7 @@
 # matnn
 
+Website https://matnn.intamixx.uk:9090/upload
+
 Uses musicnn to determine genres of music uploaded using API or website.
 Uses Kueue (https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and return result to API.
 
