@@ -14,7 +14,7 @@ Currently files must be MP3 and under 8 MB.
 # Upload
 curl -X POST 'https://matnn.intamixx.uk:9090/upload' -H 'Content-Type: multipart/form-data' -F "file=@/path/to/audio.mp3;type=audio/mpeg"
 
-{"message":"Successfully uploaded xxxxxx-xxxxx.mp3 as 01f436c22d490885a90853d7d048c5ff-ntrh9"}
+{"message":"Successfully uploaded audio.mp3 as 01f436c22d490885a90853d7d048c5ff-ntrh9"}
 
 Wait of around 30 seconds for a typical job to complete
 
