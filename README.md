@@ -9,7 +9,7 @@ Musicnn
 https://github.com/jordipons/musicnn
 
 API Usage example
-Currently files must be MP3 and under 8 MB.
+Currently files must be MP3 and under 8 MB.  File mimetype and extension must be set as shown in curl example below.
 
 # Upload
 curl -X POST 'https://matnn.intamixx.uk:9090/upload' -H 'Content-Type: multipart/form-data' -F "file=@/path/to/audio.mp3;type=audio/mpeg"
