@@ -1,14 +1,25 @@
 <html>
 <head>
-<meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Matnn Job Result</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-	<title>Matnn Job Result</title>
+<meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Matnn Job Status</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+	<title>Matnn Job Status</title>
 	<body>
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script>
 //jobid = "00ba46e6fd66e7eae9ec9c43d0828580-opuft";
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+
+const delay = async () => {
+  await sleep(1000)
+  console.log("First")
+  await sleep(1000)
+  console.log("Second")
+  await sleep(1000)
+  console.log("Third")
+location.replace("/result/<%= id %>");
+}
 	function updateMatnn(){
              $.ajax({ 
-	url: "/api/result/<%= id %>",
+	url: "/api/status/<%= id %>",
 	dataType: "json",
 	cache: false,
         statusCode: {
@@ -21,11 +32,9 @@
 			//	}
 			//result = JSON.stringify(JSON.parse(html));
 			//const json = JSON.parse(JSONObject)
-			//console.log(JSONObject.result);
-			//JSONObject = JSON.stringify(JSONObject);
-			$("#currentJob_audiofile").html(JSONObject.audiofile); 
-			$("#currentJob_result").html(JSONObject.result); 
-			//delay()
+			console.log(JSONObject.detail);
+			$("#currentJob").html(JSONObject.detail); 
+			delay()
 			//location.replace("/test2.html");
 			},
 		202: function(JSONObject) { 
@@ -48,25 +57,31 @@
 			//		console.log("Found shit");
 			//	}
 			//result = JSON.stringify(JSON.parse(html));
-			$("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
 			},
-		500: function(JSONObject, textStatus, errorThrown) { 
-			console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
-			console.log(JSONObject);
-			console.log(JSONObject.responseText);
-			$("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
-			},
+                410: function(JSONObject, textStatus, errorThrown) { 
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject);
+                        console.log(JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        },
+                500: function(JSONObject, textStatus, errorThrown) { 
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject);
+                        console.log(JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        },
 		}
 		     });
                     };
         updateMatnn();
-        //setInterval( "updateMatnn()", 10000 ); // refreshed every 60 sec
+        setInterval( "updateMatnn()", 10000 ); // refreshed every 60 sec
 </script>
-		<h1>Matnn Job Result</h1>
+		<h1>Matnn Job Status</h1>
+		<!-- <h4><%= id %> --- <%= status %></h4> -->
 		<!-- <div id="h1_coverart"></div> -->
-		<div id="currentJob"></div>
-		<h4>File : <div id="currentJob_audiofile"></div></h4>
-		<h4>Genres : <div id="currentJob_result"></div></h4>
+		<h4><div id="currentJob"></div></h4>
+		<h4>Kueue Job ID : <%= id %></h4>
 	</body>
 </head>
 </html>
