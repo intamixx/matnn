@@ -169,7 +169,7 @@ def generate_job_crd(job_name, image, args):
     )
 
 def db_update(filename, job_id, epoch, completed, tags):
-    db = TinyDB('./matnn.json')
+    db = TinyDB('/mnt/matnn.json')
     audio = Query()
     # update completed status and tags only
     if not filename and not epoch:
@@ -189,7 +189,7 @@ def db_update(filename, job_id, epoch, completed, tags):
 
 def db_search(job_id):
     # Check if file md5 exists in database
-    db = TinyDB('./matnn.json')
+    db = TinyDB('/mnt/matnn.json')
     audio = Query()
     #results = db.search(audio.md5.search(job_id))
     return (db.search(audio.job_id == job_id))
@@ -234,10 +234,10 @@ async def result_job(job_id):
 
 def check_uploaded_file_exists(job_id):
     try:
-        if os.path.isdir('/data/nfs'):
+        if os.path.isdir('/mnt'):
             # Extract filename (md5 based) from job_id
             fn = job_id.split('-') 
-            uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
+            uploaded_file="{}/{}".format("/mnt",fn[0]) 
             if os.path.exists(uploaded_file):
                return uploaded_file
             else:
