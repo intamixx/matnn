@@ -10,6 +10,7 @@ from datetime import datetime
 
 import random
 import string
+import configparser
 
 app = FastAPI()
 
@@ -141,6 +142,17 @@ def generate_job_crd(job_name, image, args):
     """
     Generate an equivalent job CRD to sample-job.yaml
     """
+    try:
+        # Get the ip of the nfs storage server from config
+        config = configparser.ConfigParser()
+        config.read('matnn.ini')
+        print (config.sections())
+        nfs_server = config['nfs-server']['host']
+        print (nfs_server)
+    except configparser.Error:
+        raise HTTPException(status_code=500, detail=f'Read of config for {job_id} failed')
+        return {'detail': f'Read of config for {job_id} failed'}
+
     metadata = client.V1ObjectMeta(
         generate_name=job_name, labels={"kueue.x-k8s.io/queue-name": "user-queue"}
     )
