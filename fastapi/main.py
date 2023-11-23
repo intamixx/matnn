@@ -145,7 +145,7 @@ def generate_job_crd(job_name, image, args):
     try:
         # Get the ip of the nfs storage server from config
         config = configparser.ConfigParser()
-        config.read('matnn.ini')
+        config.read('config/matnn.ini')
         print (config.sections())
         nfs_server = config['nfs-server']['host']
         print (nfs_server)
@@ -279,7 +279,7 @@ async def status_job(job_id):
             #print (job_epoch)
             #print (curr_epoch)
             result = (curr_epoch - job_epoch) 
-            if result > 18000000:
+            if result > 18000:
                 raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
                 return {'detail': f'Job status not available, try calling result api or please try again later'}
                 # UPDATE STATUS OF JOB
