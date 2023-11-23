@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: matnn-config
+  #namespace: default
+data:
+  matnn-config: |
+    [nfs-server]
+    host = 10.43.3.235
+    mountdir = /mnt
