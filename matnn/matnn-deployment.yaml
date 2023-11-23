@@ -23,11 +23,20 @@ spec:
         securityContext:
           privileged: true       
         volumeMounts:
+        - name: config-volume
+          mountPath: /fastapi/config
         - name: nfs
           mountPath: /mnt
       volumes:
+      - name: config-volume
+        configMap:
+          name: matnn-config
+          items:
+            - key: matnn-config
+              path: matnn.ini
       - name: nfs
         nfs:
-          server: 10.42.3.107
+          server: 10.43.3.235
           path: /exports
       restartPolicy: Always
+      
