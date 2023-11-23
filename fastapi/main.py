@@ -14,7 +14,7 @@ import configparser
 
 app = FastAPI()
 
-config.load_incluster_config
+config.load_incluster_config()
 #config.load_kube_config()
 ##crd_api = client.CustomObjectsApi()
 #api_client = crd_api.api_client
