@@ -166,7 +166,7 @@ def generate_job_crd(job_name, image, args):
         #security_context=client.V1SecurityContext(run_as_user=1000),
         volume_mounts=[client.V1VolumeMount(name='nfs',mount_path='/mnt')],
         )
-    nfsvol = client.V1NFSVolumeSource(path="/exports", server="10.42.3.107")
+    nfsvol = client.V1NFSVolumeSource(path="/exports", server=nfs_server)
     volume = client.V1Volume(name='nfs', nfs=nfsvol)
 
     # Job template
