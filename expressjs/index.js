@@ -150,6 +150,9 @@ app.get('/upload', function(req, res) {
 	    '<form method="post" enctype="multipart/form-data">' + 
         //+ '<p>Title: <input type="text" name="title" /></p>'
         '<p>Audio File: <input type="file" name="file" /></p>' +
+	'<p>Genre tag: <input type="checkbox" name="genre" value="genre"></p>' +
+	'<p>BPM tag: <input type="checkbox" name="bpm" value="bpm"></p>' +
+	'<p>Key tag: <input type="checkbox" name="key" value="key"></p>' +
         '<p><input type="submit" value="Upload" /></p>' +
 	'<h3>AI Powered by Sandman Technologies Inc</h3>' +
 	'      </body>' +
