@@ -6,13 +6,14 @@ var fs = require('fs');
 
 var maxFileSizeInBytes = 8000000;
 
-var save = function save(filename, callback) {
+var save = function save(filename, tagobj, callback) {
     console.log("IN SAVE");
     //console.log('got data: '+data);
     //const tuti = start(filename);
     console.log("NOW HERE SAVE");
+    console.log(tagobj);
     //console.log(callback(filename));
-    return (callback(filename));
+    return (callback(filename, tagobj));
     console.log("after call to callback start " + status);
     //return (status);
     setTimeout(function() {
@@ -20,18 +21,36 @@ var save = function save(filename, callback) {
     }, 10000);
 };
 
-var start = async function(filename) {
+var start = async function(filename, tagobj) {
     console.log("In START");
     const buffer = fs.readFileSync(filename);
     const FormData = require('form-data');
     const form = new FormData();
     let fetch = require('node-fetch');
 
+	model = JSON.stringify(tagobj)
+	//model = JSON.parse(Buffer.concat(tagobj).toString())
+	console.log(model);
+	console.log(Buffer.from("Hello World").toString('base64'));
+	//model = Buffer.from("Hello World").toString('base64');
+    form.append('tagselection', model, {
+        contentType: 'application/json',
+        //contentType: 'application/octet-stream',
+	//Content-Transfer-Encoding: base64,
+        name: 'tagselection',
+        //tagobj: '{genre: true}',
+        tagobj: tagobj,
+    });
     form.append('file', buffer, {
         contentType: 'multipart/form-data',
         name: 'file',
         filename: filename,
+        //name: 'tagselection',
+        //tagobj: tagobj,
     });
+
+    console.log(tagobj);
+    console.log(JSON.stringify(form));
 
     try {
         const response = await fetch('http://localhost:8000/upload', {
@@ -42,6 +61,7 @@ var start = async function(filename) {
         console.log(response.status);
         if (response.status == "200") {
             console.log(" START WORKED!");
+            console.log(tagobj);
         }
         console.log("I AM HERE START");
         //await foo()
@@ -92,7 +112,7 @@ const upload = multer({
     storage: storage,
     limits: {
         fileSize: maxFileSizeInBytes,
-        fields: 1,
+        fields: 3,
         fieldSize: 10,
         fieldNameSize: 10
     },
@@ -157,6 +177,30 @@ router.post('/', function (req, res) {
 	res.status(400).json(err);
 	return;
     } 
+    var tagobj = {
+        tags:
+        {
+        }
+    }
+    if (req.body.genre) {
+    	console.log(req.body.genre);
+	//tagobj.push({ "genre": "true"}); 
+	//tagobj.push('genre'); 
+	tagobj.tags.genre = true;
+    }
+    if (req.body.bpm) {
+    	console.log(req.body.bpm);
+	//tagobj.push({ "bpm": "true"}); 
+	//tagobj.push('bpm'); 
+        tagobj.tags.bpm = true;
+    }
+    if (req.body.key) {
+    	console.log(req.body.key);
+	//tagobj.push({ "key": "true"}); 
+	//tagobj.push('key'); 
+        tagobj.tags.key = true;
+    }
+    console.log("Selections are : " + JSON.stringify(tagobj));
     if (req.fileValidationError) {
 	    var err = req.fileValidationError;
 	    if (err.match(/large/)) {
@@ -174,7 +218,7 @@ router.post('/', function (req, res) {
         });
     	return;
     } else {
-    console.log(req.file);
+    //console.log(req.file);
     if (req.file.size > maxFileSizeInBytes) {
        return res.status(413).json({detail: "File upload size limit exceeded"});
     }
@@ -182,12 +226,16 @@ router.post('/', function (req, res) {
     var filename = req.file['originalname'];
     console.log(filepath);
     console.log(filename);
-    //console.log(req.body);
+    console.log("REQ BODY is ");
+	  console.log(req.body);
+    console.log("TAG OBJ is ");
+	  tagobj = JSON.parse(JSON.stringify(tagobj));
+	  console.log(tagobj);
     //status = save(filepath, start); 
     (async () => {
         console.log('before start');
 
-        const fast_api_response = await save(filepath, start);
+        const fast_api_response = await save(filepath, tagobj, start);
         //fast_api_response = parseInt(fast_api_response);
         //console.log("RETURN 1");
         //console.log(fast_api_response);
