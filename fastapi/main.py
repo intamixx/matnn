@@ -1,4 +1,5 @@
-from fastapi import FastAPI, File, Request, UploadFile, HTTPException, status, Header, Depends
+from fastapi import FastAPI, Form, File, Request, UploadFile, HTTPException, status, Header, Depends
+from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 import aiofiles
 
@@ -12,6 +13,10 @@ import random
 import string
 import configparser
 
+from pydantic import BaseModel
+import json
+#from typing import Optional, List
+
 app = FastAPI()
 
 config.load_incluster_config()
@@ -23,14 +28,43 @@ config.load_incluster_config()
 async def read_item(matt_id):
     return {"matt_id": matt_id}
 
+class Base(BaseModel):
+    name: str
+    #point: Optional[float] = None
+    #is_accepted: Optional[bool] = False
+
+    def is_json(myjson):
+        try:
+            #json.loads(myjson)
+            json_object = json.loads(myjson)
+        except ValueError as e:
+            return False
+        return json_object
+
+def checker(tagselection: str = Form(...)):
+    print (tagselection)
+    try:
+        return Base.is_json(tagselection)
+    #except ValidationError as e:
+    except:
+        print("ERRRORRR 422")
+        raise HTTPException(
+            #detail=jsonable_encoder(e.errors()),
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
 async def valid_content_length(content_length: int = Header(..., lt=8000_000)):
     return content_length
 @app.post("/upload")
 async def upload_file(
-    file: UploadFile = File(...), file_size: int = Depends(valid_content_length)
+    #file: UploadFile = File(...), file_size: int = Depends(valid_content_length)
+    tagselection: Base = Depends(checker), file: UploadFile = File(...), file_size: int = Depends(valid_content_length)
 ):
     output_file = f"{file.filename}"
     real_file_size = 0
+    print(f"JSON Payload : {tagselection}")
+    print(type(tagselection))
+    #print(f"BPM : {tagselection['tags']['bpm']}")
     try:
         async with aiofiles.open(f"{output_file}", "wb") as out_file:
             while content := await file.read(1024):  # async read chunk
@@ -41,7 +75,7 @@ async def upload_file(
                         detail="Too large",
                     )
                 await out_file.write(content)  # async write chunk
-        job_id = submit_job(file.filename)
+        job_id = submit_job(file.filename, tagselection)
         #return
         #sys.exit(0)
         #job_id = "iosdfjiosdjfiodfjiwejr-we334r"
@@ -333,11 +367,28 @@ def id_generator(size=5, chars=string.ascii_lowercase + string.digits):
     # Check job has been admitted
 
 
-def submit_job(filename):
+def submit_job(filename, tagselection):
     """
     Run a job.
     """
     #print (filename);
+    try:
+        genre = tagselection['tags']['genre']
+        print (f"Genre: {genre}")
+    except:
+        print ("Genre not selected")
+    try:
+        bpm = tagselection['tags']['bpm']
+        print (f"BPM: {bpm}")
+    except:
+        print ("BPM not selected")
+    try:
+        key = tagselection['tags']['key']
+        print (f"Key: {key}")
+    except:
+        print ("Key not selected")
+
+    return
 
     md5=compute_md5(filename)
     # This will run in a pod soon and will change here
