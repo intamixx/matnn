@@ -5,7 +5,6 @@
 	<body>
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script>
-//jobid = "00ba46e6fd66e7eae9ec9c43d0828580-opuft";
 	function updateMatnn(){
              $.ajax({ 
 	url: "/api/result/<%= id %>",
@@ -23,10 +22,10 @@
 			//const json = JSON.parse(JSONObject)
 			//console.log(JSONObject.result);
 			//JSONObject = JSON.stringify(JSONObject);
+			var genre  = JSONObject.result.genre.join(', ');
 			$("#currentJob_audiofile").html(JSONObject.audiofile); 
-			$("#currentJob_result").html(JSONObject.result); 
+			$("#currentJob_result").html((genre)); 
 			//delay()
-			//location.replace("/test2.html");
 			},
 		202: function(JSONObject) { 
 			console.log(JSONObject)
