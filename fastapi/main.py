@@ -132,15 +132,9 @@ def status_kueue_job(listing, job_id):
                 return {'detail': f'Processing Job {jobname}'}
             try:
                 if job["status"]["succeeded"] == 1:
-                    #print (job["status"])
-                    # Update completion into database
-                    #if read_tags(job_id) == False:
-                    #    return {'status': f'Reading tags for {jobname} failed'}
-                    #else:
-                    #    tags = (read_tags(job_id))
                     result = db_search(job_id)
-                    if (result[0]['completed']) == "False":
-                       db_update('', job_id, '', "True", '')
+                    if (result[0]['completed']) == False:
+                       db_update('', job_id, '', True, '')
                     return {'detail': f'Successful Job {jobname}'}
             except:
                 raise HTTPException(status_code=202, detail=f'Finalising Job {jobname}')
@@ -156,22 +150,68 @@ def read_tags(job_id):
     if filename == False:
         raise HTTPException(status_code=404, detail=f'Upload for {job_id} not found')
         return {'detail': f'Upload for {job_id} not found'}
-    tagfilename = filename+".tags"
-    try:
-        with open(tagfilename, 'r') as f_obj:
-            #contents = f_obj.read()
-            last_line = f_obj.readlines()[-1]
-            f_obj.close()
-            last_line = last_line.replace('\n', '').replace('\r', '')
-            last_line = last_line.split(',') 
-            last_line = (last_line[-3:])
-            return (', '.join(last_line))
-    except FileNotFoundError:
-        return False
-    #last_line = last_line.replace('\n', '').replace('\r', '')
-    #last_line = last_line.split(',') 
-    #last_line = (last_line[-3:])
-    #return (', '.join(last_line))
+
+    print ("ttttttttttttttttttttttT")
+    # Get the tag keys required by user
+    # Is genre key set in db?
+    result = db_search(job_id)
+    print (result[0]['audiofile'])
+    tagdata = result[0]['tags']
+    for key, value in (tagdata.items()):
+        print (f"KEY : {key}")
+        if key == 'genre':
+            print ("GENRE!")
+            tagfilename = filename+".genre"
+            try:
+                with open(tagfilename, 'r') as f_obj:
+                    #contents = f_obj.read()
+                    g_last_line = f_obj.readlines()[-1]
+                    f_obj.close()
+                    g_last_line = g_last_line.replace('\n', '').replace('\r', '')
+                    g_last_line = g_last_line.split(',') 
+                    g_last_line = (g_last_line[-3:])
+                    print (g_last_line)
+                    # Form the tag
+                    tagdata['genre'] = g_last_line
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail=f'Genre detail for {job_id} not found')
+                return False
+        if key == 'bpm':
+            print ("BPM!")
+            tagfilename = filename+".bpm"
+            try:
+                with open(tagfilename, 'r') as f_obj:
+                    #contents = f_obj.read()
+                    b_last_line = f_obj.readlines()[-1]
+                    b_last_line = b_last_line.replace('\n', '').replace('\r', '')
+                    f_obj.close()
+                    # Form the tag
+                    tagdata['bpm'] = b_last_line
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail=f'BPM detail for {job_id} not found')
+                return False
+        if key == 'key':
+            print ("KEY!")
+            tagfilename = filename+".key"
+            try:
+                with open(tagfilename, 'r') as f_obj:
+                    #contents = f_obj.read()
+                    k_last_line = f_obj.readlines()[-1]
+                    k_last_line = k_last_line.replace('\n', '').replace('\r', '')
+                    f_obj.close()
+                    # Form the tag
+                    tagdata['key'] = k_last_line
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail=f'Key detail for {job_id} not found')
+                return False
+    print (f"TUTTTI {tagdata}")
+    #hello = json.dumps(tagdata)
+    #print (hello)
+    # form the tags and return it to the calling function
+    return (tagdata)
+
+    #tagdata = result[0]['tags']
+    #for value in tagdata.values())
 
 def generate_job_crd(job_name, image, args):
     """
@@ -218,21 +258,29 @@ def generate_job_crd(job_name, image, args):
 def db_update(filename, job_id, epoch, completed, tags):
     db = TinyDB('./matnn.json')
     audio = Query()
-    # update completed status and tags only
-    if not filename and not epoch:
+    # Status update, update the 'completed'
+    if not filename and not epoch and not tags:
+        try:
+            db.upsert({'job_id': job_id, 'completed': completed}, audio.job_id == job_id)
+        except:
+            raise HTTPException(status_code=500, detail=f'Database insertion error')
+            return {'detail': f'Database insertion error'}
+        return
+    # Result update, update the tags
+    elif not filename and not epoch:
         try:
             db.upsert({'job_id': job_id, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
         except:
             raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
-        return
     # update whole record
-    try:
-        db.upsert({'audiofile': filename, 'job_id': job_id, 'epoch': epoch, 'completed': completed}, audio.job_id == job_id)
-    except:
-        raise HTTPException(status_code=500, detail=f'Database insertion error')
-        return {'detail': f'Database insertion error'}
-    return
+    else:
+        try:
+            db.upsert({'audiofile': filename, 'job_id': job_id, 'epoch': epoch, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
+        except:
+            raise HTTPException(status_code=500, detail=f'Database insertion error')
+            return {'detail': f'Database insertion error'}
+        return
 
 def db_search(job_id):
     # Check if file md5 exists in database
@@ -249,13 +297,19 @@ async def result_job(job_id):
     if not result:
         raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
         return {'detail': f'Result {job_id} not found'}
-    elif (result[0]['completed']) == "True":
+    elif (result[0]['completed']) == True:
         audiofile = (result[0]['audiofile'])
-        # See if tags already set
-        tags = result[0]['tags']
-        if tags != "":
-            #tag set
-            return {'audiofile': f'{audiofile}', 'result': f'{tags}'}
+        # Go through tags list and see if values populated
+        print (result[0]['tags'])
+        print (type(result[0]['tags']))
+        tagdata = result[0]['tags']
+        values_blank_populated_check = all(value == '' for value in tagdata.values())
+        print (f"Database values all blank?: {values_blank_populated_check}")
+        # Get from database
+        tagdict = (tagdata.items())
+        print (tagdict)
+        if values_blank_populated_check == False:
+            return {'audiofile': f'{audiofile}', 'result': tagdict}
         else:
             # Get the tags from filesystem
             tags = (read_tags(job_id))
@@ -263,18 +317,22 @@ async def result_job(job_id):
                 raise HTTPException(status_code=404, detail=f'Reading tags for {job_id} failed')
                 return {'detail': f'Reading tags for {job_id} failed'}
             else:
-                db_update('', job_id, '', "True", tags)
-                return {'audiofile': f'{audiofile}', 'detail': f'{tags}'}
-    elif (result[0]['completed']) == "False":
+                db_update('', job_id, '', True, tags)
+                tagdict = (tags.items())
+                print (tagdict)
+                return {'audiofile': f'{audiofile}', 'result': tagdict}
+    elif (result[0]['completed']) == False:
         audiofile = (result[0]['audiofile'])
         # Get the tags from filesystem
         tags = (read_tags(job_id))
+        tagdict = (tags.items())
+        print (tagdict)
         if tags == False:
             raise HTTPException(status_code=202, detail=f'Reading tags for {job_id} processing')
             return {'detail': f'Reading tags for {job_id} processing'}
         else:
-            db_update('', job_id, '', "True", tags)
-            return {'audiofile': f'{audiofile}', 'detail': f'{tags}'}
+            db_update('', job_id, '', True, tags)
+            return {'audiofile': f'{audiofile}', 'result': tagdict}
     else:
         raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
         return {'detail': f'Result {job_id} not found'}
@@ -371,24 +429,39 @@ def submit_job(filename, tagselection):
     """
     Run a job.
     """
+    # Form the json formatted tag to go into database
+    tags = {}
+    # Container arguments for wrapper script
+    container_args = []
     #print (filename);
     try:
         genre = tagselection['tags']['genre']
         print (f"Genre: {genre}")
+        tags['genre'] = ''
+        container_args.append('genre')
     except:
         print ("Genre not selected")
     try:
         bpm = tagselection['tags']['bpm']
         print (f"BPM: {bpm}")
+        tags['bpm'] = ''
+        container_args.append('bpm')
     except:
         print ("BPM not selected")
     try:
         key = tagselection['tags']['key']
         print (f"Key: {key}")
+        tags['key'] = ''
+        container_args.append('key')
     except:
         print ("Key not selected")
-
-    return
+    
+    print (tags)
+    container_args_str = ' '.join(container_args)
+    print (container_args_str)
+    # If empty checkboxes, default to genre
+    if bool(tags) == False:
+        tags['genre'] = ''
 
     md5=compute_md5(filename)
     # This will run in a pod soon and will change here
@@ -397,7 +470,9 @@ def submit_job(filename, tagselection):
     matnn_pod_nfs_file="/mnt/{}".format(md5)
 
     # Inside matnn container
-    result_tag_output_file="/mnt/{}.tags".format(md5)
+    result_genre_output_file="/mnt/{}.genre".format(md5)
+    result_bpm_output_file="/mnt/{}.bpm".format(md5)
+    result_key="/mnt/{}.key".format(md5)
     #print (output_file)
 
     rand_id = id_generator()
@@ -419,11 +494,21 @@ def submit_job(filename, tagselection):
     #args, _ = parser.parse_known_args()
 
     #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
-    cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_tag_output_file]
+    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, "-t", container_args_str]
+    print (cmdargs)
+    return
+
     image="intamixx/musicnn"
     #job_name="musicnn-%s-%s" % (md5, rand_id)
     job_id = "{}-{}".format(md5, rand_id)
     job_name="musicnn-{}".format(job_id)
+
+    #print ("Inserting into Database")
+    #print ("Current Date: {}".format(datetime.now()))
+    epochtime = int(datetime.now().strftime('%s'))
+    #print ("Epoch time: {}".format(epochtime))
+    db_update(filename, job_id, epochtime, False, tags)
     
     # Generate a CRD spec
     try:
@@ -438,11 +523,5 @@ def submit_job(filename, tagselection):
     #print(
     #    'Use:\n"kubectl get queue" to see queue assignment\n"kubectl get jobs" to see jobs'
     #)
-
-    #print ("Inserting into Database")
-    #print ("Current Date: {}".format(datetime.now()))
-    epochtime = int(datetime.now().strftime('%s'))
-    #print ("Epoch time: {}".format(epochtime))
-    db_update(filename, job_id, epochtime, "False", "")
 
     return job_id
