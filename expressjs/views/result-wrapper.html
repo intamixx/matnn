@@ -22,9 +22,24 @@
 			//const json = JSON.parse(JSONObject)
 			//console.log(JSONObject.result);
 			//JSONObject = JSON.stringify(JSONObject);
-			var genre  = JSONObject.result.genre.join(', ');
-			$("#currentJob_audiofile").html(JSONObject.audiofile); 
-			$("#currentJob_result").html((genre)); 
+			if (JSONObject.audiofile != "") {
+				$("#currentJob_audiofile").html(JSONObject.audiofile); 
+				}
+			if (JSONObject.result.genre == undefined) {
+				console.log("No Genre details found");
+				} else {
+				console.log("SHIT");
+				console.log(JSONObject.result.genre);
+				var genre = JSONObject.result.genre.join(', ');
+				$("#currentJob_result_genre").html((genre));
+				}
+			if (JSONObject.audiofile.bpm != "") {
+				console.log(JSONObject.result.bpm);
+				$("#currentJob_result_bpm").html(JSONObject.result.bpm);
+				}
+			if (JSONObject.audiofile.key != "") {
+				$("#currentJob_result_key").html(JSONObject.result.key);
+				}
 			//delay()
 			},
 		202: function(JSONObject) { 
@@ -65,7 +80,9 @@
 		<!-- <div id="h1_coverart"></div> -->
 		<div id="currentJob"></div>
 		<h4>File : <div id="currentJob_audiofile"></div></h4>
-		<h4>Genres : <div id="currentJob_result"></div></h4>
+		<h4>Genres : <div id="currentJob_result_genre"></div></h4>
+		<h4>BPM : <div id="currentJob_result_bpm"></div></h4>
+		<h4>Key : <div id="currentJob_result_key"></div></h4>
 	</body>
 </head>
 </html>
