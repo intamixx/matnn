@@ -50,7 +50,7 @@ var start = async function(filename, tagobj) {
     });
 
     console.log(tagobj);
-    console.log(JSON.stringify(form));
+    //console.log(JSON.stringify(form));
 
     try {
         const response = await fetch('http://localhost:8000/upload', {
@@ -113,7 +113,7 @@ const upload = multer({
     limits: {
         fileSize: maxFileSizeInBytes,
         fields: 3,
-        fieldSize: 10,
+        fieldSize: 25,
         fieldNameSize: 10
     },
     fileFilter: function(req, file, cb) {
@@ -227,7 +227,7 @@ router.post('/', function (req, res) {
     console.log(filepath);
     console.log(filename);
     console.log("REQ BODY is ");
-	  console.log(req.body);
+    console.log(req.body);
     console.log("TAG OBJ is ");
 	  tagobj = JSON.parse(JSON.stringify(tagobj));
 	  console.log(tagobj);
