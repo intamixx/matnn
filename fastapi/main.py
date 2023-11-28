@@ -429,51 +429,51 @@ def submit_job(filename, tagselection):
     """
     Run a job.
     """
+    md5=compute_md5(filename)
+    print (tagselection)
     # Form the json formatted tag to go into database
     tags = {}
-    # Container arguments for wrapper script
-    container_args = []
     #print (filename);
     try:
         genre = tagselection['tags']['genre']
         print (f"Genre: {genre}")
         tags['genre'] = ''
-        container_args.append('genre')
+        mn_args_genre = "-g"
+        result_genre_output_file="/mnt/{}.genre".format(md5)
     except:
         print ("Genre not selected")
+        mn_args_genre = "-x"
     try:
         bpm = tagselection['tags']['bpm']
         print (f"BPM: {bpm}")
         tags['bpm'] = ''
-        container_args.append('bpm')
+        mn_args_bpm = "-b"
+        result_bpm_output_file="/mnt/{}.bpm".format(md5)
     except:
         print ("BPM not selected")
+        mn_args_bpm = "-x"
     try:
         key = tagselection['tags']['key']
         print (f"Key: {key}")
         tags['key'] = ''
-        container_args.append('key')
+        mn_args_key = "-k"
+        result_key="/mnt/{}.key".format(md5)
     except:
         print ("Key not selected")
+        mn_args_key = "-x"
     
-    print (tags)
-    container_args_str = ' '.join(container_args)
-    print (container_args_str)
+    #print (tags)
+    #container_args_str = ' '.join(container_args)
+    #print (container_args_str)
     # If empty checkboxes, default to genre
-    if bool(tags) == False:
-        tags['genre'] = ''
+    #if bool(tags) == False:
+    #    tags['genre'] = ''
 
     md5=compute_md5(filename)
     # This will run in a pod soon and will change here
     #nfs_file="/data/nfs/{}".format(md5)
     nfs_file="/mnt/{}".format(md5)
     matnn_pod_nfs_file="/mnt/{}".format(md5)
-
-    # Inside matnn container
-    result_genre_output_file="/mnt/{}.genre".format(md5)
-    result_bpm_output_file="/mnt/{}.bpm".format(md5)
-    result_key="/mnt/{}.key".format(md5)
-    #print (output_file)
 
     rand_id = id_generator()
     #print (rand_id)
@@ -487,7 +487,6 @@ def submit_job(filename, tagselection):
         return {'detail': f'Error copying upload file {filename}'}
         #sys.exit(1)
 
-    #return
     #sys.exit(0)
 
     #parser = get_parser()
@@ -495,11 +494,11 @@ def submit_job(filename, tagselection):
 
     #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
     #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, "-t", container_args_str]
+    #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_bpm, mn_args_key]
     print (cmdargs)
-    return
 
-    image="intamixx/musicnn"
+    image="intamixx/musicnn_v2:0.4"
     #job_name="musicnn-%s-%s" % (md5, rand_id)
     job_id = "{}-{}".format(md5, rand_id)
     job_name="musicnn-{}".format(job_id)
