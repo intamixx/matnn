@@ -1,4 +1,4 @@
-    #!/bin/bash
+#!/bin/bash
 #
 # Analyse an audio file and add BPM metadata
 #
