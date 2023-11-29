@@ -50,14 +50,31 @@ RUN useradd -ms /bin/bash web
 RUN mkdir /fastapi
 RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/fastapi/main.py -O /fastapi/main.py
 RUN mkdir /nodejs
-RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/upload.js -O /nodejs/index.js
+RUN mkdir /nodejs/uploads
+RUN mkdir /nodejs/ssl
+RUN mkdir /nodejs/views
+RUN mkdir /nodejs/stylesheets
+RUN touch /nodejs/views/users.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/upload.js -O /nodejs/upload.js
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/index.js -O /nodejs/index.js
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/views/footer.html -O /nodejs/views/footer.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/views/header.html -O /nodejs/views/header.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/views/result-api.html -O /nodejs/views/result-api.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/views/result-wrapper.html -O /nodejs/views/result-wrapper.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/views/status-api.html -O /nodejs/views/status-api.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/views/status-wrapper.html -O /nodejs/views/status-wrapper.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/views/status.html -O /nodejs/views/status.html
+RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/expressjs/stylesheets/style.css -O /nodejs/stylesheets/style.css
 # Install NPM stack
-RUN cd /nodejs && npm i express multer
+RUN cd /nodejs && npm i express ejs multer form-data node-fetch@2
+
+# Copy ssl certs
+COPY ssl/* /nodejs/ssl
 
 # Get example python scripts
-COPY main.py /fastapi
 RUN chown web:web -Rv /fastapi
 RUN chown web:web -Rv /nodejs
+RUN chown web:web -Rv /mnt
 COPY supervisor-app.conf /etc/supervisor/conf.d
 
 # Supervisor
