@@ -498,7 +498,7 @@ def submit_job(filename, tagselection):
     cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_bpm, mn_args_key]
     print (cmdargs)
 
-    image="intamixx/musicnn_v2:0.4"
+    image="intamixx/musicnn_v2:0.5"
     #job_name="musicnn-%s-%s" % (md5, rand_id)
     job_id = "{}-{}".format(md5, rand_id)
     job_name="musicnn-{}".format(job_id)
