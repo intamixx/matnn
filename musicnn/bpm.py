@@ -34,7 +34,7 @@ def main(argv):
         sys.exit(2)
     result = bpmcalc(file)
     print (result)
-    if not file:
+    if not result:
         print ("No suitable bpm found")
         sys.exit(2)
 
