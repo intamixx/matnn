@@ -8,3 +8,29 @@ data:
     [nfs-server]
     host = 10.43.3.235
     mountdir = /mnt
+  ssl-privatekey: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDcmv1egWUXq/+7
+    2TwJxkC/TIv9FUN/Dk3OQH8vbiN75m6JxEZ+pVXutku2K2Q/beBu1ngHAu1RZDb9
+    bovl//oiB1yzeRIf8P5WJF1rdfewl26WaN45esojgMbBUuAAMDMxF0B2uQhD0Q6L
+    nhfhjkEpL6KViJFf1keMQ+49rqvVLip/koYQ5iJO1GgrxN5i/rmnm4rzBa9Lm7iP
+    hdh+O/UH1BMkytYIG46JZz3owUMOnIqHM69oxJbCABV3NyKf/bUuesx0dZpL1Wes
+    /6WkKtvWrnXhr12lH9l8ZbIPjRnweYXF/MTtQjAGMZF2iIj3hURJA0rXG5ybasho
+    geqeGQuLAgMBAAECggEAUCoGHjx5BuQatyFWntqrFpjzWdFLSLVi8qsfTJYCUPjI
+    wNe5hfFy/my3jYbP4ZEo7AfRxGotJ75t2+Kg35uGopwl57Nnl7WAt+cudYTxx7YA
+    xbDXRt50+dHiO3XTL2o1NR4Q
+    -----END PRIVATE KEY-----
+  ssl-certificate: |
+    -----BEGIN CERTIFICATE-----
+    MIIE4zCCA8ugAwIBAgISBOeC8BZtrwi0BPsUB4BfgWIOMA0GCSqGSIb3DQEBCwUA
+    MDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQD
+    EwJSMzAeFw0yMzEwMjgxNDIwNDZaFw0yNDAxMjYxNDIwNDVaMBYxFDASBgNVBAMT
+    C2ludGFtaXh4LnVrMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3Jr9
+    XoFlF6v/u9k8CcZAv0yL/RVDfw5NzkB/L24je+ZuicRGfqVV7rZLtitkP23gbtZ4
+    BwLtUWQ2/W6L5f/6Igdcs3kSH/D+ViRda3X3sJdulmjeOXrKI4DGwVLgADAzMRdA
+    M4G3CzwdQHfhXHyCl36q3AVMrd/0jpwHex36xnziudurnD4K+fxQtka3Eo6aYszp
+    BEAOLCLE7vYAs7WRqRbWjzos+xHnO+N6t6iWkRnuPpVmJ/ZK9HboyViYibdImRMQ
+    7Crr4pusBOrQms0o+MLkyT+Dx/GUGh9HjzunVnDy59NqM7RWo4w+sjKwM7/tg4Bq
+    LQCgZHWmS3TQ9FuLSjNSx35rFrqI9FWno4Q8ZV79BwV+gMJxlXHIlt+T8rAfSv8C
+    /27waxHZbw==
+    -----END CERTIFICATE-----
