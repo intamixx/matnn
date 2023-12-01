@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: matnn
-        image: intamixx/matnn
+        image: intamixx/matnn:0.2
         ports:
         - name: nodejs
           containerPort: 9090
@@ -25,6 +25,8 @@ spec:
         volumeMounts:
         - name: config-volume
           mountPath: /fastapi/config
+        - name: ssl-volume
+          mountPath: /nodejs/ssl
         - name: nfs
           mountPath: /mnt
       volumes:
@@ -34,9 +36,16 @@ spec:
           items:
             - key: matnn-config
               path: matnn.ini
+      - name: ssl-volume
+        configMap:
+          name: matnn-config
+          items:
+            - key: ssl-privatekey
+              path: privatekey.pem
+            - key: ssl-certificate
+              path: certificate.pem
       - name: nfs
         nfs:
-          server: 10.43.3.235
+          server: 10.42.3.107
           path: /exports
       restartPolicy: Always
-      
