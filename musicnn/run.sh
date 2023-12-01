@@ -95,6 +95,9 @@ if $bpm; then
 fi
 if $key; then
 		echo "Key tag required"
-		#TODO
+		cmdstr="python3 /musicnn/key-scale.py -f '${filename}'"
+		KEY_SCALE=`bash -c "${cmdstr}"`
+		echo "Key Scale is $KEY_SCALE"
+		echo "$KEY_SCALE" | tee -a "${filename}.key"
 fi
 exit
