@@ -1,4 +1,5 @@
 # matnn
+Tested on a kubernetes cluster v1.26.4 with Kueue 0.4.2
 
 Website https://matnn.intamixx.uk:9090/upload
 Provide a simple web frontend for the API using nodejs, expressjs, multer, fetch etc
