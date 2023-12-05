@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Analyse an audio file and add BPM metadata
+# Wrapper for analyzing and obtaining data from an audio file
 #
 
 set -e
