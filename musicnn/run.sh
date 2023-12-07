@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Wrapper for analyzing and obtaining data from an audio file
+# Analyse an audio file and add BPM metadata
 #
 
 set -e
@@ -14,7 +14,7 @@ Usage: run.sh [options]
 Wrapper script to run matnn jobs
 
   -f   filename of song
-  -g   genre tag required
+  -g   genre tag required (musicnn or discogs-effnet)
   -b   bpm tag required
   -k   key tag required
   -h   Display this help message and exit
@@ -28,13 +28,15 @@ genre=false
 bpm=false
 key=false
 
-while getopts "h:f:gbkx" OPT; do
+while getopts "h:f:g:bkx" OPT; do
 	case "$OPT" in
 	f)
 		ARGS=$OPTARG
 		filename=$ARGS
 		;;
 	g)
+		ARGS=$OPTARG
+		genre_model=$ARGS
 		genre=true
 		;;
 	b)
@@ -80,12 +82,22 @@ echo "--------------"
 BASEDIR=$(dirname "${filename}")
 echo ${filename}
 echo ${BASEDIR}
-if $genre; then
-		echo "Genre tag required"
+if ${genre}; then
+	case ${genre_model} in
+	musicnn)
+		echo "Musicnn Genre tag required"
 		cmdstr="python3 -m musicnn.tagger '${filename}' --model MSD_musicnn --topN 3 --length 3 --overlap 1 --print --save '${filename}.genre'"
 		bash -c "${cmdstr}"
+		;;
+	discogs-effnet)
+		echo "Discogs-effnet Genre tag required"
+		cmdstr="python3 /musicnn/genre-discogs-effnet.py -f '${filename}'"
+		GENRE=`bash -c "${cmdstr}"`
+		echo "$GENRE" | tee -a "${filename}.genre"
+		;;
+	esac
 fi
-if $bpm; then
+if ${bpm}; then
 		echo "Bpm tag required"
 		cmdstr="python3 /musicnn/bpm.py -f '${filename}'"
 		BPM=`bash -c "${cmdstr}"`
@@ -93,7 +105,7 @@ if $bpm; then
 		echo "BPM is $BPMROUND"
 		echo "$BPMROUND" | tee -a "${filename}.bpm"
 fi
-if $key; then
+if ${key}; then
 		echo "Key tag required"
 		cmdstr="python3 /musicnn/key-scale.py -f '${filename}'"
 		KEY_SCALE=`bash -c "${cmdstr}"`
