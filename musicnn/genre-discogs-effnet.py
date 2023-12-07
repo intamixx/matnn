@@ -84,7 +84,7 @@ def genre_prediction(audio_file):
         #print (myrow)
         #print ("genre:", myrow.label)
         genre = myrow.label.replace('\n', ' ')
-        print ("Genre:", genre)
+        #print ("Genre:", genre)
         genre = re.sub("[\(\[].*?[\)\]]", "", genre)
         genre = genre.rstrip()
         if genre not in genre_array:
