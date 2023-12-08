@@ -89,7 +89,8 @@ def genre_prediction(audio_file):
         genre = genre.rstrip()
         if genre not in genre_array:
                 genre_array.append(genre)
-    return genre_array[:3]
+    genre = ','.join(genre_array[:3])
+    return genre
 
 def main(argv):
     file = ''
