@@ -1,602 +1,307 @@
-from fastapi import FastAPI, Form, File, Request, UploadFile, HTTPException, status, Header, Depends
-from fastapi.exceptions import HTTPException
-from fastapi.responses import HTMLResponse
-import aiofiles
+'use strict'
 
-from kubernetes import config, client
-import hashlib, sys, os, shutil
+const http = require('http');
+//const axios = require('axios');
 
-from tinydb import TinyDB, Query
-from datetime import datetime
+/**
+ * Module dependencies.
+ */
 
-import random
-import string
-import configparser
+//var express = require('../../');
+const express = require('express');
+var path = require('path');
+var fs = require('fs');
 
-from pydantic import BaseModel
-import json
-#from typing import Optional, List
+//var app = module.exports = express();
+const app = express();
 
-app = FastAPI()
+//var options = {
+//    key: fs.readFileSync('./ssl/privatekey.pem'),
+//    cert: fs.readFileSync('./ssl/certificate.pem'),
+//};
+var options = {};
+var port = 9090;
 
-#config.load_incluster_config()
-#config.load_kube_config()
-##crd_api = client.CustomObjectsApi()
-#api_client = crd_api.api_client
+// Register ejs as .html. If we did
+// not call this, we would need to
+// name our views foo.ejs instead
+// of foo.html. The __express method
+// is simply a function that engines
+// use to hook into the Express view
+// system by default, so if we want
+// to change "foo.ejs" to "foo.html"
+// we simply pass _any_ function, in this
+// case `ejs.__express`.
 
-@app.get("/upload/{matt_id}")
-async def read_item(matt_id):
-    return {"matt_id": matt_id}
+app.engine('.html', require('ejs').__express);
 
-class Base(BaseModel):
-    name: str
-    #point: Optional[float] = None
-    #is_accepted: Optional[bool] = False
+// Optional since express defaults to CWD/views
 
-    def is_json(myjson):
-        try:
-            #json.loads(myjson)
-            json_object = json.loads(myjson)
-        except ValueError as e:
-            return False
-        return json_object
+app.set('views', path.join(__dirname, 'views'));
 
-def checker(tagselection: str = Form(...)):
-    print (tagselection)
-    try:
-        return Base.is_json(tagselection)
-    #except ValidationError as e:
-    except:
-        print("ERRRORRR 422")
-        raise HTTPException(
-            #detail=jsonable_encoder(e.errors()),
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
+// Path to our public directory
 
-async def valid_content_length(content_length: int = Header(..., lt=8000_000)):
-    return content_length
-@app.post("/upload")
-async def upload_file(
-    #file: UploadFile = File(...), file_size: int = Depends(valid_content_length)
-    tagselection: Base = Depends(checker), file: UploadFile = File(...), file_size: int = Depends(valid_content_length)
-):
-    output_file = f"{file.filename}"
-    real_file_size = 0
-    print(f"JSON Payload : {tagselection}")
-    print(type(tagselection))
-    #print(f"BPM : {tagselection['tags']['bpm']}")
-    try:
-        async with aiofiles.open(f"{output_file}", "wb") as out_file:
-            while content := await file.read(1024):  # async read chunk
-                real_file_size += len(content)
-                if real_file_size > file_size:
-                    raise HTTPException(
-                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                        detail="Too large",
-                    )
-                await out_file.write(content)  # async write chunk
-        job_id = submit_job(file.filename, tagselection)
-        #return
-        #sys.exit(0)
-        #job_id = "iosdfjiosdjfiodfjiwejr-we334r"
-        msg = f"Successfully uploaded {file.filename}"
-    except IOError:
-        raise HTTPException(status_code=500, detail=f'There was an error uploading your file')
-        msg = "There was an error uploading your file"
-    return {"id": job_id, "status": msg }
+app.use(express.static(path.join(__dirname, 'public')));
 
-# Upload the file and submit new job
-#@app.post('/upload')
-#async def upload(file: UploadFile):
-#    try:
-#        contents = await file.read()
-#        async with aiofiles.open(file.filename, 'wb') as f:
-#            await f.write(contents)
-#    except Exception:
-#        raise HTTPException(
-#            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#            detail='There was an error uploading the file',
-#        )
-#    finally:
-#        await file.close()
+// Without this you would need to
+// supply the extension to res.render()
+// ex: res.render('users.html').
+app.set('view engine', 'html');
 
-    # Submit Kueue Job
-    #job_id = submit_job(file.filename)
-#    return {'message': f'Successfully uploaded {file.filename} as {job_id}'}
+// Dummy users
+var users = [
+  { name: 'tobi', email: 'tobi@learnboost.com' },
+  { name: 'loki', email: 'loki@learnboost.com' },
+  { name: 'jane', email: 'jane@learnboost.com' }
+];
 
-# A utility function that can be used in your code
-def compute_md5(file_name):
-    hash_md5 = hashlib.md5()
-    with open(file_name, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+app.get('/', function(req, res){
+  res.render('users', {
+    users: users,
+    title: "EJS example",
+    header: "Some users"
+  });
+});
 
-def status_kueue_job(listing, job_id):
-    """
-    Iterate and show job metadata.
-    """
-    if not listing:
-        return {'status': f'There are no jobs'}
-
-    #print("\n💼️ Jobs")
-    for job in listing["items"]:
-        jobname = job["metadata"]["name"]
-        if job_id in jobname:
-            status = (
-                "TBA" if "succeeded" not in job["status"] else job["status"]["succeeded"]
-            )
-            ready = job["status"]["ready"]
-            if ready == 1:
-                raise HTTPException(status_code=202, detail=f'Processing Job {jobname}')
-                return {'detail': f'Processing Job {jobname}'}
-            try:
-                if job["status"]["succeeded"] == 1:
-                    result = db_search(job_id)
-                    if (result[0]['completed']) == False:
-                       db_update('', job_id, '', '', True, '')
-                    return {'detail': f'Successful Job {jobname}'}
-            except:
-                raise HTTPException(status_code=202, detail=f'Finalising Job {jobname}')
-                return {'detail': f'Finalising Job {jobname}'}
-    raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
-    return {'detail': f'Job status not available, try calling result api or please try again later'}
-            #print(f"Found job {jobname}")
-            #print(f"  Succeeded: {status}")
-            #print(f"  Ready: {ready}")
-
-def mtime_epoch(filename):
-    m_timestamp = os.stat(filename).st_mtime
-    print (m_timestamp)
-    return m_timestamp
-
-def read_tags(job_id):
-# Reads tag information and stat for epoch complete time
-    finish_epoch_times = []
-    filename = check_uploaded_file_exists(job_id)
-    if filename == False:
-        raise HTTPException(status_code=404, detail=f'Upload for {job_id} not found')
-        return {'detail': f'Upload for {job_id} not found'}
-
-    print ("ttttttttttttttttttttttT")
-    # Get the tag keys required by user
-    # Is genre key set in db?
-    result = db_search(job_id)
-    print (result[0]['audiofile'])
-    tagdata = result[0]['tags']
-    for key, value in (tagdata.items()):
-        print (f"KEY : {key}")
-        if key == 'genre':
-            print ("GENRE!")
-            tagfilename = filename+".genre"
-            try:
-                m_timestamp = mtime_epoch(tagfilename)
-                finish_epoch_times.append(m_timestamp)
-                with open(tagfilename, 'r') as f_obj:
-                    #contents = f_obj.read()
-                    g_last_line = f_obj.readlines()[-1]
-                    f_obj.close()
-                    g_last_line = g_last_line.replace('\n', '').replace('\r', '')
-                    g_last_line = g_last_line.split(',') 
-                    g_last_line = (g_last_line[-3:])
-                    print (g_last_line)
-                    # Form the tag
-                    tagdata['genre'] = g_last_line
-            except FileNotFoundError:
-                raise HTTPException(status_code=404, detail=f'Genre detail for {job_id} not found')
-                return False
-        if key == 'bpm':
-            print ("BPM!")
-            tagfilename = filename+".bpm"
-            try:
-                m_timestamp = mtime_epoch(tagfilename)
-                finish_epoch_times.append(m_timestamp)
-                with open(tagfilename, 'r') as f_obj:
-                    #contents = f_obj.read()
-                    b_last_line = f_obj.readlines()[-1]
-                    b_last_line = b_last_line.replace('\n', '').replace('\r', '')
-                    f_obj.close()
-                    # Form the tag
-                    tagdata['bpm'] = b_last_line
-            except FileNotFoundError:
-                raise HTTPException(status_code=404, detail=f'BPM detail for {job_id} not found')
-                return False
-        if key == 'key':
-            print ("KEY!")
-            tagfilename = filename+".key"
-            try:
-                m_timestamp = mtime_epoch(tagfilename)
-                finish_epoch_times.append(m_timestamp)
-                with open(tagfilename, 'r') as f_obj:
-                    #contents = f_obj.read()
-                    k_last_line = f_obj.readlines()[-1]
-                    k_last_line = k_last_line.replace('\n', '').replace('\r', '')
-                    f_obj.close()
-                    # Form the tag
-                    tagdata['key'] = k_last_line
-            except FileNotFoundError:
-                raise HTTPException(status_code=404, detail=f'Key detail for {job_id} not found')
-                return False
-    print (f"TUTTTI {tagdata}")
-    #hello = json.dumps(tagdata)
-    #print (hello)
-    # form the tags and return it to the calling function
-    print (finish_epoch_times)
-    finish_epoch_time = max(finish_epoch_times)
-    print (finish_epoch_time)
-    # This sets the job completion time
-    db_update('', job_id, '', finish_epoch_time, '', '')
-    return (tagdata)
-
-    #tagdata = result[0]['tags']
-    #for value in tagdata.values())
-
-def generate_job_crd(job_name, image, args):
-    """
-    Generate an equivalent job CRD to sample-job.yaml
-    """
-    try:
-        # Get the ip of the nfs storage server from config
-        config = configparser.ConfigParser()
-        config.read('config/matnn.ini')
-        print (config.sections())
-        nfs_server = config['nfs-server']['host']
-        print (nfs_server)
-    except configparser.Error:
-        raise HTTPException(status_code=500, detail=f'Read of config for {job_id} failed')
-        return {'detail': f'Read of config for {job_id} failed'}
-
-    metadata = client.V1ObjectMeta(
-        generate_name=job_name, labels={"kueue.x-k8s.io/queue-name": "user-queue"}
-    )
-
-    # Job container
-    container = client.V1Container(
-        image=image,
-        name="musicnn-job",
-        args=args,
-        resources=client.V1ResourceRequirements(requests={'cpu': 1, 'memory': '200Mi',} ),
-        #security_context=client.V1SecurityContext(run_as_user=1000),
-        volume_mounts=[client.V1VolumeMount(name='nfs',mount_path='/mnt')],
-        )
-    nfsvol = client.V1NFSVolumeSource(path="/exports", server=nfs_server)
-    volume = client.V1Volume(name='nfs', nfs=nfsvol)
-
-    # Job template
-    template = {"spec": {"containers": [container], "volumes": [volume], "restartPolicy": "Never"}}
-    return client.V1Job(
-        api_version="batch/v1",
-        kind="Job",
-        metadata=metadata,
-        spec=client.V1JobSpec(
-            parallelism=1, completions=1, suspend=True, template=template
-        ),
-    )
-
-    #db_update('', job_id, '', finish_epoch_time, '', '')
-
-def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
-    db = TinyDB('./matnn.json')
-    audio = Query()
-    # Status update, update the 'completed'
-    if not filename and not start_epoch and not finish_epoch and not tags:
-        print ("ONEEE")
-        try:
-            db.upsert({'job_id': job_id, 'completed': completed}, audio.job_id == job_id)
-        except:
-            raise HTTPException(status_code=500, detail=f'Database insertion error')
-            return {'detail': f'Database insertion error'}
-        return
-    # Result update, finish_epoch
-    elif not filename and not start_epoch and not completed and not tags:
-        print ("TWOOO")
-        try:
-            db.upsert({'job_id': job_id, 'finish_epoch': finish_epoch}, audio.job_id == job_id)
-        except:
-            raise HTTPException(status_code=500, detail=f'Database insertion error')
-            return {'detail': f'Database insertion error'}
-    # Result update, update the tags, completed
-    elif not filename and not start_epoch and not finish_epoch:
-        print ("THREEE")
-        try:
-            db.upsert({'job_id': job_id, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
-        except:
-            raise HTTPException(status_code=500, detail=f'Database insertion error')
-            return {'detail': f'Database insertion error'}
-    # update whole record
-    else:
-        print ("FOURR")
-        try:
-            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
-        except:
-            raise HTTPException(status_code=500, detail=f'Database insertion error')
-            return {'detail': f'Database insertion error'}
-        return
-
-def db_search(job_id):
-    # Check if file md5 exists in database
-    db = TinyDB('./matnn.json')
-    audio = Query()
-    #results = db.search(audio.md5.search(job_id))
-    return (db.search(audio.job_id == job_id))
-
-def epochtodatetime(epochtime):
-    dt = datetime.fromtimestamp(epochtime).strftime('%d-%m-%Y %H:%M:%S')
-    return dt
-
-# Get the result of the job
-@app.get("/result/{job_id}")
-async def result_job(job_id):
-    # Check if in database
-    result = db_search(job_id)
-    if not result:
-        raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
-        return {'detail': f'Result {job_id} not found'}
-    else:
-        # Get all available data
-        audiofile = (result[0]['audiofile'])
-    if (result[0]['completed']) == True:
-        # Go through tags list and see if values populated
-        print (result[0]['tags'])
-        print (type(result[0]['tags']))
-        tagdata = result[0]['tags']
-        values_blank_populated_check = all(value == '' for value in tagdata.values())
-        print (f"Database values all blank?: {values_blank_populated_check}")
-        # Get from database
-        tagdict = (tagdata.items())
-        print (tagdict)
-        if values_blank_populated_check == False:
-            started_at = (result[0]['start_epoch'])
-            completed_at = (result[0]['finish_epoch'])
-            completed = (result[0]['completed'])
-        else:
-            # Get the tags from filesystem and get completed time
-            tags = (read_tags(job_id))
-            if tags == False:
-                raise HTTPException(status_code=404, detail=f'Reading tags for {job_id} failed')
-                return {'detail': f'Reading tags for {job_id} failed'}
-            else:
-                # Set completed to true with tag data
-                db_update('', job_id, '', '', True, tags)
-                tagdict = (tags.items())
-                print (tagdict)
-    elif (result[0]['completed']) == False:
-        audiofile = (result[0]['audiofile'])
-        # Get the tags from filesystem and get completed time
-        tags = (read_tags(job_id))
-        result = db_search(job_id)
-        started_at = (result[0]['start_epoch'])
-        completed_at = (result[0]['finish_epoch'])
-        completed = (result[0]['completed'])
-        tagdict = (tags.items())
-        print (tagdict)
-        if tags == False:
-            raise HTTPException(status_code=202, detail=f'Reading tags for {job_id} processing')
-            return {'detail': f'Reading tags for {job_id} processing'}
-        else:
-            # Set completion to True with tagdata
-            db_update('', job_id, '', '', True, tags)
-    else:
-        raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
-        return {'detail': f'Result {job_id} not found'}
-    return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': epochtodatetime(started_at), 'completed_at': epochtodatetime(completed_at), 'completed': completed, 'result': tagdict}
-
-def check_uploaded_file_exists(job_id):
-    try:
-        if os.path.isdir('/mnt'):
-            # Extract filename (md5 based) from job_id
-            fn = job_id.split('-') 
-            uploaded_file="{}/{}".format("/mnt",fn[0]) 
-            if os.path.exists(uploaded_file):
-               return uploaded_file
-            else:
-               return False
-    except:
-        return False
-
-# Get the status of the job
-@app.get("/status/{job_id}")
-async def status_job(job_id):
-    crd_api = client.CustomObjectsApi()
-#    return {"matt_id": matt_id}
-# Check status of job
-    if not job_id:
-        print ("ID not given")
-        return
-    results = db_search(job_id)
-    #print ("-------------")
-    if (results):
-        #print (results[0]['audiofile'])
-        #print ("job_id Found in database")
-        # Check how old the job is
-        job_epoch = int(results[0]['start_epoch'])
-        curr_epoch = int(datetime.now().strftime('%s'))
-        if job_epoch:
-            #print (job_epoch)
-            #print (curr_epoch)
-            result = (curr_epoch - job_epoch) 
-            if result > 18000:
-                raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
-                return {'detail': f'Job status not available, try calling result api or please try again later'}
-                # UPDATE STATUS OF JOB
-                #return
-            #else:
-            #    print ("Job {} processing ....".format(job_id))
-    else:
-        #print ({'status': f'job_id {job_id} not found'})
-        #raise HTTPException(status_code=404, detail={'status': f'job_id {job_id} not found'})
-        raise HTTPException(status_code=404, detail=f'job_id {job_id} not found')
-        return {'detail': f'job_id {job_id} not found'}
-    #print ("-------------")
-
-    # Check if file exists in nfs mount directory, if it does then jobs completed!!
-    # This will run in a pod soon and will change here
-    if (check_uploaded_file_exists(job_id)) == False:
-           raise HTTPException(status_code=404, detail=f'Upload for {job_id} not found')
-           return {'detail': f'Upload for {job_id} not found'}
-    #if os.path.isdir('/data/nfs'):
-    #    # Extract filename (md5 based) from job_id
-    #    fn = job_id.split('-') 
-    #    uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
-    #    if not os.path.exists(uploaded_file):
-    #       #print ({'message': f'Filename {fn[0]} not found'})
-    #       return {'message': f'Filename {fn[0]} not found'}
-
-    # Check job is in localqueue
-    #listing = crd_api.list_namespaced_custom_object(
-    #    _request_timeout=1,
-    #    group="kueue.x-k8s.io",
-    #    version="v1beta1",
-    #    #namespace=args.namespace,
-    #    namespace="default",
-    #    plural="localqueues",
-    #)
-    #list_queues(listing, job_id)
-    # Check job has been admitted
-    try:
-        listing = crd_api.list_namespaced_custom_object(
-            _request_timeout=1,
-            group="batch",
-            version="v1",
-            #namespace=args.namespace,
-            namespace="default",
-            plural="jobs",
-    )
-    except:
-        raise HTTPException(status_code=500, detail=f'Internal server error: {job_id}')
-        return {'detail': f'Internal server error: {job_id}'}
-    return (status_kueue_job(listing, job_id))
-
-def id_generator(size=5, chars=string.ascii_lowercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
-    # Check job has been admitted
+function gethttpaxios() {
+axios.get('http://localhost:8000/status/0ba3c83ce691d814ee31c3b944177d96-u8jgk')
+  .then(function (response) {
+    // handle success
+    console.log(response);
+    return (response);
+  })
+  .catch(function (error) {
+    // handle error
+    console.log(error);
+  })
+}
 
 
-def submit_job(filename, tagselection):
-    """
-    Run a job.
-    """
-    md5=compute_md5(filename)
-    print (tagselection)
-    # Form the json formatted tag to go into database
-    tags = {}
-    #print (filename);
-    mn_args_genre = "-x"
-    mn_args_genre_type = "-x"
-    try:
-        genre = tagselection['tags']['genre_musicnn']
-        print (f"Genre musicnn: {genre}")
-        tags['genre'] = ''
-        mn_args_genre = "-g"
-        mn_args_genre_type = "musicnn"
-        result_genre_output_file="/mnt/{}.genre".format(md5)
-    except:
-        print ("Genre musicnn not selected")
+function gethttp_api(callback) {
 
-    try:
-        genre = tagselection['tags']['genre_discogs_effnet']
-        print (f"Genre discogs_effnet: {genre}")
-        tags['genre'] = ''
-        mn_args_genre = "-g"
-        mn_args_genre_type = "discogs_effnet"
-        result_genre_output_file="/mnt/{}.genre".format(md5)
-    except:
-        print ("Genre discogs-effnet not selected")
+console.log("-----------------");
+console.log(global.id);
+console.log("-----------------");
+http.get('http://localhost:8000/' + global.stype + '/' + global.id, res => {
+  let data = [];
+  const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
+  console.log('Status Code:', res.statusCode);
+  console.log('Date in Response header:', headerDate);
 
-    try:
-        bpm = tagselection['tags']['bpm']
-        print (f"BPM: {bpm}")
-        tags['bpm'] = ''
-        mn_args_bpm = "-b"
-        result_bpm_output_file="/mnt/{}.bpm".format(md5)
-    except:
-        print ("BPM not selected")
-        mn_args_bpm = "-x"
-    try:
-        key = tagselection['tags']['key']
-        print (f"Key: {key}")
-        tags['key'] = ''
-        mn_args_key = "-k"
-        result_key="/mnt/{}.key".format(md5)
-    except:
-        print ("Key not selected")
-        mn_args_key = "-x"
-    
-    #print (tags)
-    #container_args_str = ' '.join(container_args)
-    #print (container_args_str)
-    # If empty checkboxes, default to genre
-    #if bool(tags) == False:
-    #    tags['genre'] = ''
+  res.on('data', chunk => {
+    data.push(chunk);
+  });
 
-    md5=compute_md5(filename)
-    # This will run in a pod soon and will change here
-    #nfs_file="/data/nfs/{}".format(md5)
-    nfs_file="/mnt/{}".format(md5)
-    matnn_pod_nfs_file="/mnt/{}".format(md5)
+  res.on('end', () => {
+    console.log('Response ended: ');
+    var status = JSON.parse(Buffer.concat(data).toString());
+    //console.log(status);
+    callback(res.statusCode, status);
+  });
+}).on('error', err => {
+  console.log('Error: ', err.message);
+  //callback(err.message, null);
+  //var errmsg = ("{" + err.message + "}")
+  callback(500, err.message);
+  //callback(500, errmsg);
+});
 
-    rand_id = id_generator()
-    #print (rand_id)
+}
 
-    # Copy into nfs shared directory
-    try:
-        shutil.copy(filename, nfs_file)
-        #print("File %s copied successfully into %s" % (filename, output_file))
-    except:
-        raise HTTPException(status_code=500, detail=f'Error copying upload file {filename}')
-        return {'detail': f'Error copying upload file {filename}'}
-        #sys.exit(1)
+var callback = function(data) {
+  //if (err) throw err; // Check for the error and throw if it exists.
+  console.log('got data: '+data); // Otherwise proceed as usual.
+//  return ("TUTI");
+};
+
+var usingitnow = function(callback) {
+  //var myError = new Error('My custom error!');
+  //callback(myError, 'get it?'); // I send my error as the first argument.
+  //return ("TUTI");
+  var status = callback();
+  console.log("!!!!!!!!!!!")
+  console.log(status)
+  console.log("!!!!!!!!!!!")
+  //callback('2nd');
+  //var status = gethttp_status();
+  //var status = gethttpaxios();
+  //var status = testshite();
+  //return (status);
+};
+
+//const express = require('express');
+const https = require('https');
+//const app = express();
+var fs = require('fs');
+
+//const FormData = require('form-data');
+//const form = new FormData();
+//let fetch = require('node-fetch');
+
+app.get('/upload', function(req, res) {
+    res.send('<!doctype html>' + 
+	    '<html lang="en">' + 
+	      '<head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Matnn Demo</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> </head> <body> <h1>Matnn (<u>M</u>usic <u>A</u>udio <u>T</u>agger <u>N</u>eural <u>N</u>et)</h1> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>' + 
+	    '<form method="post" enctype="multipart/form-data">' + 
+        //+ '<p>Title: <input type="text" name="title" /></p>'
+        '<p>Audio File: <input type="file" name="file" /></p>' +
+	'<p>Genre tag (Musicnn): <input type="checkbox" name="genre_musicnn" value="genre_musicnn"></p>' +
+	'<p>Genre tag (Discogs-effnet): <input type="checkbox" name="genre_discogs_effnet" value="genre_discogs_effnet"></p>' +
+	'<p>BPM tag: <input type="checkbox" name="bpm" value="bpm"></p>' +
+	'<p>Key tag: <input type="checkbox" name="key" value="key"></p>' +
+        '<p><input type="submit" value="Upload" /></p>' +
+	'<h3>AI Powered by Sandman Technologies Inc</h3>' +
+	'      </body>' +
+	 '   </html>' +
+        '</form>');
+});
+
+module.exports = (error, req, res, next) => {
+	  if (error instanceof multer.MulterError) {
+		      error.status = 413;
+		      error.message = "image too large, max size is 1mb!";
+	  }
+	  const status = error.status || 500;
+	  const message = error.message;
+	  const response = { status: status, error: message };
+	  res.status(status).json(response);
+};
+
+//const upload = multer().single('avatar')
+const upload_post_route = require('./upload')
+app.use('/upload', upload_post_route)
+app.use('/api/upload', upload_post_route)
+
+//app.listen(9090)
+//var server = https.createServer(options, app).listen(port, function(){
+//  console.log("Express server listening on port " + port);
+//  });
 
 
-######## Just to test database
-    job_id = "{}-{}".format(md5, rand_id)
-    job_name="musicnn-{}".format(job_id)
-    #print ("Inserting into Database")
-    #print ("Current Date: {}".format(datetime.now()))
-    start_epochtime = int(datetime.now().strftime('%s'))
-    #print ("Epoch time: {}".format(epochtime))
-    db_update(filename, job_id, start_epochtime, '', False, tags)
+// Then we will set the storage 
+//const upload = multer({ storage: storage })
 
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
-    print (cmdargs)
 
-    return job_id
-########
+app.get('/status/:id', (req, res) => {
+    global.id = req.params.id;
+    global.stype = "status";
+    console.log("!!!!!!!!");
+    console.log(id);
+    //var status = "";
+    //var data = "";
+    gethttp_api(function(err, status, id) {
+        if (err) console.log('error', err)//error handling
+	console.log("statuscode is " + err);
+        console.log("status msg is " + status);
+  		res.status(err).render('status-wrapper', {
+		    users: users,
+		    id: global.id,
+		    status: JSON.stringify(status),
+		    title: "Kueue Job Status",
+		    header: "Some info about job status"
+		  });
+    	});
+});
 
-    #sys.exit(0)
 
-    #parser = get_parser()
-    #args, _ = parser.parse_known_args()
+app.get('/render/status/:id', (req, res) => {
+    global.id = req.params.id;
+    global.stype = "status";
+    console.log("!!!!!!!!");
+    console.log(id);
+    //var status = "";
+    //var data = "";
+    gethttp_api(function(err, status, id) {
+        if (err) console.log('error', err)//error handling
+	console.log(err);
+        console.log(status);
+  		res.status(err).render('status', {
+		    users: users,
+		    id: global.id,
+		    status: JSON.stringify(status),
+		    title: "Kueue Job Status",
+		    header: "Some info about job status"
+		  });
+    	});
+});
 
-    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
-    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
-    #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
-    print (cmdargs)
+app.get('/api/status/:id', (req, res) => {
+    global.id = req.params.id;
+    global.stype = "status";
+    console.log("!!!!!!!!");
+    console.log(id);
+    //var status = "";
+    //var data = "";
+    gethttp_api(function(err, status, id) {
+        //if (err) console.log('error', err)//error handling
+	console.log(err);
+        console.log(status);
+	        res.status(err).send(status);
+    	});
+});
 
-    image="intamixx/musicnn_v2:0.5"
-    #job_name="musicnn-%s-%s" % (md5, rand_id)
-    job_id = "{}-{}".format(md5, rand_id)
-    job_name="musicnn-{}".format(job_id)
+app.get('/result/:id', (req, res) => {
+    global.id = req.params.id;
+    global.stype = "result";
+    console.log("!!!!!!!!");
+    console.log(id);
+    //var status = "";
+    //var data = "";
+    gethttp_api(function(err, result, id) {
+        if (err) console.log('error', err)//error handling
+        console.log(result);
+  		res.status(err).render('result-wrapper', {
+		    users: users,
+		    id: global.id,
+		    result: JSON.stringify(result),
+		    title: "Kueue Job Result",
+		    header: "Some info about job result"
+		  });
+    	});
+});
 
-    #print ("Inserting into Database")
-    #print ("Current Date: {}".format(datetime.now()))
-    epochtime = int(datetime.now().strftime('%s'))
-    #print ("Epoch time: {}".format(epochtime))
-    db_update(filename, job_id, epochtime, False, tags)
-    
-    # Generate a CRD spec
-    try:
-        crd = generate_job_crd(job_name, image, cmdargs)
-        batch_api = client.BatchV1Api()
-        #print(f"📦️ Container image selected is {image}...")
-        #print(f"⭐️ Creating sample job with prefix {job_name}...")
-        batch_api.create_namespaced_job("default", crd)
-    except:
-        raise HTTPException(status_code=500, detail=f'Error creating CRD for {job_id}')
-        return {'detail': f'Error creating CRD for {job_id}'}
-    #print(
-    #    'Use:\n"kubectl get queue" to see queue assignment\n"kubectl get jobs" to see jobs'
-    #)
+app.get('/render/result/:id', (req, res) => {
+    global.id = req.params.id;
+    global.stype = "result";
+    console.log("!!!!!!!!");
+    console.log(id);
+    //var status = "";
+    //var data = "";
+    gethttp_api(function(err, result, id) {
+        if (err) console.log('error', err)//error handling
+        console.log(result);
+  		res.status(err).render('result', {
+		    users: users,
+		    id: global.id,
+		    result: JSON.stringify(result),
+		    title: "Kueue Job Result",
+		    header: "Some info about job result"
+		  });
+    	});
+});
 
-    return job_id
+app.get('/api/result/:id', (req, res) => {
+    global.id = req.params.id;
+    global.stype = "result";
+    console.log("!!!!!!!!");
+    console.log(id);
+    //var status = "";
+    //var data = "";
+    gethttp_api(function(err, result, id) {
+        if (err) console.log('error', err)//error handling
+        console.log(result);
+	        res.status(err).send(result);
+  		//res.status(err).render('result-api', {
+    	});
+});
+
+
+
+/* istanbul ignore next */
+if (!module.parent) {
+  app.listen(9090);
+  console.log('Express started on port 9090');
+}
+//var server = https.createServer(options, app).listen(port, function(){
+//  console.log("Express server listening on port " + port);
+//});
