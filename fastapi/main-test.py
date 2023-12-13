@@ -540,7 +540,7 @@ def submit_job(filename, tagselection):
 
     # Copy into nfs shared directory
     try:
-        shutil.copy(filename, nfs_file)
+        shutil.move(filename, nfs_file)
         #print("File %s copied successfully into %s" % (filename, output_file))
     except:
         raise HTTPException(status_code=500, detail=f'Error copying upload file {filename}')
@@ -550,7 +550,7 @@ def submit_job(filename, tagselection):
 
 ######## Just to test database
     job_id = "{}-{}".format(md5, rand_id)
-    job_name="musicnn-{}".format(job_id)
+    job_name="{}-{}".format(mn_args_genre_type, job_id)
     #print ("Inserting into Database")
     #print ("Current Date: {}".format(datetime.now()))
     start_epochtime = int(datetime.now().strftime('%s'))
