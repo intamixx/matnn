@@ -8,7 +8,7 @@ Direct service frontend GUI: [https://mat.intamixx.uk:9090/upload](https://mat.i
 Provide a simple web frontend for the API using nodejs, expressjs, multer, fetch etc
 Kueue scheduler is controlled and queried by fastapi backend.
 
-Uses discogs-effnet [discogs-effnet]([https://essentia.upf.edu/](https://essentia.upf.edu/models.html#discogs-effnet). or [musicnn](https://github.com/jordipons/musicnn) to determine genres of music uploaded using API or website.
+Uses discogs-effnet [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [musicnn](https://github.com/jordipons/musicnn) to determine genres of music uploaded using API or website.
 Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and return result to API.
 
 API Usage example
