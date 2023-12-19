@@ -16,8 +16,17 @@ Currently files must be MP3 and under 10 MB.  File mimetype and extension must b
 Music submission for analysis, setting tags required. Select either 'genre_discogs_effnet' or 'genre_musicnn' as shown below
 
 # Upload
+Shell
 ```
 curl -k -X POST 'https://mat.intamixx.uk:9090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
+```
+In Python
+```import requests
+url = 'https://mat.intamixx.uk:9090/api/upload'
+data = {'genre_discogs_effnet':'True', 'bpm':'True', 'key':'True'}
+file = {'file': ('audio.mp3', open('audio.mp3', 'rb'), 'audio/mpeg')}
+resp = requests.post(url=url, files=file, data=data, verify=False)
+print(resp.json())
 ```
 ```
 {
@@ -41,8 +50,15 @@ curl -k 'https://mat.intamixx.uk:9090/api/status/01f436c22d490885a90853d7d048c5f
 
 # Result
 Provides the result of prediction
+Bash
 ```
 curl -k 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
+```
+In Python
+```import requests
+url = 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
+resp = requests.get(url=url, verify=False)
+print(resp.json())
 ```
 ```
 {
