@@ -8,17 +8,22 @@ Direct service frontend GUI: [https://mat.intamixx.uk:9090/upload](https://mat.i
 Provide a simple web frontend for the API using nodejs, expressjs, multer, fetch etc
 Kueue scheduler is controlled and queried by fastapi backend.
 
-Uses discogs-effnet [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [musicnn](https://github.com/jordipons/musicnn) to determine genres of music uploaded using API or website.
+Uses [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [musicnn](https://github.com/jordipons/musicnn) to determine genres of music uploaded using API or website.
 Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and return result to API.
 
 API Usage example
 Currently files must be MP3 and under 8 MB.  File mimetype and extension must be set as shown in curl example below.  Choose or select the tags required as below;
 
 # Upload
-curl -k -X POST 'https://mat.intamixx.uk:9090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre=true" -F  "file=@/path/to/audio.mp3;type=audio/mpeg"
-
-{"message":"Successfully uploaded audio.mp3 as 01f436c22d490885a90853d7d048c5ff-ntrh9"}
-
+```
+curl -k -X POST 'https://mat.intamixx.uk:9090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
+```
+```
+{
+  "id": "01f436c22d490885a90853d7d048c5ff-ntrh9",
+  "status": "Successfully uploaded audio.mp3"
+}
+```
 Wait of around 30 seconds for a typical job to complete
 
 # Status
