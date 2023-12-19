@@ -21,7 +21,8 @@ Shell
 curl -k -X POST 'https://mat.intamixx.uk:9090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
 ```
 In Python
-```import requests
+```
+import requests
 url = 'https://mat.intamixx.uk:9090/api/upload'
 data = {'genre_discogs_effnet':'True', 'bpm':'True', 'key':'True'}
 file = {'file': ('audio.mp3', open('audio.mp3', 'rb'), 'audio/mpeg')}
@@ -55,7 +56,8 @@ Bash
 curl -k 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
 ```
 In Python
-```import requests
+```
+import requests
 url = 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
 resp = requests.get(url=url, verify=False)
 print(resp.json())
