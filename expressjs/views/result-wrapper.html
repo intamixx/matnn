@@ -1,88 +1,101 @@
 <html>
 <head>
 <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Matnn Job Result</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-	<title>Matnn Job Result</title>
-	<body>
+        <title>Matnn Job Result</title>
+        <body>
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script>
-	function updateMatnn(){
-             $.ajax({ 
-	url: "/api/result/<%= id %>",
-	dataType: "json",
-	cache: false,
+        function updateMatnn(){
+             $.ajax({
+        url: "/api/result/<%= id %>",
+        dataType: "json",
+        cache: false,
         statusCode: {
-		200: function(JSONObject) { 
-			console.log(JSONObject)
-			console.log("Done")
-			//const substr = 'Successful';
-			//if (html.includes(substr)) {
-			//		console.log("Found shit");
-			//	}
-			//result = JSON.stringify(JSON.parse(html));
-			//const json = JSON.parse(JSONObject)
-			//console.log(JSONObject.result);
-			//JSONObject = JSON.stringify(JSONObject);
-			if (JSONObject.audiofile != "") {
-				$("#currentJob_audiofile").html(JSONObject.audiofile); 
-				}
-			if (JSONObject.result.genre == undefined) {
-				console.log("No Genre details found");
-				} else {
-				console.log("SHIT");
-				console.log(JSONObject.result.genre);
-				var genre = JSONObject.result.genre.join(', ');
-				$("#currentJob_result_genre").html((genre));
-				}
-			if (JSONObject.audiofile.bpm != "") {
-				console.log(JSONObject.result.bpm);
-				$("#currentJob_result_bpm").html(JSONObject.result.bpm);
-				}
-			if (JSONObject.audiofile.key != "") {
-				$("#currentJob_result_key").html(JSONObject.result.key);
-				}
-			//delay()
-			},
-		202: function(JSONObject) { 
-			console.log(JSONObject)
-			console.log("Processing")
-			//const substr = 'Successful';
-			//if (html.includes(substr)) {
-			//		console.log("Found shit");
-			//	}
-			//result = JSON.stringify(JSON.parse(html));
-			console.log(JSONObject.detail);
-			$("#currentJob").html(JSONObject.detail); 
-			},
-		404: function(JSONObject, textStatus, errorThrown) { 
-			console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
-			console.log(JSONObject)
-			console.log("TUTI")
-			//const substr = 'Successful';
-			//if (html.includes(substr)) {
-			//		console.log("Found shit");
-			//	}
-			//result = JSON.stringify(JSON.parse(html));
-			$("#currentJob").html(JSONObject.status + " " + errorThrown);
-			},
-		500: function(JSONObject, textStatus, errorThrown) { 
-			console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
-			console.log(JSONObject);
-			console.log(JSONObject.responseText);
-			$("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
-			},
-		}
-		     });
+                200: function(JSONObject) {
+                        console.log(JSONObject)
+                        console.log("Done")
+                        //const substr = 'Successful';
+                        //if (html.includes(substr)) {
+                        //              console.log("Found shit");
+                        //      }
+                        //result = JSON.stringify(JSON.parse(html));
+                        //const json = JSON.parse(JSONObject)
+                        //console.log(JSONObject.result);
+                        //JSONObject = JSON.stringify(JSONObject);
+                        if (JSONObject.audiofile != "") {
+                                $("#currentJob_audiofile").html(JSONObject.audiofile);
+                                }
+                        if (JSONObject.result.genre == undefined) {
+                                console.log("No Genre details found");
+                                } else {
+                                console.log("SHIT");
+                                console.log(JSONObject.result.genre);
+                                //console.log(JSONObject.result.genre);
+                                var genre = JSONObject.result.genre.join(', ');
+                                $("#currentJob_result_genre").html((genre));
+                                }
+                        if (JSONObject.result.bpm != "") {
+                                console.log(JSONObject.result.bpm);
+                                $("#currentJob_result_bpm").html(JSONObject.result.bpm);
+                                }
+                        if (JSONObject.result.key != "") {
+                                $("#currentJob_result_key").html(JSONObject.result.key);
+                                }
+                        if (JSONObject.started_at != "") {
+                                $("#currentJob_started_at").html(JSONObject.started_at);
+                                }
+                        if (JSONObject.completed_at != "") {
+                                $("#currentJob_completed_at").html(JSONObject.completed_at);
+                                }
+                        if (JSONObject.id != "") {
+                                $("#currentJob_id").html(JSONObject.id);
+                                }
+                        //delay()
+                        },
+                202: function(JSONObject) {
+                        console.log(JSONObject)
+                        console.log("Processing")
+                        //const substr = 'Successful';
+                        //if (html.includes(substr)) {
+                        //              console.log("Found shit");
+                        //      }
+                        //result = JSON.stringify(JSON.parse(html));
+                        console.log(JSONObject.detail);
+                        $("#currentJob").html(JSONObject.detail);
+                        },
+                404: function(JSONObject, textStatus, errorThrown) {
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject)
+                        console.log("TUTI")
+                        //const substr = 'Successful';
+                        //if (html.includes(substr)) {
+                        //              console.log("Found shit");
+                        //      }
+                        //result = JSON.stringify(JSON.parse(html));
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown);
+                        },
+                500: function(JSONObject, textStatus, errorThrown) {
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject);
+                        console.log(JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        },
+                }
+                     });
                     };
         updateMatnn();
         //setInterval( "updateMatnn()", 10000 ); // refreshed every 60 sec
 </script>
-		<h1>Matnn Job Result</h1>
-		<!-- <div id="h1_coverart"></div> -->
-		<div id="currentJob"></div>
-		<h4>File : <div id="currentJob_audiofile"></div></h4>
-		<h4>Genres : <div id="currentJob_result_genre"></div></h4>
-		<h4>BPM : <div id="currentJob_result_bpm"></div></h4>
-		<h4>Key : <div id="currentJob_result_key"></div></h4>
-	</body>
+                <h1>Matnn Job Result</h1>
+                <!-- <div id="h1_coverart"></div> -->
+                <div id="currentJob"></div>
+                <h4>File : <div id="currentJob_audiofile"></div></h4>
+                <h4>Genres : <div id="currentJob_result_genre"></div></h4>
+                <h4>BPM : <div id="currentJob_result_bpm"></div></h4>
+                <h4>Key : <div id="currentJob_result_key"></div></h4>
+                <h4>Id : <div id="currentJob_id"></div></h4>
+                <h4>Started At : <div id="currentJob_started_at"></div></h4>
+                <h4>Completed At : <div id="currentJob_completed_at"></div></h4>
+        </body>
 </head>
 </html>
