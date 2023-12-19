@@ -79,11 +79,11 @@ async def upload_file(
         #return
         #sys.exit(0)
         #job_id = "iosdfjiosdjfiodfjiwejr-we334r"
-        msg = f"Successfully uploaded {file.filename} as {job_id}"
+        msg = f"Successfully uploaded {file.filename}"
     except IOError:
         raise HTTPException(status_code=500, detail=f'There was an error uploading your file')
         msg = "There was an error uploading your file"
-    return {"message": msg}
+    return {"id": job_id, "status": msg }
 
 # Upload the file and submit new job
 #@app.post('/upload')
@@ -134,8 +134,8 @@ def status_kueue_job(listing, job_id):
                 if job["status"]["succeeded"] == 1:
                     result = db_search(job_id)
                     if (result[0]['completed']) == False:
-                       db_update('', job_id, '', True, '')
-                    return {'detail': f'Successful Job {jobname}'}
+                       db_update('', job_id, '', '', True, '')
+                    return {'id': job_id, 'detail': f'Successful Job {jobname}'}
             except:
                 raise HTTPException(status_code=202, detail=f'Finalising Job {jobname}')
                 return {'detail': f'Finalising Job {jobname}'}
@@ -145,7 +145,14 @@ def status_kueue_job(listing, job_id):
             #print(f"  Succeeded: {status}")
             #print(f"  Ready: {ready}")
 
+def mtime_epoch(filename):
+    m_timestamp = os.stat(filename).st_mtime
+    print (m_timestamp)
+    return m_timestamp
+
 def read_tags(job_id):
+# Reads tag information and stat for epoch complete time
+    finish_epoch_times = []
     filename = check_uploaded_file_exists(job_id)
     if filename == False:
         raise HTTPException(status_code=404, detail=f'Upload for {job_id} not found')
@@ -163,12 +170,14 @@ def read_tags(job_id):
             print ("GENRE!")
             tagfilename = filename+".genre"
             try:
+                m_timestamp = mtime_epoch(tagfilename)
+                finish_epoch_times.append(m_timestamp)
                 with open(tagfilename, 'r') as f_obj:
                     #contents = f_obj.read()
                     g_last_line = f_obj.readlines()[-1]
                     f_obj.close()
                     g_last_line = g_last_line.replace('\n', '').replace('\r', '')
-                    g_last_line = g_last_line.split(',') 
+                    g_last_line = g_last_line.split(',')
                     g_last_line = (g_last_line[-3:])
                     print (g_last_line)
                     # Form the tag
@@ -180,6 +189,8 @@ def read_tags(job_id):
             print ("BPM!")
             tagfilename = filename+".bpm"
             try:
+                m_timestamp = mtime_epoch(tagfilename)
+                finish_epoch_times.append(m_timestamp)
                 with open(tagfilename, 'r') as f_obj:
                     #contents = f_obj.read()
                     b_last_line = f_obj.readlines()[-1]
@@ -194,6 +205,8 @@ def read_tags(job_id):
             print ("KEY!")
             tagfilename = filename+".key"
             try:
+                m_timestamp = mtime_epoch(tagfilename)
+                finish_epoch_times.append(m_timestamp)
                 with open(tagfilename, 'r') as f_obj:
                     #contents = f_obj.read()
                     k_last_line = f_obj.readlines()[-1]
@@ -208,6 +221,13 @@ def read_tags(job_id):
     #hello = json.dumps(tagdata)
     #print (hello)
     # form the tags and return it to the calling function
+    print (finish_epoch_times)
+    finish_epoch_time = max(finish_epoch_times)
+    finish_epoch_time = round(finish_epoch_time)
+    finish_epoch_time = int(finish_epoch_time)
+    print (finish_epoch_time)
+    # This sets the job completion time
+    db_update('', job_id, '', finish_epoch_time, '', '')
     return (tagdata)
 
     #tagdata = result[0]['tags']
@@ -255,19 +275,31 @@ def generate_job_crd(job_name, image, args):
         ),
     )
 
-def db_update(filename, job_id, epoch, completed, tags):
+    #db_update('', job_id, '', finish_epoch_time, '', '')
+
+def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
     db = TinyDB('./matnn.json')
     audio = Query()
     # Status update, update the 'completed'
-    if not filename and not epoch and not tags:
+    if not filename and not start_epoch and not finish_epoch and not tags:
+        print ("ONEEE")
         try:
             db.upsert({'job_id': job_id, 'completed': completed}, audio.job_id == job_id)
         except:
             raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
         return
-    # Result update, update the tags
-    elif not filename and not epoch:
+    # Result update, finish_epoch
+    elif not filename and not start_epoch and not completed and not tags:
+        print ("TWOOO")
+        try:
+            db.upsert({'job_id': job_id, 'finish_epoch': finish_epoch}, audio.job_id == job_id)
+        except:
+            raise HTTPException(status_code=500, detail=f'Database insertion error')
+            return {'detail': f'Database insertion error'}
+    # Result update, update the tags, completed
+    elif not filename and not start_epoch and not finish_epoch:
+        print ("THREEE")
         try:
             db.upsert({'job_id': job_id, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
         except:
@@ -275,8 +307,9 @@ def db_update(filename, job_id, epoch, completed, tags):
             return {'detail': f'Database insertion error'}
     # update whole record
     else:
+        print ("FOURR")
         try:
-            db.upsert({'audiofile': filename, 'job_id': job_id, 'epoch': epoch, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
+            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
         except:
             raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
@@ -289,60 +322,91 @@ def db_search(job_id):
     #results = db.search(audio.md5.search(job_id))
     return (db.search(audio.job_id == job_id))
 
+def epochtodatetime(epochtime):
+    print ("EPOCHTIME TIME IS:")
+    print (epochtime)
+    print ("TYPE")
+    print (type(epochtime))
+    epochtime = int(epochtime)
+    dt = datetime.fromtimestamp(epochtime).strftime('%d-%m-%Y %H:%M:%S')
+    return dt
+
 # Get the result of the job
 @app.get("/result/{job_id}")
 async def result_job(job_id):
-    # Check if in database and completed flag set to 1
+    # Check if in database
     result = db_search(job_id)
     if not result:
         raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
         return {'detail': f'Result {job_id} not found'}
-    elif (result[0]['completed']) == True:
-        audiofile = (result[0]['audiofile'])
-        # Go through tags list and see if values populated
-        print (result[0]['tags'])
-        print (type(result[0]['tags']))
-        tagdata = result[0]['tags']
-        values_blank_populated_check = all(value == '' for value in tagdata.values())
-        print (f"Database values all blank?: {values_blank_populated_check}")
-        # Get from database
-        tagdict = (tagdata.items())
-        print (tagdict)
-        if values_blank_populated_check == False:
-            return {'audiofile': f'{audiofile}', 'result': tagdict}
-        else:
-            # Get the tags from filesystem
-            tags = (read_tags(job_id))
-            if tags == False:
-                raise HTTPException(status_code=404, detail=f'Reading tags for {job_id} failed')
-                return {'detail': f'Reading tags for {job_id} failed'}
-            else:
-                db_update('', job_id, '', True, tags)
-                tagdict = (tags.items())
-                print (tagdict)
-                return {'audiofile': f'{audiofile}', 'result': tagdict}
-    elif (result[0]['completed']) == False:
-        audiofile = (result[0]['audiofile'])
-        # Get the tags from filesystem
-        tags = (read_tags(job_id))
-        tagdict = (tags.items())
-        print (tagdict)
-        if tags == False:
-            raise HTTPException(status_code=202, detail=f'Reading tags for {job_id} processing')
-            return {'detail': f'Reading tags for {job_id} processing'}
-        else:
-            db_update('', job_id, '', True, tags)
-            return {'audiofile': f'{audiofile}', 'result': tagdict}
+        # Get all available data
     else:
-        raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
-        return {'detail': f'Result {job_id} not found'}
+        print ("RESULT IS")
+        print (result)
+        if (result[0]['completed']) == True:
+            print ("COMPLETED TRUE!")
+            # Go through tags list and see if values populated
+            print (result[0]['tags'])
+            print (type(result[0]['tags']))
+            tagdata = result[0]['tags']
+            values_blank_populated_check = all(value == '' for value in tagdata.values())
+            print (f"Database values all blank?: {values_blank_populated_check}")
+            # Get from database
+            tagdict = (tagdata.items())
+            print (tagdict)
+            if values_blank_populated_check == False:
+                audiofile = (result[0]['audiofile'])
+                started_at = (result[0]['start_epoch'])
+                completed_at = (result[0]['finish_epoch'])
+                completed = (result[0]['completed'])
+            else:
+                # Get the tags from filesystem and get completed time
+                tags = (read_tags(job_id))
+                if tags == False:
+                    raise HTTPException(status_code=404, detail=f'Reading tags for {job_id} failed')
+                    return {'detail': f'Reading tags for {job_id} failed'}
+                else:
+                    # Set completed to true with tag data
+                    db_update('', job_id, '', '', True, tags)
+                    tagdict = (tags.items())
+                    print (tagdict)
+                    audiofile = (result[0]['audiofile'])
+                    started_at = (result[0]['start_epoch'])
+                    completed_at = (result[0]['finish_epoch'])
+                    completed = (result[0]['completed'])
+        elif (result[0]['completed']) == False:
+            print ("COMPLETED FALSE!")
+            audiofile = (result[0]['audiofile'])
+            # Get the tags from filesystem and get completed time
+            tags = (read_tags(job_id))
+            result = db_search(job_id)
+            started_at = (result[0]['start_epoch'])
+            completed_at = (result[0]['finish_epoch'])
+            completed = (result[0]['completed'])
+            tagdict = (tags.items())
+            print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            print (tagdict)
+            if tags == False:
+                raise HTTPException(status_code=202, detail=f'Reading tags for {job_id} processing')
+                return {'detail': f'Reading tags for {job_id} processing'}
+            else:
+                # Set completion to True with tagdata
+                db_update('', job_id, '', '', True, tags)
+        else:
+            raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
+            return {'detail': f'Result {job_id} not found'}
+        print ("STARTED AT")
+        print (type(started_at))
+        print ("COMPLETED AT")
+        print (type(completed_at))
+        return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}', 'completed': completed, 'result': tagdict}
 
 def check_uploaded_file_exists(job_id):
     try:
         if os.path.isdir('/mnt'):
             # Extract filename (md5 based) from job_id
-            fn = job_id.split('-') 
-            uploaded_file="{}/{}".format("/mnt",fn[0]) 
+            fn = job_id.split('-')
+            uploaded_file="{}/{}".format("/mnt",fn[0])
             if os.path.exists(uploaded_file):
                return uploaded_file
             else:
@@ -365,13 +429,12 @@ async def status_job(job_id):
         #print (results[0]['audiofile'])
         #print ("job_id Found in database")
         # Check how old the job is
-        job_epoch = int(results[0]['epoch'])
-        curr_epoch = (datetime.now())
+        job_epoch = int(results[0]['start_epoch'])
         curr_epoch = int(datetime.now().strftime('%s'))
         if job_epoch:
             #print (job_epoch)
             #print (curr_epoch)
-            result = (curr_epoch - job_epoch) 
+            result = (curr_epoch - job_epoch)
             if result > 18000:
                 raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
                 return {'detail': f'Job status not available, try calling result api or please try again later'}
@@ -393,8 +456,8 @@ async def status_job(job_id):
            return {'detail': f'Upload for {job_id} not found'}
     #if os.path.isdir('/data/nfs'):
     #    # Extract filename (md5 based) from job_id
-    #    fn = job_id.split('-') 
-    #    uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
+    #    fn = job_id.split('-')
+    #    uploaded_file="{}/{}".format("/data/nfs",fn[0])
     #    if not os.path.exists(uploaded_file):
     #       #print ({'message': f'Filename {fn[0]} not found'})
     #       return {'message': f'Filename {fn[0]} not found'}
@@ -410,14 +473,18 @@ async def status_job(job_id):
     #)
     #list_queues(listing, job_id)
     # Check job has been admitted
-    listing = crd_api.list_namespaced_custom_object(
-        _request_timeout=1,
-        group="batch",
-        version="v1",
-        #namespace=args.namespace,
-        namespace="default",
-        plural="jobs",
+    try:
+        listing = crd_api.list_namespaced_custom_object(
+            _request_timeout=1,
+            group="batch",
+            version="v1",
+            #namespace=args.namespace,
+            namespace="default",
+            plural="jobs",
     )
+    except:
+        raise HTTPException(status_code=500, detail=f'Internal server error: {job_id}')
+        return {'detail': f'Internal server error: {job_id}'}
     return (status_kueue_job(listing, job_id))
 
 def id_generator(size=5, chars=string.ascii_lowercase + string.digits):
@@ -434,15 +501,28 @@ def submit_job(filename, tagselection):
     # Form the json formatted tag to go into database
     tags = {}
     #print (filename);
+    mn_args_genre = "-x"
+    mn_args_genre_type = "-x"
     try:
-        genre = tagselection['tags']['genre']
-        print (f"Genre: {genre}")
+        genre = tagselection['tags']['genre_musicnn']
+        print (f"Genre musicnn: {genre}")
         tags['genre'] = ''
         mn_args_genre = "-g"
+        mn_args_genre_type = "musicnn"
         result_genre_output_file="/mnt/{}.genre".format(md5)
     except:
-        print ("Genre not selected")
-        mn_args_genre = "-x"
+        print ("Genre musicnn not selected")
+
+    try:
+        genre = tagselection['tags']['genre_discogs_effnet']
+        print (f"Genre discogs_effnet: {genre}")
+        tags['genre'] = ''
+        mn_args_genre = "-g"
+        mn_args_genre_type = "discogseffnet"
+        result_genre_output_file="/mnt/{}.genre".format(md5)
+    except:
+        print ("Genre discogs-effnet not selected")
+
     try:
         bpm = tagselection['tags']['bpm']
         print (f"BPM: {bpm}")
@@ -461,7 +541,7 @@ def submit_job(filename, tagselection):
     except:
         print ("Key not selected")
         mn_args_key = "-x"
-    
+
     #print (tags)
     #container_args_str = ' '.join(container_args)
     #print (container_args_str)
@@ -480,12 +560,28 @@ def submit_job(filename, tagselection):
 
     # Copy into nfs shared directory
     try:
-        shutil.copy(filename, nfs_file)
+        shutil.move(filename, nfs_file)
         #print("File %s copied successfully into %s" % (filename, output_file))
     except:
         raise HTTPException(status_code=500, detail=f'Error copying upload file {filename}')
         return {'detail': f'Error copying upload file {filename}'}
         #sys.exit(1)
+
+
+######## Just to test database
+    job_id = "{}-{}".format(md5, rand_id)
+    job_name="{}-{}".format(mn_args_genre_type, job_id)
+    #print ("Inserting into Database")
+    #print ("Current Date: {}".format(datetime.now()))
+    start_epochtime = int(datetime.now().strftime('%s'))
+    #print ("Epoch time: {}".format(epochtime))
+    db_update(filename, job_id, start_epochtime, 0, False, tags)
+
+    #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
+    #print (cmdargs)
+
+    #return job_id
+########
 
     #sys.exit(0)
 
@@ -495,20 +591,20 @@ def submit_job(filename, tagselection):
     #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
     #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_bpm, mn_args_key]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
     print (cmdargs)
 
-    image="intamixx/musicnn_v2:0.5"
+    image="intamixx/musicnn_v2:latest"
     #job_name="musicnn-%s-%s" % (md5, rand_id)
-    job_id = "{}-{}".format(md5, rand_id)
-    job_name="musicnn-{}".format(job_id)
+    ##job_id = "{}-{}".format(md5, rand_id)
+    ##job_name="musicnn-{}".format(job_id)
 
     #print ("Inserting into Database")
     #print ("Current Date: {}".format(datetime.now()))
-    epochtime = int(datetime.now().strftime('%s'))
+    ##epochtime = int(datetime.now().strftime('%s'))
     #print ("Epoch time: {}".format(epochtime))
-    db_update(filename, job_id, epochtime, False, tags)
-    
+    ##db_update(filename, job_id, epochtime, False, tags)
+
     # Generate a CRD spec
     try:
         crd = generate_job_crd(job_name, image, cmdargs)
