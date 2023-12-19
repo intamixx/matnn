@@ -63,3 +63,24 @@ curl -k 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5f
 }
 ```
 
+# Example Usage
+
+BPM Tag a file
+```
+id3v2 --TBPM `curl -k 'https://matnn.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9' \
+ | jq -r '.result["bpm"]'` audio.mp3
+```
+Genre Tag a file
+```
+id3v2 --TCON `curl -k 'https://matnn.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9' \
+ | jq -r '.result["genre"]' | tr -d "\n" | sed 's/ //g; s/[]["]//g'` audio.mp3
+```
+Or use a method / language of your choice.
+
+# Contact
+Questions? - intamixx@hotmail.com
+
+# To Do
+Provide API functionality for a webhook HTTPS URL to call when predictions are ready.
+
+
