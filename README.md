@@ -12,7 +12,8 @@ Uses [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [m
 Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and return result to API.
 
 API Usage example
-Currently files must be MP3 and under 8 MB.  File mimetype and extension must be set as shown in curl example below.  Choose or select the tags required as below;
+Currently files must be MP3 and under 10 MB.  File mimetype and extension must be set as shown in curl example below.  Choose or select the tags required as below;
+Music submission for analysis, setting tags required. Select either 'genre_discogs_effnet' or 'genre_musicnn' as shown below
 
 # Upload
 ```
@@ -24,15 +25,41 @@ curl -k -X POST 'https://mat.intamixx.uk:9090/api/upload' -H 'Content-Type: mult
   "status": "Successfully uploaded audio.mp3"
 }
 ```
-Wait of around 30 seconds for a typical job to complete
+There is an average wait of around 30 seconds for a typical prediction to complete. The result will not be available immediately.
 
 # Status
-to check if kueue job complete
-
-curl -k 'https://mat.intamixx.uk:9090/api/status/01f436c22d490885a90853d7d048c5ff-ntrh9' 
+This will show the status of the prediction.
+```
+curl -k 'https://mat.intamixx.uk:9090/api/status/01f436c22d490885a90853d7d048c5ff-ntrh9'
+```
+```
+{
+  "detail": "Processing Job musicnn-01f436c22d490885a90853d7d048c5ff-ntrh9"
+  "started_at": "08-12-2023 03:36:25",
+}
+```
 
 # Result
-of kueue Job
-
+Provides the result of prediction
+```
 curl -k 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
+```
+```
+{
+  "id": "01f436c22d490885a90853d7d048c5ff-ntrh9",
+  "audiofile": "audio.mp3",
+  "started_at": "08-12-2023 03:36:25",
+  "completed_at": "08-12-2023 03:41:19",
+  "completed": true,
+  "result": {
+    "genre": [
+      "Drum n Bass",
+      "Halftime",
+      "Dark Ambient"
+    ],
+    "bpm": "174.3",
+    "key": "Ab Minor"
+  }
+}
+```
 
