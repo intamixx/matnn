@@ -83,7 +83,7 @@ async def upload_file(
     except IOError:
         raise HTTPException(status_code=500, detail=f'There was an error uploading your file')
         msg = "There was an error uploading your file"
-    return {"id": job_id, "status": msg }
+    return { "id": job_id, "detail": msg }
 
 # Upload the file and submit new job
 #@app.post('/upload')
@@ -129,17 +129,18 @@ def status_kueue_job(listing, job_id):
             ready = job["status"]["ready"]
             if ready == 1:
                 raise HTTPException(status_code=202, detail=f'Processing Job {jobname}')
-                return {'detail': f'Processing Job {jobname}'}
+                return {'id': job_id, 'detail': f'Processing Job {jobname}'}
             try:
                 if job["status"]["succeeded"] == 1:
                     result = db_search(job_id)
+                    started_at = (result[0]['start_epoch'])
                     # Job succeeded, update the db
                     if (result[0]['completed']) == False:
                        db_update('', job_id, '', '', True, '')
-                    return {'id': job_id, 'detail': f'Successful Job {jobname}'}
+                    return {'id': job_id, 'detail': f'Successful Job {jobname}', 'started_at': f'{epochtodatetime(started_at)}' }
             except:
                 raise HTTPException(status_code=202, detail=f'Finalising Job {jobname}')
-                return {'detail': f'Finalising Job {jobname}'}
+                return {'id': job_id, 'detail': f'Finalising Job {jobname}'}
     raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
     return {'detail': f'Job status not available, try calling result api or please try again later'}
             #print(f"Found job {jobname}")
@@ -178,7 +179,7 @@ def read_tags(job_id):
                     g_last_line = f_obj.readlines()[-1]
                     f_obj.close()
                     g_last_line = g_last_line.replace('\n', '').replace('\r', '')
-                    g_last_line = g_last_line.split(',') 
+                    g_last_line = g_last_line.split(',')
                     g_last_line = (g_last_line[-3:])
                     print (g_last_line)
                     # Form the tag
@@ -406,8 +407,8 @@ def check_uploaded_file_exists(job_id):
     try:
         if os.path.isdir('/mnt'):
             # Extract filename (md5 based) from job_id
-            fn = job_id.split('-') 
-            uploaded_file="{}/{}".format("/mnt",fn[0]) 
+            fn = job_id.split('-')
+            uploaded_file="{}/{}".format("/mnt",fn[0])
             if os.path.exists(uploaded_file):
                return uploaded_file
             else:
@@ -435,7 +436,7 @@ async def status_job(job_id):
         if job_epoch:
             #print (job_epoch)
             #print (curr_epoch)
-            result = (curr_epoch - job_epoch) 
+            result = (curr_epoch - job_epoch)
             if result > 18000:
                 raise HTTPException(status_code=410, detail=f'Job status not available, try calling result api or please try again later')
                 return {'detail': f'Job status not available, try calling result api or please try again later'}
@@ -457,8 +458,8 @@ async def status_job(job_id):
            return {'detail': f'Upload for {job_id} not found'}
     #if os.path.isdir('/data/nfs'):
     #    # Extract filename (md5 based) from job_id
-    #    fn = job_id.split('-') 
-    #    uploaded_file="{}/{}".format("/data/nfs",fn[0]) 
+    #    fn = job_id.split('-')
+    #    uploaded_file="{}/{}".format("/data/nfs",fn[0])
     #    if not os.path.exists(uploaded_file):
     #       #print ({'message': f'Filename {fn[0]} not found'})
     #       return {'message': f'Filename {fn[0]} not found'}
@@ -542,7 +543,7 @@ def submit_job(filename, tagselection):
     except:
         print ("Key not selected")
         mn_args_key = "-x"
-    
+
     #print (tags)
     #container_args_str = ' '.join(container_args)
     #print (container_args_str)
@@ -605,7 +606,7 @@ def submit_job(filename, tagselection):
     ##epochtime = int(datetime.now().strftime('%s'))
     #print ("Epoch time: {}".format(epochtime))
     ##db_update(filename, job_id, epochtime, False, tags)
-    
+
     # Generate a CRD spec
     try:
         crd = generate_job_crd(job_name, image, cmdargs)
