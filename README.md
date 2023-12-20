@@ -44,7 +44,8 @@ curl -k 'https://mat.intamixx.uk:9090/api/status/01f436c22d490885a90853d7d048c5f
 ```
 ```
 {
-  "detail": "Processing Job musicnn-01f436c22d490885a90853d7d048c5ff-ntrh9"
+  "id": "musicnn-01f436c22d490885a90853d7d048c5ff-ntrh9",
+  "detail": "Successful Job musicnn-01f436c22d490885a90853d7d048c5ff-ntrh9"
   "started_at": "08-12-2023 03:36:25",
 }
 ```
