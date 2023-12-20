@@ -52,6 +52,7 @@ curl -k 'https://mat.intamixx.uk:9090/api/status/01f436c22d490885a90853d7d048c5f
 
 # Result
 Provides the result of prediction
+
 Bash
 ```
 curl -k 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
