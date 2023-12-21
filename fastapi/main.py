@@ -235,20 +235,24 @@ def read_tags(job_id):
     #tagdata = result[0]['tags']
     #for value in tagdata.values())
 
-def generate_job_crd(job_name, image, args):
-    """
-    Generate an equivalent job CRD to sample-job.yaml
-    """
+def confparser(section, key):
     try:
         # Get the ip of the nfs storage server from config
         config = configparser.ConfigParser()
         config.read('config/matnn.ini')
-        print (config.sections())
-        nfs_server = config['nfs-server']['host']
-        print (nfs_server)
+        #print (config.sections())
+        value = (config[section][key])
+        return value
     except configparser.Error:
-        raise HTTPException(status_code=500, detail=f'Read of config for {job_id} failed')
-        return {'detail': f'Read of config for {job_id} failed'}
+        raise HTTPException(status_code=500, detail=f'Read of config failed')
+        return {'detail': f'Read of config failed'}
+
+def generate_job_crd(job_name, image, args):
+    """
+    Generate an equivalent job CRD to sample-job.yaml
+    """
+    nfs_server = confparser('nfs-server', 'host')
+    print (nfs_server)
 
     metadata = client.V1ObjectMeta(
         generate_name=job_name, labels={"kueue.x-k8s.io/queue-name": "user-queue"}
@@ -276,8 +280,6 @@ def generate_job_crd(job_name, image, args):
             parallelism=1, completions=1, suspend=True, template=template
         ),
     )
-
-    #db_update('', job_id, '', finish_epoch_time, '', '')
 
 def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
     db = TinyDB('./matnn.json')
@@ -311,7 +313,7 @@ def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
     else:
         print ("FOURR")
         try:
-            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
+            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tags': ts}, audio.job_id == job_id)
         except:
             raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
@@ -401,7 +403,7 @@ async def result_job(job_id):
         print (type(started_at))
         print ("COMPLETED AT")
         print (type(completed_at))
-        return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}', 'completed': completed, 'result': tagdict}
+        return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at), 'completed': completed, 'result': tagdict}
 
 def check_uploaded_file_exists(job_id):
     try:
@@ -590,13 +592,15 @@ def submit_job(filename, tagselection):
     #parser = get_parser()
     #args, _ = parser.parse_known_args()
 
-    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
-    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
+    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "-verlap", "1", "--print", "--save", output_file]
+    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print",--save", result_genre_output_file]
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
     cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
     print (cmdargs)
 
-    image="intamixx/musicnn_v2:latest"
+    image = confparser('dockerhub', 'image')
+    print (image)
+    #image="intamixx/musicnn_v2:latest"
     #job_name="musicnn-%s-%s" % (md5, rand_id)
     ##job_id = "{}-{}".format(md5, rand_id)
     ##job_name="musicnn-{}".format(job_id)
