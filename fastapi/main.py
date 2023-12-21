@@ -313,7 +313,7 @@ def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
     else:
         print ("FOURR")
         try:
-            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tags': ts}, audio.job_id == job_id)
+            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
         except:
             raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
@@ -403,7 +403,7 @@ async def result_job(job_id):
         print (type(started_at))
         print ("COMPLETED AT")
         print (type(completed_at))
-        return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at), 'completed': completed, 'result': tagdict}
+        return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}', 'completed': completed, 'result': tagdict}
 
 def check_uploaded_file_exists(job_id):
     try:
@@ -592,8 +592,8 @@ def submit_job(filename, tagselection):
     #parser = get_parser()
     #args, _ = parser.parse_known_args()
 
-    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "-verlap", "1", "--print", "--save", output_file]
-    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print",--save", result_genre_output_file]
+    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
+    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
     cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
     print (cmdargs)
