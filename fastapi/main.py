@@ -133,11 +133,14 @@ def status_kueue_job(listing, job_id):
             try:
                 if job["status"]["succeeded"] == 1:
                     result = db_search(job_id)
-                    started_at = (result[0]['start_epoch'])
                     # Job succeeded, update the db
                     if (result[0]['completed']) == False:
                        db_update('', job_id, '', '', True, '')
-                    return {'id': job_id, 'detail': f'Successful Job {jobname}', 'started_at': f'{epochtodatetime(started_at)}' }
+                       (tags, completed_at) = (read_tags(job_id))
+                       db_update('', job_id, '', completed_at, '', '')
+                    completed_at = (result[0]['finish_epoch'])
+                    started_at = (result[0]['start_epoch'])
+                    return {'id': job_id, 'detail': f'Successful Job {jobname}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}'}
             except:
                 raise HTTPException(status_code=202, detail=f'Finalising Job {jobname}')
                 return {'id': job_id, 'detail': f'Finalising Job {jobname}'}
@@ -293,7 +296,7 @@ def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
             raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
         return
-    # Result update, finish_epoch ##### Maybe redundant #####
+    # Status / Result update, finish_epoch
     elif not filename and not start_epoch and not completed and not tags:
         print ("TWOOO")
         try:
@@ -506,7 +509,7 @@ def submit_job(filename, tagselection):
     tags = {}
     #print (filename);
     mn_args_genre = "-x"
-    mn_args_genre_type = "-x"
+    #mn_args_genre_type = "-x"
     try:
         genre = tagselection['tags']['genre_musicnn']
         print (f"Genre musicnn: {genre}")
@@ -571,10 +574,14 @@ def submit_job(filename, tagselection):
         return {'detail': f'Error copying upload file {filename}'}
         #sys.exit(1)
 
-
 ######## Just to test database
     job_id = "{}-{}".format(md5, rand_id)
-    job_name="{}-{}".format(mn_args_genre_type, job_id)
+    try:
+        job_name="{}-{}".format(mn_args_genre_type, job_id)
+    except:
+        # mn_args_genre_type not set, so job_name is default for now and send a blank genre_type
+        job_name="default-{}".format(job_id)
+        mn_args_genre_type = "-x"
     #print ("Inserting into Database")
     #print ("Current Date: {}".format(datetime.now()))
     start_epochtime = int(datetime.now().strftime('%s'))
