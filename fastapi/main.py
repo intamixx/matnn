@@ -138,7 +138,8 @@ def status_kueue_job(listing, job_id):
                        db_update('', job_id, '', '', True, '')
                        (tags, completed_at) = (read_tags(job_id))
                        db_update('', job_id, '', completed_at, '', '')
-                    completed_at = (result[0]['finish_epoch'])
+                    else:
+                       completed_at = (result[0]['finish_epoch'])
                     started_at = (result[0]['start_epoch'])
                     return {'id': job_id, 'detail': f'Successful Job {jobname}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}'}
             except:
