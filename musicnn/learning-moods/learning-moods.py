@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 
-# Prediction interface for Cog ⚙️
-# Reference: https://github.com/replicate/cog/blob/main/docs/python.md
-
 import os
 from dataclasses import dataclass
 from typing import Dict, List
