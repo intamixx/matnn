@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 
-# Prediction interface for Cog âï¸
-# Reference: https://github.com/replicate/cog/blob/main/docs/python.md
-
 import json
 import tempfile
 from itertools import chain
