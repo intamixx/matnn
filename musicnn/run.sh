@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Analyse an audio file and add BPM metadata
+# Wrapper Script to analyse an audio file
 #
 
 set -e
