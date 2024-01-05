@@ -19,6 +19,7 @@ models = {
     "3 classes":{
         "approachability": {
             "name": "approachability-3class",
+            "friendly_name": "approachability",
             "labels": [
                 "low",
                 "mid",
@@ -27,6 +28,7 @@ models = {
         },
         "engagement": {
             "name": "engagement-3class",
+            "friendly_name": "engagement",
             "labels": [
                 "low",
                 "mid",
