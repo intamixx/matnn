@@ -149,7 +149,7 @@ app.get('/upload', function(req, res) {
         '<p>Genre (Discogs-effnet): <input type="checkbox" name="genre_discogs_effnet" value="genre_discogs_effnet"></p>' +
         '<p>BPM: <input type="checkbox" name="bpm" value="bpm"></p>' +
         '<p>Key: <input type="checkbox" name="key" value="key"></p>' +
-        '<p>Approachability / Engagement: <input type="checkbox" name="appr_engage" value="appr_engage"></p>' +
+        '<p>Approachability / Engagement: <input type="checkbox" name="classifiers" value="classifiers"></p>' +
         '<p><input type="submit" value="Upload" /></p>' +
         '<h3>AI Powered by Sandman Technologies Inc</h3>' +
         '      </body>' +
