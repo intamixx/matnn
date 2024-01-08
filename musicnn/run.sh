@@ -28,6 +28,7 @@ END
 genre=false
 bpm=false
 key=false
+appr_engage=false
 
 while getopts "h:f:g:bkax" OPT; do
 	case "$OPT" in
