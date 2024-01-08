@@ -220,6 +220,17 @@ def read_tags(job_id):
                     f_obj.close()
                     # Form the tag
                     tagdata['key'] = k_last_line
+        if key == 'classifiers':
+            print ("APPROACHABILITY / ENGAGEMENT!")
+            tagfilename = filename+".ae"
+            try:
+                m_timestamp = mtime_epoch(tagfilename)
+                finish_epoch_times.append(m_timestamp)
+                with open(tagfilename, 'r') as f_obj:
+                    contents = f_obj.read()
+                    f_obj.close()
+                    # Form the tag
+                    tagdata['classifiers'] = contents
             except FileNotFoundError:
                 raise HTTPException(status_code=404, detail=f'Key detail for {job_id} not found')
                 return False
@@ -527,7 +538,7 @@ def submit_job(filename, tagselection):
         tags['genre'] = ''
         mn_args_genre = "-g"
         mn_args_genre_type = "discogseffnet"
-        result_genre_output_file="/mnt/{}.genre".format(md5)
+        #result_genre_output_file="/mnt/{}.genre".format(md5)
     except:
         print ("Genre discogs-effnet not selected")
 
@@ -536,19 +547,30 @@ def submit_job(filename, tagselection):
         print (f"BPM: {bpm}")
         tags['bpm'] = ''
         mn_args_bpm = "-b"
-        result_bpm_output_file="/mnt/{}.bpm".format(md5)
+        #result_bpm_output_file="/mnt/{}.bpm".format(md5)
     except:
         print ("BPM not selected")
         mn_args_bpm = "-x"
+        
     try:
         key = tagselection['tags']['key']
         print (f"Key: {key}")
         tags['key'] = ''
         mn_args_key = "-k"
-        result_key="/mnt/{}.key".format(md5)
+        #result_key_output_file="/mnt/{}.key".format(md5)
     except:
         print ("Key not selected")
         mn_args_key = "-x"
+
+    try:
+        key = tagselection['tags']['classifiers']
+        print (f"Classifiers: {key}")
+        tags['classifiers'] = ''
+        mn_args_classifiers = "-a"
+        #result_classifiers_output_file="/mnt/{}.ae".format(md5)
+    except:
+        print ("APPR / ENGAGE not selected")
+        mn_args_classifiers = "-x"
 
     #print (tags)
     #container_args_str = ' '.join(container_args)
@@ -603,7 +625,7 @@ def submit_job(filename, tagselection):
     #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
     #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifers]
     print (cmdargs)
 
     image = confparser('dockerhub', 'image')
