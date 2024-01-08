@@ -15,11 +15,11 @@ var fs = require('fs');
 //var app = module.exports = express();
 const app = express();
 
-//var options = {
-//    key: fs.readFileSync('./ssl/privatekey.pem'),
-//    cert: fs.readFileSync('./ssl/certificate.pem'),
-//};
-var options = {};
+var options = {
+    key: fs.readFileSync('./ssl/privatekey.pem'),
+    cert: fs.readFileSync('./ssl/certificate.pem'),
+};
+//var options = {};
 var port = 9090;
 
 // Register ejs as .html. If we did
@@ -139,32 +139,32 @@ var fs = require('fs');
 //let fetch = require('node-fetch');
 
 app.get('/upload', function(req, res) {
-    res.send('<!doctype html>' + 
-	    '<html lang="en">' + 
-	      '<head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Matnn Demo</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> </head> <body> <h1>Matnn (<u>M</u>usic <u>A</u>udio <u>T</u>agger <u>N</u>eural <u>N</u>et)</h1> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>' + 
-	    '<form method="post" enctype="multipart/form-data">' + 
+    res.send('<!doctype html>' +
+            '<html lang="en">' +
+              '<head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Matnn Demo</title> <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous"> </head> <body> <h1>Matnn (<u>M</u>usic <u>A</u>udio <u>T</u>agger <u>N</u>eural <u>N</u>et)</h1> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>' +
+            '<form method="post" enctype="multipart/form-data">' +
         //+ '<p>Title: <input type="text" name="title" /></p>'
         '<p>Audio File: <input type="file" name="file" /></p>' +
-	'<p>Genre tag (Musicnn): <input type="checkbox" name="genre_musicnn" value="genre_musicnn"></p>' +
-	'<p>Genre tag (Discogs-effnet): <input type="checkbox" name="genre_discogs_effnet" value="genre_discogs_effnet"></p>' +
-	'<p>BPM tag: <input type="checkbox" name="bpm" value="bpm"></p>' +
-	'<p>Key tag: <input type="checkbox" name="key" value="key"></p>' +
+        '<p>Genre tag (Musicnn): <input type="checkbox" name="genre_musicnn" value="genre_musicnn"></p>' +
+        '<p>Genre tag (Discogs-effnet): <input type="checkbox" name="genre_discogs_effnet" value="genre_discogs_effnet"></p>' +
+        '<p>BPM tag: <input type="checkbox" name="bpm" value="bpm"></p>' +
+        '<p>Key tag: <input type="checkbox" name="key" value="key"></p>' +
         '<p><input type="submit" value="Upload" /></p>' +
-	'<h3>AI Powered by Sandman Technologies Inc</h3>' +
-	'      </body>' +
-	 '   </html>' +
+        '<h3>AI Powered by Sandman Technologies Inc</h3>' +
+        '      </body>' +
+         '   </html>' +
         '</form>');
 });
 
 module.exports = (error, req, res, next) => {
-	  if (error instanceof multer.MulterError) {
-		      error.status = 413;
-		      error.message = "image too large, max size is 1mb!";
-	  }
-	  const status = error.status || 500;
-	  const message = error.message;
-	  const response = { status: status, error: message };
-	  res.status(status).json(response);
+          if (error instanceof multer.MulterError) {
+                      error.status = 413;
+                      error.message = "image too large, max size is 1mb!";
+          }
+          const status = error.status || 500;
+          const message = error.message;
+          const response = { status: status, error: message };
+          res.status(status).json(response);
 };
 
 //const upload = multer().single('avatar')
@@ -178,7 +178,7 @@ app.use('/api/upload', upload_post_route)
 //  });
 
 
-// Then we will set the storage 
+// Then we will set the storage
 //const upload = multer({ storage: storage })
 
 
@@ -191,16 +191,16 @@ app.get('/status/:id', (req, res) => {
     //var data = "";
     gethttp_api(function(err, status, id) {
         if (err) console.log('error', err)//error handling
-	console.log("statuscode is " + err);
+        console.log("statuscode is " + err);
         console.log("status msg is " + status);
-  		res.status(err).render('status-wrapper', {
-		    users: users,
-		    id: global.id,
-		    status: JSON.stringify(status),
-		    title: "Kueue Job Status",
-		    header: "Some info about job status"
-		  });
-    	});
+                res.status(err).render('status-wrapper', {
+                    users: users,
+                    id: global.id,
+                    status: JSON.stringify(status),
+                    title: "Kueue Job Status",
+                    header: "Some info about job status"
+                  });
+        });
 });
 
 
@@ -213,16 +213,16 @@ app.get('/render/status/:id', (req, res) => {
     //var data = "";
     gethttp_api(function(err, status, id) {
         if (err) console.log('error', err)//error handling
-	console.log(err);
+        console.log(err);
         console.log(status);
-  		res.status(err).render('status', {
-		    users: users,
-		    id: global.id,
-		    status: JSON.stringify(status),
-		    title: "Kueue Job Status",
-		    header: "Some info about job status"
-		  });
-    	});
+                res.status(err).render('status', {
+                    users: users,
+                    id: global.id,
+                    status: JSON.stringify(status),
+                    title: "Kueue Job Status",
+                    header: "Some info about job status"
+                  });
+        });
 });
 
 app.get('/api/status/:id', (req, res) => {
@@ -234,10 +234,10 @@ app.get('/api/status/:id', (req, res) => {
     //var data = "";
     gethttp_api(function(err, status, id) {
         //if (err) console.log('error', err)//error handling
-	console.log(err);
+        console.log(err);
         console.log(status);
-	        res.status(err).send(status);
-    	});
+                res.status(err).send(status);
+        });
 });
 
 app.get('/result/:id', (req, res) => {
@@ -250,14 +250,14 @@ app.get('/result/:id', (req, res) => {
     gethttp_api(function(err, result, id) {
         if (err) console.log('error', err)//error handling
         console.log(result);
-  		res.status(err).render('result-wrapper', {
-		    users: users,
-		    id: global.id,
-		    result: JSON.stringify(result),
-		    title: "Kueue Job Result",
-		    header: "Some info about job result"
-		  });
-    	});
+                res.status(err).render('result-wrapper', {
+                    users: users,
+                    id: global.id,
+                    result: JSON.stringify(result),
+                    title: "Kueue Job Result",
+                    header: "Some info about job result"
+                  });
+        });
 });
 
 app.get('/render/result/:id', (req, res) => {
@@ -270,14 +270,14 @@ app.get('/render/result/:id', (req, res) => {
     gethttp_api(function(err, result, id) {
         if (err) console.log('error', err)//error handling
         console.log(result);
-  		res.status(err).render('result', {
-		    users: users,
-		    id: global.id,
-		    result: JSON.stringify(result),
-		    title: "Kueue Job Result",
-		    header: "Some info about job result"
-		  });
-    	});
+                res.status(err).render('result', {
+                    users: users,
+                    id: global.id,
+                    result: JSON.stringify(result),
+                    title: "Kueue Job Result",
+                    header: "Some info about job result"
+                  });
+        });
 });
 
 app.get('/api/result/:id', (req, res) => {
@@ -290,18 +290,18 @@ app.get('/api/result/:id', (req, res) => {
     gethttp_api(function(err, result, id) {
         if (err) console.log('error', err)//error handling
         console.log(result);
-	        res.status(err).send(result);
-  		//res.status(err).render('result-api', {
-    	});
+                res.status(err).send(result);
+                //res.status(err).render('result-api', {
+        });
 });
 
 
 
 /* istanbul ignore next */
-if (!module.parent) {
-  app.listen(9090);
-  console.log('Express started on port 9090');
-}
-//var server = https.createServer(options, app).listen(port, function(){
-//  console.log("Express server listening on port " + port);
-//});
+//if (!module.parent) {
+//  app.listen(9090);
+//  console.log('Express started on port 9090');
+//}
+var server = https.createServer(options, app).listen(port, function(){
+  console.log("Express server listening on port " + port);
+});
