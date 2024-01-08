@@ -206,11 +206,11 @@ router.post('/', function (req, res) {
         //tagobj.push('key');
         tagobj.tags.key = true;
     }
-    if (req.body.appr_engage) {
+    if (req.body.classifiers) {
         console.log(req.body.key);
-        //tagobj.push({ "appr_engage": "true"});
-        //tagobj.push('appr_engage');
-        tagobj.tags.appr_engage = true;
+        //tagobj.push({ "classifiers": "true"});
+        //tagobj.push('classifiers');
+        tagobj.tags.classifiers = true;
     }
     console.log("Selections are : " + JSON.stringify(tagobj));
     if (req.fileValidationError) {
