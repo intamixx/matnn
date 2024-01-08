@@ -4,7 +4,7 @@ const router = express.Router()
 const multer = require('multer');
 var fs = require('fs');
 
-var maxFileSizeInBytes = 8000000;
+var maxFileSizeInBytes = 11000000;
 
 var save = function save(filename, tagobj, callback) {
     console.log("IN SAVE");
@@ -28,15 +28,15 @@ var start = async function(filename, tagobj) {
     const form = new FormData();
     let fetch = require('node-fetch');
 
-	model = JSON.stringify(tagobj)
-	//model = JSON.parse(Buffer.concat(tagobj).toString())
-	console.log(model);
-	console.log(Buffer.from("Hello World").toString('base64'));
-	//model = Buffer.from("Hello World").toString('base64');
+        model = JSON.stringify(tagobj)
+        //model = JSON.parse(Buffer.concat(tagobj).toString())
+        console.log(model);
+        console.log(Buffer.from("Hello World").toString('base64'));
+        //model = Buffer.from("Hello World").toString('base64');
     form.append('tagselection', model, {
         contentType: 'application/json',
         //contentType: 'application/octet-stream',
-	//Content-Transfer-Encoding: base64,
+        //Content-Transfer-Encoding: base64,
         name: 'tagselection',
         //tagobj: '{genre: true}',
         tagobj: tagobj,
@@ -66,9 +66,9 @@ var start = async function(filename, tagobj) {
         console.log("I AM HERE START");
         //await foo()
         const body = await response.json();
-        //	if (!response.ok) {
-        //		throw new Error(`${response.status} ${response.statusText}`);
-        //	}
+        //      if (!response.ok) {
+        //              throw new Error(`${response.status} ${response.statusText}`);
+        //      }
         console.log("RESPONSE STATUS");
         console.log(response.status);
         console.log(response.statusText);
@@ -168,54 +168,60 @@ router.post('/', function (req, res) {
     // The req.body will contain your text data
     // An unknown error occurred when uploading.
     if (err instanceof multer.MulterError) {
-	console.log("TUTI" + err);
-	res.status(400).json(err);
-	return;
+        console.log("TUTI" + err);
+        res.status(400).json(err);
+        return;
       // A Multer error occurred when uploading.
     } else if (err) {
-	console.log("BUD" + err);
-	res.status(400).json(err);
-	return;
-    } 
+        console.log("BUD" + err);
+        res.status(400).json(err);
+        return;
+    }
     var tagobj = {
         tags:
         {
         }
     }
     if (req.body.genre_discogs_effnet) {
-    	console.log(req.body.genre_discogs_effnet);
-	//tagobj.push({ "genre": "true"}); 
-	//tagobj.push('genre'); 
-	tagobj.tags.genre_discogs_effnet = true;
+        console.log(req.body.genre_discogs_effnet);
+        //tagobj.push({ "genre": "true"});
+        //tagobj.push('genre');
+        tagobj.tags.genre_discogs_effnet = true;
     }
     if (req.body.genre_musicnn) {
-    	console.log(req.body.genre_musicnn);
-	//tagobj.push({ "genre": "true"}); 
-	//tagobj.push('genre'); 
-	tagobj.tags.genre_musicnn = true;
+        console.log(req.body.genre_musicnn);
+        //tagobj.push({ "genre": "true"});
+        //tagobj.push('genre');
+        tagobj.tags.genre_musicnn = true;
     }
     if (req.body.bpm) {
-    	console.log(req.body.bpm);
-	//tagobj.push({ "bpm": "true"}); 
-	//tagobj.push('bpm'); 
+        console.log(req.body.bpm);
+        //tagobj.push({ "bpm": "true"});
+        //tagobj.push('bpm');
         tagobj.tags.bpm = true;
     }
     if (req.body.key) {
-    	console.log(req.body.key);
-	//tagobj.push({ "key": "true"}); 
-	//tagobj.push('key'); 
+        console.log(req.body.key);
+        //tagobj.push({ "key": "true"});
+        //tagobj.push('key');
         tagobj.tags.key = true;
+    }
+    if (req.body.appr_engage) {
+        console.log(req.body.key);
+        //tagobj.push({ "appr_engage": "true"});
+        //tagobj.push('appr_engage');
+        tagobj.tags.appr_engage = true;
     }
     console.log("Selections are : " + JSON.stringify(tagobj));
     if (req.fileValidationError) {
-	    var err = req.fileValidationError;
-	    if (err.match(/large/)) {
-		res.status(413).json(req.fileValidationError);
-		return;
-	    } else if (err.match(/extension|mimetype/)) {
-		res.status(415).json(req.fileValidationError);
-		return;
-	    }
+            var err = req.fileValidationError;
+            if (err.match(/large/)) {
+                res.status(413).json(req.fileValidationError);
+                return;
+            } else if (err.match(/extension|mimetype/)) {
+                res.status(415).json(req.fileValidationError);
+                return;
+            }
     }
     // Check if more one genre model selected
     if (req.body.genre_discogs_effnet && req.body.genre_musicnn) {
@@ -223,14 +229,14 @@ router.post('/', function (req, res) {
         res.status(400).json({
             detail: "Please select one genre model type, discogs-effnet or musicnn"
         });
-	return;
+        return;
     }
     if (!req.file) {
         console.log("BAD FILE");
         res.status(400).json({
             detail: "Rejected"
         });
-    	return;
+        return;
     } else {
     //console.log(req.file);
     if (req.file.size > maxFileSizeInBytes) {
@@ -243,9 +249,9 @@ router.post('/', function (req, res) {
     console.log("REQ BODY is ");
     console.log(req.body);
     console.log("TAG OBJ is ");
-	  tagobj = JSON.parse(JSON.stringify(tagobj));
-	  console.log(tagobj);
-    //status = save(filepath, start); 
+          tagobj = JSON.parse(JSON.stringify(tagobj));
+          console.log(tagobj);
+    //status = save(filepath, start);
     (async () => {
         console.log('before start');
 
@@ -257,14 +263,17 @@ router.post('/', function (req, res) {
         console.log('after start ' + fast_api_response);
         console.log("STATUS is " + fast_api_response['http_status']);
         //console.log("BODY is " + fast_api_response['http_body']);
-	console.log("JSON is " + JSON.stringify(fast_api_response['http_body']));
+        console.log("JSON is " + JSON.stringify(fast_api_response['http_body']));
         console.log(typeof(fast_api_response['http_status']));
-	var tokens = JSON.stringify(fast_api_response['http_body']).split(" ");
-	var id = tokens[tokens.length - 1];
-	//id = id.replace('}', '');
-	//id = id.replace('{', '');
-	id = id.replace(/["{}]/g, '');
-	console.log(id);
+        var JSONObject = JSON.parse(JSON.stringify(fast_api_response['http_body']));
+        console.log(JSONObject);
+        var id = JSONObject.id;
+        ////var tokens = JSON.stringify(fast_api_response['http_body']).split(" ");
+        ////var id = tokens[tokens.length - 1];
+        //id = id.replace('}', '');
+        //id = id.replace('{', '');
+        //id = id.replace(/["{}]/g, '');
+        console.log(id);
 
         if (!fast_api_response) {
             console.log("NOTHING");
@@ -272,7 +281,7 @@ router.post('/', function (req, res) {
         //msg = "{ detail: " + fast_api_response['http_body'] + " }";
         switch (fast_api_response['http_status']) {
             case 200:
-		// Extract the id from the response body
+                // Extract the id from the response body
                 //res.status(fast_api_response['http_status']).render('status-wrapper', {
                 //    id: id,
                 //    status: JSON.stringify(fast_api_response['http_body']),
@@ -280,14 +289,14 @@ router.post('/', function (req, res) {
                 //    header: "Some info about job status"
                 //  });
                 //res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
-		const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
-		await sleep(1000);
-    		console.log("BASEURL is " + req.baseUrl);
-		if (req.baseUrl.match(/api\/upload/)) {
-			res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
-		} else {
-			res.status(fast_api_response['http_status']).redirect("/status/" + id);
-		}
+                const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
+                await sleep(1000);
+                console.log("BASEURL is " + req.baseUrl);
+                if (req.baseUrl.match(/api\/upload/)) {
+                        res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
+                } else {
+                        res.status(fast_api_response['http_status']).redirect("/status/" + id);
+                }
                 break;
             case 413:
                 res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
