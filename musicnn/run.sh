@@ -17,6 +17,7 @@ Wrapper script to run matnn jobs
   -g   genre tag required (musicnn or discogs-effnet)
   -b   bpm tag required
   -k   key tag required
+  -a   approachability / engagement required
   -h   Display this help message and exit
 
 END
@@ -28,7 +29,7 @@ genre=false
 bpm=false
 key=false
 
-while getopts "h:f:g:bkx" OPT; do
+while getopts "h:f:g:bkax" OPT; do
 	case "$OPT" in
 	f)
 		ARGS=$OPTARG
@@ -44,6 +45,9 @@ while getopts "h:f:g:bkx" OPT; do
 		;;
 	k)
 		key=true
+  		;;
+  	a)
+   		appr_engage=true
 		;;
 	x)
 		blank=true
@@ -111,5 +115,12 @@ if ${key}; then
 		KEY_SCALE=`bash -c "${cmdstr}"`
 		echo "Key Scale is $KEY_SCALE"
 		echo "$KEY_SCALE" | tee -a "${filename}.key"
+  
+if ${appr_engage}; then
+		echo "Key tag required"
+		cmdstr="python3 /musicnn/approachability-engagement.py -f '${filename}'"
+		APPR_ENGAGE=`bash -c "${cmdstr}"`
+		echo "Key Scale is $APPR_ENGAGE"
+		echo "$APPR_ENGAGE" | tee -a "${filename}.ae"
 fi
 exit
