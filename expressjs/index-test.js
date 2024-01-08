@@ -145,10 +145,11 @@ app.get('/upload', function(req, res) {
             '<form method="post" enctype="multipart/form-data">' +
         //+ '<p>Title: <input type="text" name="title" /></p>'
         '<p>Audio File: <input type="file" name="file" /></p>' +
-        '<p>Genre tag (Musicnn): <input type="checkbox" name="genre_musicnn" value="genre_musicnn"></p>' +
-        '<p>Genre tag (Discogs-effnet): <input type="checkbox" name="genre_discogs_effnet" value="genre_discogs_effnet"></p>' +
-        '<p>BPM tag: <input type="checkbox" name="bpm" value="bpm"></p>' +
-        '<p>Key tag: <input type="checkbox" name="key" value="key"></p>' +
+        '<p>Genre (Musicnn): <input type="checkbox" name="genre_musicnn" value="genre_musicnn"></p>' +
+        '<p>Genre (Discogs-effnet): <input type="checkbox" name="genre_discogs_effnet" value="genre_discogs_effnet"></p>' +
+        '<p>BPM: <input type="checkbox" name="bpm" value="bpm"></p>' +
+        '<p>Key: <input type="checkbox" name="key" value="key"></p>' +
+        '<p>Approachability / Engagement: <input type="checkbox" name="appr_engage" value="appr_engage"></p>' +
         '<p><input type="submit" value="Upload" /></p>' +
         '<h3>AI Powered by Sandman Technologies Inc</h3>' +
         '      </body>' +
@@ -203,28 +204,6 @@ app.get('/status/:id', (req, res) => {
         });
 });
 
-
-app.get('/render/status/:id', (req, res) => {
-    global.id = req.params.id;
-    global.stype = "status";
-    console.log("!!!!!!!!");
-    console.log(id);
-    //var status = "";
-    //var data = "";
-    gethttp_api(function(err, status, id) {
-        if (err) console.log('error', err)//error handling
-        console.log(err);
-        console.log(status);
-                res.status(err).render('status', {
-                    users: users,
-                    id: global.id,
-                    status: JSON.stringify(status),
-                    title: "Kueue Job Status",
-                    header: "Some info about job status"
-                  });
-        });
-});
-
 app.get('/api/status/:id', (req, res) => {
     global.id = req.params.id;
     global.stype = "status";
@@ -251,26 +230,6 @@ app.get('/result/:id', (req, res) => {
         if (err) console.log('error', err)//error handling
         console.log(result);
                 res.status(err).render('result-wrapper', {
-                    users: users,
-                    id: global.id,
-                    result: JSON.stringify(result),
-                    title: "Kueue Job Result",
-                    header: "Some info about job result"
-                  });
-        });
-});
-
-app.get('/render/result/:id', (req, res) => {
-    global.id = req.params.id;
-    global.stype = "result";
-    console.log("!!!!!!!!");
-    console.log(id);
-    //var status = "";
-    //var data = "";
-    gethttp_api(function(err, result, id) {
-        if (err) console.log('error', err)//error handling
-        console.log(result);
-                res.status(err).render('result', {
                     users: users,
                     id: global.id,
                     result: JSON.stringify(result),
