@@ -28,18 +28,45 @@
                         if (JSONObject.result.genre == undefined) {
                                 console.log("No Genre details found");
                                 } else {
-                                console.log("SHIT");
                                 console.log(JSONObject.result.genre);
                                 //console.log(JSONObject.result.genre);
+                                var genre_heading = "Genre :";
+                                $("#genre_heading").html(genre_heading);
                                 var genre = JSONObject.result.genre.join(', ');
                                 $("#currentJob_result_genre").html((genre));
                                 }
-                        if (JSONObject.result.bpm != "") {
+                        if (JSONObject.result.bpm == undefined) {
+                                console.log("No BPM details found");
+                                } else {
                                 console.log(JSONObject.result.bpm);
+                                var bpm_heading = "BPM :";
+                                $("#bpm_heading").html(bpm_heading);
                                 $("#currentJob_result_bpm").html(JSONObject.result.bpm);
                                 }
-                        if (JSONObject.result.key != "") {
+                        if (JSONObject.result.key == undefined) {
+                                console.log("No Key details found");
+                                } else {
+                                console.log(JSONObject.result.key);
+                                var key_heading = "Key :";
+                                $("#key_heading").html(key_heading);
                                 $("#currentJob_result_key").html(JSONObject.result.key);
+                                }
+                        //if ((JSONObject.result.classifiers != "") || (typeof JSONObject.result.classifiers === undefined)) {
+                        if (JSONObject.result.classifiers == undefined) {
+                                console.log("No classifiers found")
+                                } else {
+                                console.log(JSONObject.result.classifiers);
+                                //const res = JSON.parse(JSONObject.result.classifiers);
+                                Object.entries(JSONObject.result.classifiers).forEach((entry) => {
+                                  const [key, value] = entry;
+                                  console.log(`${key}: ${value}`);
+                                });
+                                var cleaned = JSON.stringify(JSONObject.result.classifiers, null, 2);
+                                //cleaned = (cleaned.replace(/\"/g, ""));
+                                cleaned = cleaned.replace(/[\"\[\]\{\}]+/g, '')
+                                var classifiers_heading = "Classifier :";
+                                $("#classifiers_heading").html(classifiers_heading);
+                                $("#currentJob_result_classifiers").html(cleaned);
                                 }
                         if (JSONObject.started_at != "") {
                                 $("#currentJob_started_at").html(JSONObject.started_at);
@@ -90,9 +117,10 @@
                 <!-- <div id="h1_coverart"></div> -->
                 <div id="currentJob"></div>
                 <h4>File : <div id="currentJob_audiofile"></div></h4>
-                <h4>Genres : <div id="currentJob_result_genre"></div></h4>
-                <h4>BPM : <div id="currentJob_result_bpm"></div></h4>
-                <h4>Key : <div id="currentJob_result_key"></div></h4>
+                <h4><div id="genre_heading"></div><div id="currentJob_result_genre"></div></h4>
+                <h4><div id="bpm_heading"></div><div id="currentJob_result_bpm"></div></h4>
+                <h4><div id="key_heading"></div><div id="currentJob_result_key"></div></h4>
+                <h4><div id="classifiers_heading"></div><div id="currentJob_result_classifiers"></div></h4>
                 <h4>Id : <div id="currentJob_id"></div></h4>
                 <h4>Started At : <div id="currentJob_started_at"></div></h4>
                 <h4>Completed At : <div id="currentJob_completed_at"></div></h4>
