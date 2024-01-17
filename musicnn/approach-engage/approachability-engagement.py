@@ -35,8 +35,8 @@ def predict(audio_file):
     ),
     """Load the model into memory and create the Essentia network for predictions"""
 
-    #model = str(MODELS_HOME / "discogs-effnet-bs64-1.pb")
-    model = str("discogs-effnet-bs64-1.pb")
+    model = str(MODELS_HOME / "discogs-effnet-bs64-1.pb")
+    #model = str("discogs-effnet-bs64-1.pb")
     #print (model)
     input = "model/Placeholder"
     output = "model/Softmax"
@@ -62,8 +62,8 @@ def predict(audio_file):
     for model in all_models:
         #print ("---------------")
         #print (model)
-        #modelFilename = str(MODELS_HOME / f"{model['name']}.pb")
-        modelFilename = str(f"{model['name']}.pb")
+        modelFilename = str(MODELS_HOME / f"{model['name']}.pb")
+        #modelFilename = str(f"{model['name']}.pb")
         #print (modelFilename)
         classifiers[model["name"]] = TensorflowPredict2D(
             graphFilename=modelFilename,
