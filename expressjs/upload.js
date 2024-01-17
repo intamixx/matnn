@@ -4,7 +4,7 @@ const router = express.Router()
 const multer = require('multer');
 var fs = require('fs');
 
-var maxFileSizeInBytes = 8000000;
+var maxFileSizeInBytes = 11000000;
 
 var save = function save(filename, tagobj, callback) {
     console.log("IN SAVE");
@@ -205,6 +205,12 @@ router.post('/', function (req, res) {
         //tagobj.push({ "key": "true"});
         //tagobj.push('key');
         tagobj.tags.key = true;
+    }
+    if (req.body.classifiers) {
+        console.log(req.body.key);
+        //tagobj.push({ "classifiers": "true"});
+        //tagobj.push('classifiers');
+        tagobj.tags.classifiers = true;
     }
     console.log("Selections are : " + JSON.stringify(tagobj));
     if (req.fileValidationError) {
