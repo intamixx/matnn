@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 import aiofiles
 
 from kubernetes import config, client
-import hashlib, sys, os, shutil
+import hashlib, sys, os, shutil, ast
 
 from tinydb import TinyDB, Query
 from datetime import datetime
@@ -141,7 +141,7 @@ def status_kueue_job(listing, job_id):
                     else:
                        completed_at = (result[0]['finish_epoch'])
                     started_at = (result[0]['start_epoch'])
-                    return {'id': job_id, 'detail': f'Successful Job {jobname}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}'}
+                    return {'id': job_id, 'detail': f'Successful Job {jobname}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epotetime(completed_at)}'}
             except:
                 raise HTTPException(status_code=202, detail=f'Finalising Job {jobname}')
                 return {'id': job_id, 'detail': f'Finalising Job {jobname}'}
@@ -222,6 +222,23 @@ def read_tags(job_id):
                     tagdata['key'] = k_last_line
             except FileNotFoundError:
                 raise HTTPException(status_code=404, detail=f'Key detail for {job_id} not found')
+                return False
+        if key == 'classifiers':
+            print ("APPROACHABILITY / ENGAGEMENT!")
+            tagfilename = filename+".ae"
+            try:
+                m_timestamp = mtime_epoch(tagfilename)
+                finish_epoch_times.append(m_timestamp)
+                with open(tagfilename, 'r') as f_obj:
+                    json_string = f_obj.readlines()[-1]
+                    json_string = json_string.replace('\n', '').replace('\r', '')
+                    json_format = json.dumps(ast.literal_eval(json_string))
+                    contents = json.loads(json_format)
+                    f_obj.close()
+                    # Form the tag
+                    tagdata['classifiers'] = contents
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail=f'Classifier detail for {job_id} not found')
                 return False
     print (f"TUTTTI {tagdata}")
     #hello = json.dumps(tagdata)
@@ -317,7 +334,7 @@ def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
     else:
         print ("FOURR")
         try:
-            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tags': tags}, audio.job_id == job_id)
+            db.upsert({'audiofile': filename, 'job_id': job_id, 'start_epoch': start_epoch, 'finish_epoch': finish_epoch, 'completed': completed, 'tagss}, audio.job_id == job_id)
         except:
             raise HTTPException(status_code=500, detail=f'Database insertion error')
             return {'detail': f'Database insertion error'}
@@ -407,7 +424,7 @@ async def result_job(job_id):
         print (type(started_at))
         print ("COMPLETED AT")
         print (type(completed_at))
-        return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}', 'completed': completed, 'result': tagdict}
+        return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed, 'completed': completed, 'result': tagdict}
 
 def check_uploaded_file_exists(job_id):
     try:
@@ -527,7 +544,7 @@ def submit_job(filename, tagselection):
         tags['genre'] = ''
         mn_args_genre = "-g"
         mn_args_genre_type = "discogseffnet"
-        result_genre_output_file="/mnt/{}.genre".format(md5)
+        #result_genre_output_file="/mnt/{}.genre".format(md5)
     except:
         print ("Genre discogs-effnet not selected")
 
@@ -536,19 +553,30 @@ def submit_job(filename, tagselection):
         print (f"BPM: {bpm}")
         tags['bpm'] = ''
         mn_args_bpm = "-b"
-        result_bpm_output_file="/mnt/{}.bpm".format(md5)
+        #result_bpm_output_file="/mnt/{}.bpm".format(md5)
     except:
         print ("BPM not selected")
         mn_args_bpm = "-x"
+
     try:
         key = tagselection['tags']['key']
         print (f"Key: {key}")
         tags['key'] = ''
         mn_args_key = "-k"
-        result_key="/mnt/{}.key".format(md5)
+        #result_key_output_file="/mnt/{}.key".format(md5)
     except:
         print ("Key not selected")
         mn_args_key = "-x"
+
+    try:
+        key = tagselection['tags']['classifiers']
+        print (f"Classifiers: {key}")
+        tags['classifiers'] = ''
+        mn_args_classifiers = "-a"
+        #result_classifiers_output_file="/mnt/{}.ae".format(md5)
+    except:
+        print ("APPR / ENGAGE not selected")
+        mn_args_classifiers = "-x"
 
     #print (tags)
     #container_args_str = ' '.join(container_args)
@@ -600,10 +628,10 @@ def submit_job(filename, tagselection):
     #parser = get_parser()
     #args, _ = parser.parse_known_args()
 
-    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
-    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
+    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3"verlap", "1", "--print", "--save", output_file]
+    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--pri--save", result_genre_output_file]
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers]
     print (cmdargs)
 
     image = confparser('dockerhub', 'image')
