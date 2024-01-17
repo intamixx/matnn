@@ -7,7 +7,7 @@ set -e
 
 usage()
 {
-	cat <<END
+        cat <<END
 run.sh v1
 
 Usage: run.sh [options]
@@ -31,47 +31,47 @@ key=false
 appr_engage=false
 
 while getopts "h:f:g:bkax" OPT; do
-	case "$OPT" in
-	f)
-		ARGS=$OPTARG
-		filename=$ARGS
-		;;
-	g)
-		ARGS=$OPTARG
-		genre_model=$ARGS
-		genre=true
-		;;
-	b)
-		bpm=true
-		;;
-	k)
-		key=true
-  		;;
-  	a)
-   		appr_engage=true
-		;;
-	x)
-		blank=true
-		;;
-	h)
-		usage
-		exit 0
-		;;
-	?)
-		exit 1
-	esac
+        case "$OPT" in
+        f)
+                ARGS=$OPTARG
+                filename=$ARGS
+                ;;
+        g)
+                ARGS=$OPTARG
+                genre_model=$ARGS
+                genre=true
+                ;;
+        b)
+                bpm=true
+                ;;
+        k)
+                key=true
+                ;;
+        a)
+                appr_engage=true
+                ;;
+        x)
+                blank=true
+                ;;
+        h)
+                usage
+                exit 0
+                ;;
+        ?)
+                exit 1
+        esac
 done
 shift $((OPTIND - 1))
 
 if [ -z "$filename" ]; then
-	usage >&2
-	exit 1
+        usage >&2
+        exit 1
 fi
 
 set -u
 
 echo "FILENAME - $filename"
-echo "TAGS required - genre bpm key = $genre $bpm $key"
+echo "TAGS required - genre bpm key classifier = $genre $bpm $key $appr_engage"
 
 #PATHNAME="$1"
 #shift
@@ -88,40 +88,40 @@ BASEDIR=$(dirname "${filename}")
 echo ${filename}
 echo ${BASEDIR}
 if ${genre}; then
-	case ${genre_model} in
-	musicnn)
-		echo "Musicnn Genre tag required"
-		cmdstr="python3 -m musicnn.tagger '${filename}' --model MSD_musicnn --topN 3 --length 3 --overlap 1 --print --save '${filename}.genre'"
-		bash -c "${cmdstr}"
-		;;
-	discogs-effnet)
-		echo "Discogs-effnet Genre tag required"
-		cmdstr="python3 /musicnn/genre-discogs-effnet.py -f '${filename}'"
-		GENRE=`bash -c "${cmdstr}"`
-		echo "$GENRE" | tee -a "${filename}.genre"
-		;;
-	esac
+        case ${genre_model} in
+        musicnn)
+                echo "Musicnn Genre tag required"
+                cmdstr="python3 -m musicnn.tagger '${filename}' --model MSD_musicnn --topN 3 --length 3 --overlap 1 --print --save '${filename}.genre'"
+                bash -c "${cmdstr}"
+                ;;
+        discogseffnet)
+                echo "Discogs-effnet Genre tag required"
+                cmdstr="python3 /musicnn/genre-discogs-effnet.py -f '${filename}'"
+                GENRE=`bash -c "${cmdstr}"`
+                echo "$GENRE" | tee -a "${filename}.genre"
+                ;;
+        esac
 fi
 if ${bpm}; then
-		echo "Bpm tag required"
-		cmdstr="python3 /musicnn/bpm.py -f '${filename}'"
-		BPM=`bash -c "${cmdstr}"`
-	 	BPMROUND=`printf "%.1f\n" "$BPM"`
-		echo "BPM is $BPMROUND"
-		echo "$BPMROUND" | tee -a "${filename}.bpm"
+                echo "Bpm tag required"
+                cmdstr="python3 /musicnn/bpm.py -f '${filename}'"
+                BPM=`bash -c "${cmdstr}"`
+                BPMROUND=`printf "%.1f\n" "$BPM"`
+                echo "BPM is $BPMROUND"
+                echo "$BPMROUND" | tee -a "${filename}.bpm"
 fi
 if ${key}; then
-		echo "Key tag required"
-		cmdstr="python3 /musicnn/key-scale.py -f '${filename}'"
-		KEY_SCALE=`bash -c "${cmdstr}"`
-		echo "Key Scale is $KEY_SCALE"
-		echo "$KEY_SCALE" | tee -a "${filename}.key"
-  
+                echo "Key tag required"
+                cmdstr="python3 /musicnn/key-scale.py -f '${filename}'"
+                KEY_SCALE=`bash -c "${cmdstr}"`
+                echo "Key Scale is $KEY_SCALE"
+                echo "$KEY_SCALE" | tee -a "${filename}.key"
+fi
 if ${appr_engage}; then
-		echo "Key tag required"
-		cmdstr="python3 /musicnn/approachability-engagement.py -f '${filename}'"
-		APPR_ENGAGE=`bash -c "${cmdstr}"`
-		echo "Key Scale is $APPR_ENGAGE"
-		echo "$APPR_ENGAGE" | tee -a "${filename}.ae"
+                echo "Approachability / Engagement tag required"
+                cmdstr="python3 /musicnn/approachability-engagement.py -f '${filename}'"
+                APPR_ENGAGE=`bash -c "${cmdstr}"`
+                echo "Approach / Engagement is $APPR_ENGAGE"
+                echo "$APPR_ENGAGE" | tee -a "${filename}.ae"
 fi
 exit
