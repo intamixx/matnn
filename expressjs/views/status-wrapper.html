@@ -57,19 +57,19 @@ location.replace("/result/<%= id %>");
 			//		console.log("Found shit");
 			//	}
 			//result = JSON.stringify(JSON.parse(html));
-                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseJSON.detail);
 			},
                 410: function(JSONObject, textStatus, errorThrown) { 
                         console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
                         console.log(JSONObject);
                         console.log(JSONObject.responseText);
-                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseJSON.detail);
                         },
                 500: function(JSONObject, textStatus, errorThrown) { 
                         console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
                         console.log(JSONObject);
                         console.log(JSONObject.responseText);
-                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseJSON.detail);
                         },
 		}
 		     });
