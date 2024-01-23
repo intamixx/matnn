@@ -26,12 +26,6 @@ location.replace("/result/<%= id %>");
 		200: function(JSONObject) { 
 			console.log(JSONObject)
 			console.log("Done")
-			//const substr = 'Successful';
-			//if (html.includes(substr)) {
-			//		console.log("Found shit");
-			//	}
-			//result = JSON.stringify(JSON.parse(html));
-			//const json = JSON.parse(JSONObject)
 			console.log(JSONObject.detail);
 			$("#currentJob").html(JSONObject.detail); 
 			delay()
@@ -40,11 +34,6 @@ location.replace("/result/<%= id %>");
 		202: function(JSONObject) { 
 			console.log(JSONObject)
 			console.log("Processing")
-			//const substr = 'Successful';
-			//if (html.includes(substr)) {
-			//		console.log("Found shit");
-			//	}
-			//result = JSON.stringify(JSON.parse(html));
 			console.log(JSONObject.detail);
 			$("#currentJob").html(JSONObject.detail); 
 			},
@@ -52,11 +41,6 @@ location.replace("/result/<%= id %>");
 			console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
 			console.log(JSONObject)
 			console.log("TUTI")
-			//const substr = 'Successful';
-			//if (html.includes(substr)) {
-			//		console.log("Found shit");
-			//	}
-			//result = JSON.stringify(JSON.parse(html));
                         $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseJSON.detail);
 			},
                 410: function(JSONObject, textStatus, errorThrown) { 
