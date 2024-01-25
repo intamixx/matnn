@@ -17,8 +17,10 @@ spec:
       #    claimName: nfs-pvc
       containers:
       - name: musicnn-job
-        image: intamixx/musicnn
+        image: intamixx/musicnn_v2:latest
         args: ["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", "/mnt/out.tags"]
+        securityContext:
+          runAsUser: 1000
         resources:
           requests:
             cpu: 1
