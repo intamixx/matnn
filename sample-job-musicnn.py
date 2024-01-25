@@ -38,7 +38,7 @@ def get_parser():
     parser.add_argument(
         "--image",
         help="container image to use",
-        default="intamixx/musicnn",
+        default="intamixx/musicnn_v2",
     )
     parser.add_argument(
         "--args",
@@ -63,7 +63,7 @@ def generate_job_crd(job_name, image, args):
         name="musicnn-job",
         args=args,
         resources=client.V1ResourceRequirements(requests={'cpu': 1, 'memory': '200Mi',} ),
-        #security_context=client.V1SecurityContext(run_as_user=1000),
+        security_context=client.V1SecurityContext(run_as_user=1000),
         volume_mounts=[client.V1VolumeMount(name='nfs',mount_path='/mnt')],
         )
     nfsvol = client.V1NFSVolumeSource(path="/exports", server="10.42.3.214")
