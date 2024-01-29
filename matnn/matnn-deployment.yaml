@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: matnn
-        image: intamixx/matnn:0.2
+        image: intamixx/matnn:latest
         ports:
         - name: nodejs
           containerPort: 9090
