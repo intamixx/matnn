@@ -1,5 +1,5 @@
 # matnn
-Tested on a kubernetes cluster v1.26.4 with Kueue 0.4.2
+Tested on a kubernetes cluster v1.26.4 with Kueue 0.5.2
 
 Main Website: [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
