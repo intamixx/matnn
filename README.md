@@ -26,6 +26,8 @@ API Usage example
 Currently files must be MP3 and under 10 MB.  File mimetype and extension must be set as shown in curl example below.  Select musical attributes for analysis by specifying tags required. This reduces time taken for analysis to complete. Select either 'genre_discogs_effnet' OR 'genre_musicnn'.
 
 # Submission / Upload API (POST)
+Select musical attributes for analysis by specifying tags required. This reduces time taken for analysis to complete. Select either 'genre_discogs_effnet' OR 'genre_musicnn'. Set just the filename with no options to perform a full set of predictions.
+
 Shell
 ```
 curl -k -X POST 'https://mat.intamixx.uk:9090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "classifiers=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
@@ -48,7 +50,7 @@ print(resp.json())
 There is an average wait of around 30 seconds for a typical prediction to complete. The result will not be available immediately.
 
 # Status API (GET)
-This will show the status of the prediction.
+This will show the status of the prediction using the ID returned from the upload step above.
 ```
 curl -k 'https://mat.intamixx.uk:9090/api/status/01f436c22d490885a90853d7d048c5ff-ntrh9'
 ```
