@@ -578,7 +578,19 @@ def submit_job(filename, tagselection):
         print ("APPR / ENGAGE not selected")
         mn_args_classifiers = "-x"
 
-    #print (tags)
+    if not bool(tags):
+        print ("Tags Dict is Empty, put in analysis defaults")
+        mn_args_genre = "-g"
+        mn_args_genre_type = "discogseffnet"
+        mn_args_bpm = "-b"
+        mn_args_key = "-k"
+        mn_args_classifiers = "-a"
+        tags['genre'] = ''
+        tags['bpm'] = ''
+        tags['key'] = ''
+        tags['classifiers'] = ''
+        
+    print (tags)
     #container_args_str = ' '.join(container_args)
     #print (container_args_str)
     # If empty checkboxes, default to genre
