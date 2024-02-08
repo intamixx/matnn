@@ -4,6 +4,7 @@
 #
 
 set -e
+#trap "echo Booh!" SIGINT SIGTERM SIGTRAP
 
 usage()
 {
@@ -18,6 +19,7 @@ Wrapper script to run matnn jobs
   -b   bpm tag required
   -k   key tag required
   -a   approachability / engagement required
+  -w   webhook required (destination url)
   -h   Display this help message and exit
 
 END
@@ -29,8 +31,9 @@ genre=false
 bpm=false
 key=false
 appr_engage=false
+webhook=false
 
-while getopts "h:f:g:bkax" OPT; do
+while getopts "hf:g:bkaw:x" OPT; do
         case "$OPT" in
         f)
                 ARGS=$OPTARG
@@ -50,6 +53,11 @@ while getopts "h:f:g:bkax" OPT; do
         a)
                 appr_engage=true
                 ;;
+        w)
+                ARGS=$OPTARG
+                webhook_url=$ARGS
+                webhook=true
+                ;;
         x)
                 blank=true
                 ;;
@@ -68,7 +76,18 @@ if [ -z "$filename" ]; then
         exit 1
 fi
 
+trap 'result=$?; echo pid is $$; echo $result; launch_webhook' 0 1 2 10 15
 set -u
+
+launch_webhook()
+{
+        if $webhook && [[ $result -eq 0 ]] ; then
+                echo "Webhook destination URL: ${webhook_url}"
+                cmdstr="python3 ${BASEDIR}/webhook.py ${webhook_url}"
+                WEBHOOK=`bash -c "timeout 2 ${cmdstr}"`
+                echo "${WEBHOOK}" | tee -a "${BASEDIR}/webhook.log"
+        fi
+}
 
 echo "FILENAME - $filename"
 echo "TAGS required - genre bpm key classifier = $genre $bpm $key $appr_engage"
