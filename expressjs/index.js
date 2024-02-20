@@ -77,12 +77,15 @@ axios.get('http://localhost:8000/status/0ba3c83ce691d814ee31c3b944177d96-u8jgk')
 }
 
 
-function gethttp_api(callback) {
+function gethttp_api(callback, id, rtype) {
 
 console.log("-----------------");
-console.log(global.id);
+console.log("ID")
+console.log(id);
+console.log("RTYPE")
+console.log(rtype);
 console.log("-----------------");
-http.get('http://localhost:8000/' + global.stype + '/' + global.id, res => {
+http.get('http://localhost:8000/' + rtype + '/' + id, res => {
   let data = [];
   const headerDate = res.headers && res.headers.date ? res.headers.date : 'no response date';
   console.log('Status Code:', res.statusCode);
@@ -184,74 +187,61 @@ app.use('/api/upload', upload_post_route)
 
 
 app.get('/status/:id', (req, res) => {
-    global.id = req.params.id;
-    global.stype = "status";
+    var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    //var status = "";
-    //var data = "";
     gethttp_api(function(err, status, id) {
         if (err) console.log('error', err)//error handling
         console.log("statuscode is " + err);
         console.log("status msg is " + status);
                 res.status(err).render('status-wrapper', {
                     users: users,
-                    id: global.id,
+                    id: id,
                     status: JSON.stringify(status),
                     title: "Kueue Job Status",
                     header: "Some info about job status"
                   });
-        });
+        }, id, 'status');
 });
 
 app.get('/api/status/:id', (req, res) => {
-    global.id = req.params.id;
-    global.stype = "status";
+    var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    //var status = "";
-    //var data = "";
     gethttp_api(function(err, status, id) {
         //if (err) console.log('error', err)//error handling
         console.log(err);
         console.log(status);
                 res.status(err).send(status);
-        });
+        }, id, 'status');
 });
 
 app.get('/result/:id', (req, res) => {
-    global.id = req.params.id;
-    global.stype = "result";
+    var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    //var status = "";
-    //var data = "";
     gethttp_api(function(err, result, id) {
         if (err) console.log('error', err)//error handling
         console.log(result);
                 res.status(err).render('result-wrapper', {
                     users: users,
-                    id: global.id,
+                    id: id,
                     result: JSON.stringify(result),
                     title: "Kueue Job Result",
                     header: "Some info about job result"
                   });
-        });
+        }, id, 'result');
 });
 
 app.get('/api/result/:id', (req, res) => {
-    global.id = req.params.id;
-    global.stype = "result";
+    var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    //var status = "";
-    //var data = "";
     gethttp_api(function(err, result, id) {
         if (err) console.log('error', err)//error handling
         console.log(result);
                 res.status(err).send(result);
-                //res.status(err).render('result-api', {
-        });
+        }, id, 'result');
 });
 
 
