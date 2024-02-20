@@ -190,7 +190,7 @@ app.get('/status/:id', (req, res) => {
     var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    gethttp_api(function(err, status, id) {
+    gethttp_api(function(err, status) {
         if (err) console.log('error', err)//error handling
         console.log("statuscode is " + err);
         console.log("status msg is " + status);
@@ -208,7 +208,7 @@ app.get('/api/status/:id', (req, res) => {
     var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    gethttp_api(function(err, status, id) {
+    gethttp_api(function(err, status) {
         //if (err) console.log('error', err)//error handling
         console.log(err);
         console.log(status);
@@ -220,7 +220,7 @@ app.get('/result/:id', (req, res) => {
     var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    gethttp_api(function(err, result, id) {
+    gethttp_api(function(err, result) {
         if (err) console.log('error', err)//error handling
         console.log(result);
                 res.status(err).render('result-wrapper', {
@@ -237,7 +237,7 @@ app.get('/api/result/:id', (req, res) => {
     var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
-    gethttp_api(function(err, result, id) {
+    gethttp_api(function(err, result) {
         if (err) console.log('error', err)//error handling
         console.log(result);
                 res.status(err).send(result);
