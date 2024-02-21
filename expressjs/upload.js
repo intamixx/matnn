@@ -51,7 +51,7 @@ var start = async function(filename, tagobj) {
 
     console.log(tagobj);
     //console.log(JSON.stringify(form));
-
+        //
     try {
         const response = await fetch('http://localhost:8000/upload', {
             method: 'POST',
@@ -112,8 +112,8 @@ const upload = multer({
     storage: storage,
     limits: {
         fileSize: maxFileSizeInBytes,
-        fields: 4,
-        fieldSize: 25,
+        fields: 5,
+        fieldSize: 100,
         fieldNameSize: 25
     },
     fileFilter: function(req, file, cb) {
@@ -181,6 +181,16 @@ router.post('/', function (req, res) {
         tags:
         {
         }
+    }
+
+    console.log("++++++++++++++++++++++++++++++++++++");
+    //onsole.log(req);
+    console.log("++++++++++++++++++++++++++++++++++++");
+    if (req.body.webhook_url) {
+        console.log(req.body.webhook_url);
+        //tagobj.push({ "genre": "true"});
+        //tagobj.push('genre');
+        tagobj.tags.webhook_url = req.body.webhook_url;
     }
     if (req.body.genre_discogs_effnet) {
         console.log(req.body.genre_discogs_effnet);
