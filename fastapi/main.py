@@ -654,7 +654,7 @@ def submit_job(filename, tagselection):
     #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
     #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers, mn_args_webhook, mn_args_webhook_url]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers, mn_args_webhook, mn_args_webhook_url, "-i", job_id]
     print (cmdargs)
 
     image = confparser('dockerhub', 'image')
