@@ -529,12 +529,23 @@ def submit_job(filename, tagselection):
     mn_args_genre = "-x"
     #mn_args_genre_type = "-x"
     try:
+        webhook_url = tagselection['tags']['webhook_url']
+        print (f"Webhook URL: {webhook_url}")
+        tags['webhook_url'] = webhook_url
+        mn_args_webhook = "-w"
+        mn_args_webhook_url = webhook_url
+    except:
+        print ("Webhook not selected")
+        mn_args_webhook = "-x"
+        mn_args_webhook_url = "-x"
+
+    try:
         genre = tagselection['tags']['genre_musicnn']
         print (f"Genre musicnn: {genre}")
         tags['genre'] = ''
         mn_args_genre = "-g"
         mn_args_genre_type = "musicnn"
-        result_genre_output_file="/mnt/{}.genre".format(md5)
+        #result_genre_output_file="/mnt/{}.genre".format(md5)
     except:
         print ("Genre musicnn not selected")
 
@@ -643,7 +654,7 @@ def submit_job(filename, tagselection):
     #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
     #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers, mn_args_webhook, mn_args_webhook_url]
     print (cmdargs)
 
     image = confparser('dockerhub', 'image')
