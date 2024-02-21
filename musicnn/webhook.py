@@ -1,4 +1,9 @@
-#!/usr/bin/python3
+!/usr/bin/python3
+
+# Webhook Argument list
+# 1) Destination URL
+# 2) Job ID
+# 3) Result
 
 import requests
 import hashlib
@@ -7,37 +12,56 @@ import json
 import base64
 import sys
 
-def jsonWebhookSecretExample():
-    url = 'https://example.domo.com/api/iot/v1/webhook/data/aseKEdjweksKSSPwasjdflKEecklsClsjeQ'
-    #url = 'https://tuti.com/bud'
-    json_dict = {"data": [{"name": "Ashley", "age": 22}, {"name": "Ben", "age": 24}, {"name": "Melissa", "age": 31}, {"name": "Eddy", "age": 29}]}
+if (len(sys.argv) != 4):
+    print ("invalid number of arguments")
+    sys.exit(1)
+url = sys.argv[1]
+job_id = sys.argv[2]
+try:
+    result = int(sys.argv[3])
+except:
+    print ("argument 3 not an integer")
+    sys.exit(1)
+
+def webhook():
+    print (result)
+    if result == 0:
+        status = "finished"
+    else:
+        status = "error"
+    body = { "id": job_id, "event": { "status": status } }
     key = 'webhookSecret'
     #byteKey = bytes(key, 'UTF-8')
-    body = json.dumps(json_dict)
-    print (type(body))
-    #print ("json dumps")
+    try:
+        payload = json.dumps(body)
+    except TypeError:
+        print ("Not valid json")
+        sys.exit(1)
+    #print (type(body))
     #print (jsonStr)
     #message = jsonStr.encode()
     #print ("message")
     #print (message)
-    digest = hmac.new(bytes(key, 'UTF-8'), bytes(body, 'UTF-8'), hashlib.sha256)
-    print (base64.b64encode(bytes(key, 'UTF-8')))
+    digest = hmac.new(bytes(key, 'UTF-8'), bytes(payload, 'UTF-8'), hashlib.sha256)
+    #print (base64.b64encode(bytes(key, 'UTF-8')))
     #hashed = hmac.new(byteKey, message, digestmod=hashlib.sha256).digest()
     signature = digest.hexdigest()
-    print ("HELLLLO")
     print (signature)
-    #try:
-    #    response = requests.post(url, headers={'X-Hub-Signature': hashed.hexdigest(), 'Content-Type': 'application/json'}, timeout=2)
-    #except requests.Timeout:
-    #    print ("Timeout")
-    #    pass
-    #except requests.ConnectionError:
-    #    print ("Connection Error")
-    #    pass
-    #except:
-    #    print ("General Error")
-    #    pass
-    #print (response)
+    try:
+        response = requests.post(url, data=payload, headers={'X-Matnn-Signature': signature, 'Content-Type': 'application/json'}, timeout=2)
+    except requests.Timeout:
+        print ("Timeout")
+        pass
+        sys.exit(1)
+    except requests.ConnectionError:
+        print ("Connection Error")
+        pass
+        sys.exit(1)
+    except:
+        print ("General Error")
+        pass
+        sys.exit(1)
+    print (response)
     return (body, signature)
     #return (message, hashed)
 
@@ -49,11 +73,6 @@ def verify_webhook(data, hmac_header):
     print (data)
     print (hmac_header)
     signature = hmac.new(API_SECRET_KEY.encode('utf-8'), bytes(body, 'UTF-8'), digestmod=hashlib.sha256).hexdigest()
-    #digest = hmac.new(bytes(API_SECRET_KEY, 'utf-8'), bytes(body, 'UTF-8'), digestmod=hashlib.sha256).hexdigest()
-    #digest = hmac.new(bytes(API_SECRET_KEY, 'utf-8'), bytes(body, 'UTF-8'), digestmod=hashlib.sha256)
-    #digest = hmac.new(bytes(API_SECRET_KEY, 'UTF-8'), bytes(data, 'UTF-8'), hashlib.sha256)
-    #print (digest)
-    #signature = digest.hexdigest()
     print ("VERIFY HELLLLO")
     print (signature)
     #computed_hmac = base64.b64encode(digest)
@@ -79,14 +98,14 @@ def verify_webhook(data, hmac_header):
 
 
 print ("LETS START")
-(body, signature) = jsonWebhookSecretExample()
+(body, signature) = webhook()
 print ("BACK FROM FUNCTION")
 print (body)
-print (signature)
-print (type(signature))
-#sys.exit(0)
+#print (signature)
+#print (type(signature))
+sys.exit(0)
+
 #verified = verify_webhook(data, request.headers.get('X-Signature-SHA256'))
-verified = verify_webhook(body, signature)
-print (verified)
-#if not verified:
-#    print ("
+
+#verified = verify_webhook(body, signature)
+#print (verified)
