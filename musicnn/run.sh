@@ -15,11 +15,12 @@ Usage: run.sh [options]
 Wrapper script to run matnn jobs
 
   -f   filename of song
-  -g   genre tag required (musicnn or discogs-effnet)
+  -g   genre tag required (musicnn or discogseffnet)
   -b   bpm tag required
   -k   key tag required
   -a   approachability / engagement required
   -w   webhook required (destination url)
+  -i   display job_id
   -h   Display this help message and exit
 
 END
@@ -33,7 +34,7 @@ key=false
 appr_engage=false
 webhook=false
 
-while getopts "hf:g:bkaw:x" OPT; do
+while getopts "hf:g:i:bkaw:x" OPT; do
         case "$OPT" in
         f)
                 ARGS=$OPTARG
@@ -58,6 +59,10 @@ while getopts "hf:g:bkaw:x" OPT; do
                 webhook_url=$ARGS
                 webhook=true
                 ;;
+        i)
+                ARGS=$OPTARG
+                job_id=$ARGS
+                ;;
         x)
                 blank=true
                 ;;
@@ -81,10 +86,11 @@ set -u
 
 launch_webhook()
 {
-        if $webhook && [[ $result -eq 0 ]] ; then
+        #if $webhook && [[ $result -eq 0 ]] ; then
+        if $webhook; then
                 echo "Webhook destination URL: ${webhook_url}"
-                cmdstr="python3 ${BASEDIR}/webhook.py ${webhook_url}"
-                WEBHOOK=`bash -c "timeout 2 ${cmdstr}"`
+                cmdstr="python3 ${BASEDIR}/webhook.py ${webhook_url} ${job_id} ${result}"
+                WEBHOOK=`bash -c "${cmdstr}"`
                 echo "${WEBHOOK}" | tee -a "${BASEDIR}/webhook.log"
         fi
 }
