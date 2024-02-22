@@ -608,7 +608,7 @@ def submit_job(filename, tagselection):
 
     print ("oooooooooooooo")
     print (tags)
-    print (webhook_url)
+    print (webhook)
     print ("oooooooooooooo")
     #container_args_str = ' '.join(container_args)
     #print (container_args_str)
