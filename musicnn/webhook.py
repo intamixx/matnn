@@ -1,4 +1,4 @@
-!/usr/bin/python3
+#!/usr/bin/python3
 
 # Webhook Argument list
 # 1) Destination URL
@@ -49,19 +49,16 @@ def webhook():
     print (signature)
     try:
         response = requests.post(url, data=payload, headers={'X-Matnn-Signature': signature, 'Content-Type': 'application/json'}, timeout=2)
+        print (response)
     except requests.Timeout:
         print ("Timeout")
         pass
-        sys.exit(1)
     except requests.ConnectionError:
         print ("Connection Error")
         pass
-        sys.exit(1)
     except:
         print ("General Error")
         pass
-        sys.exit(1)
-    print (response)
     return (body, signature)
     #return (message, hashed)
 
