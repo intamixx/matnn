@@ -589,7 +589,8 @@ def submit_job(filename, tagselection):
         print ("APPR / ENGAGE not selected")
         mn_args_classifiers = "-x"
 
-    if not bool(tags):
+    # if tags empty
+    if not bool(tags) or tags['webhook_url'] and len(tags) == 1:
         print ("Tags Dict is Empty, put in analysis defaults")
         mn_args_genre = "-g"
         mn_args_genre_type = "discogseffnet"
