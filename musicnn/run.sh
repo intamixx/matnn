@@ -89,7 +89,7 @@ launch_webhook()
         #if $webhook && [[ $result -eq 0 ]] ; then
         if $webhook; then
                 echo "Webhook destination URL: ${webhook_url}"
-                cmdstr="python3 ${BASEDIR}/webhook.py ${webhook_url} ${job_id} ${result}"
+                cmdstr="python3 /musicnn/webhook.py ${webhook_url} ${job_id} ${result}"
                 WEBHOOK=`bash -c "${cmdstr}"`
                 echo "${WEBHOOK}" | tee -a "${BASEDIR}/webhook.log"
         fi
