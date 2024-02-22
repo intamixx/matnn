@@ -525,13 +525,16 @@ def submit_job(filename, tagselection):
     print (tagselection)
     # Form the json formatted tag to go into database
     tags = {}
+    webhook = {}
     #print (filename);
     mn_args_genre = "-x"
     #mn_args_genre_type = "-x"
+
+    # split out webhook into another dict
     try:
         webhook_url = tagselection['tags']['webhook_url']
         print (f"Webhook URL: {webhook_url}")
-        tags['webhook_url'] = webhook_url
+        webhook['webhook_url'] = webhook_url
         mn_args_webhook = "-w"
         mn_args_webhook_url = webhook_url
     except:
@@ -590,7 +593,8 @@ def submit_job(filename, tagselection):
         mn_args_classifiers = "-x"
 
     # if tags empty
-    if not bool(tags) or tags['webhook_url'] and len(tags) == 1:
+    #if not bool(tags) or webhook['webhook_url'] and len(tags) == 1:
+    if not bool(tags):
         print ("Tags Dict is Empty, put in analysis defaults")
         mn_args_genre = "-g"
         mn_args_genre_type = "discogseffnet"
@@ -602,7 +606,10 @@ def submit_job(filename, tagselection):
         tags['key'] = ''
         tags['classifiers'] = ''
 
-    #print (tags)
+    print ("oooooooooooooo")
+    print (tags)
+    print (webhook_url)
+    print ("oooooooooooooo")
     #container_args_str = ' '.join(container_args)
     #print (container_args_str)
     # If empty checkboxes, default to genre
