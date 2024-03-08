@@ -1,0 +1,36 @@
+##################################################
+# A test playbook
+##################################################
+---
+- hosts: all
+  become: true
+  vars_files:
+    - vars/default.yml
+
+  tasks:
+    #- name: Run command uname -a
+    #  command:
+    #  loop: [ 'aptitude' ]
+
+    - name: Run shell command
+      shell: uname -a
+        #  notify: Reload Apache
+       
+    - name: Run command
+      ansible.builtin.command:
+        cmd: 'echo message | tee /tmp/file'
+          #creates: /tmp/testfile
+          
+    - name: Run command2
+      command: "/bin/bash -c 'echo hello1 | tee -a /tmp/testfile'"
+      #action: command echo "hello" >> /tmp/testfile
+      register: hello
+
+    - debug: msg="{{ hello.stdout }}"
+    - debug: msg="{{ hello.stderr }}"
+
+    - name: Run script command
+      script: ls.sh
+      register: hello
+
+    - debug: var=hello.stdout_lines
