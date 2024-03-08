@@ -26,12 +26,12 @@ resource "azurerm_virtual_network" "mtc-vn" {
   resource_group_name = azurerm_resource_group.mtc-rg.name
   location            = azurerm_resource_group.mtc-rg.location
   address_space       = ["10.123.0.0/16"]
-  dns_servers         = ["10.0.0.4", "10.0.0.5"]
+  dns_servers         = ["8.8.8.8", "8.8.4.4"]
 
-  subnet {
-    name           = "subnet1"
-    address_prefix = "10.0.1.0/24"
-  }
+  #subnet {
+  #  name           = "subnet1"
+  #  address_prefix = "10.0.1.0/24"
+  #}
 
   #subnet {
   #  name           = "subnet2"
@@ -55,8 +55,7 @@ resource "azurerm_subnet" "mtc-subnet" {
 #
 #    service_delegation {
 #      name    = "Microsoft.ContainerInstance/containerGroups"
-#      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action", "Microsoft.Network/virtualNetworks/subne
-ts/prepareNetworkPolicies/action"]
+#      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action", "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"]
 #    }
 #  }
 }
@@ -134,4 +133,29 @@ resource "azurerm_linux_virtual_machine" "mtc-vm" {
     sku       = "22_04-lts"
     version   = "latest"
   }
+  provisioner "local-exec" {
+      command = templatefile("${var.host_os}-ssh-script.tpl", {
+      #command = templatefile("linux-ssh-script.tpl", {
+          hostname = self.public_ip_address,
+          user = "adminuser",
+          identityfile = "~/.ssh/mtcazurekey"
+      })
+      #interpreter = var.host_os == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
+      #interpreter = "linux" == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
+      interpreter = ["bash", "-c"]
+  }
+
+  tags = {
+    environment = "dev"
+  }
+}
+
+
+data "azurerm_public_ip" "mtc-ip-data" {
+    name = azurerm_public_ip.mtc-ip.name
+    resource_group_name = azurerm_resource_group.mtc-rg.name
+}
+
+output "public_ip_address" {
+    value = "${azurerm_linux_virtual_machine.mtc-vm.name}: ${data.azurerm_public_ip.mtc-ip-data.ip_address}"
 }
