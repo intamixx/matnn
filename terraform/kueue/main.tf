@@ -1,4 +1,4 @@
-# Configure Terraform
+# Configure Terraform for RKE / Kubernetes / Kueue
 # (workload schema errors during installation -> kubectl apply --server-side -f https://github.com/kubernetes-sigs/kueue/releases/download/v0.6.2/manifests.yaml --force-conflicts)
 terraform {
   required_providers {
