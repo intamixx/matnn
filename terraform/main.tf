@@ -103,6 +103,17 @@ resource "azurerm_network_security_group" "mtc-sg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+  security_rule {
+    name                       = "rule-22"
+    priority                   = 130
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 
   tags = {
     environment = "dev"
@@ -155,6 +166,16 @@ resource "azurerm_network_interface" "mtc-nic-2" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.mtc-ip-2.id
   }
+}
+
+resource "azurerm_network_interface_security_group_association" "mtc-nic-sg-1" {
+  network_interface_id      = azurerm_network_interface.mtc-nic-1.id
+  network_security_group_id = azurerm_network_security_group.mtc-sg.id
+}
+
+resource "azurerm_network_interface_security_group_association" "mtc-nic-sg-2" {
+  network_interface_id      = azurerm_network_interface.mtc-nic-2.id
+  network_security_group_id = azurerm_network_security_group.mtc-sg.id
 }
 
 resource "azurerm_linux_virtual_machine" "mtc-vm-1" {
