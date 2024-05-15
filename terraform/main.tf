@@ -65,8 +65,7 @@ resource "azurerm_subnet" "mtc-subnet" {
 #
 #    service_delegation {
 #      name    = "Microsoft.ContainerInstance/containerGroups"
-#      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action", "Microsoft.Network/virtualNetworks/s
-ubnets/prepareNetworkPolicies/action"]
+#      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action", "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"]
 #    }
 #  }
 }
