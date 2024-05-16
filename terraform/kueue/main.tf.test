@@ -1,0 +1,65 @@
+# Configure Terraform
+terraform {
+  required_providers {
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 2.15.0"
+    }
+    rke = {
+      source = "rancher/rke"
+      version = "1.5.0"
+    }
+  }
+}
+
+locals {
+ data  = yamldecode(file("./instances.yaml"))
+ dev   = merge([for data in local.data : { for instance_key, instance_value in data : instance_key => instance_
+value if instance_value.env == "dev" }]...)
+ stage = merge([for data in local.data : { for instance_key, instance_value in data : instance_key => instance_
+value if instance_value.env == "stage" }]...)
+
+#public_ip_addresses = [for instance in local.dev : instance.public_ip_address]
+#instances = [for instance in local.dev : instance]
+}
+
+#output "server_ips" {
+#  value = [
+#    for instance in local.dev:
+#       instance.public_ip_address
+#  ]
+#}
+#output "instances1" {
+# value = local.instances
+#}
+
+output "instances" {
+ value = var.instances_config
+}
+
+#output "stage" {
+# value = local.stage
+#}
+
+resource "rke_cluster" "cluster" {
+  for_each = { for each in var.instances_config : each.name => each }
+  nodes {
+    address = each.value.public_ip_address
+    internal_address = each.value.internal_ip_address
+    user    = "root"
+    role    = each.value.role
+    ssh_key = "${file("/root/terraform/rootprivkey")}"
+  }
+  enable_cri_dockerd = true
+  #  addons_include = [
+  #  "https://github.com/kubernetes-sigs/kueue/releases/download/v0.6.2/manifests.yaml",
+  #  "https://raw.githubusercontent.com/kubernetes-sigs/kueue/main/site/static/examples/admin/single-clusterque
+ue-setup.yaml"
+  #  ]
+}
+
+resource "local_file" "kube_cluster_yaml" {
+  filename = "${path.root}/kube_config_cluster.yml"
+  sensitive_content  = "${rke_cluster.cluster[each.key].kube_config_yaml}"
+  #local_sensitive_file  = "${rke_cluster.cluster.kube_config_yaml}"
+}
