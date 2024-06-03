@@ -8,9 +8,9 @@ metadata:
   uid: 35d3b508-ea59-43b0-be6d-8780c27eb8b4
 spec:
   allocateLoadBalancerNodePorts: true
-  clusterIP: 10.43.3.234
+  clusterIP: 10.43.3.235
   clusterIPs:
-  - 10.43.3.234
+  - 10.43.3.235
   externalIPs:
   - 10.0.0.7
   externalTrafficPolicy: Cluster
@@ -29,6 +29,11 @@ spec:
     port: 8000
     protocol: TCP
     targetPort: 8000
+  - name: port-3
+    nodePort: 31715
+    port: 8090
+    protocol: TCP
+    targetPort: 8090
   selector:
     app: matnn
   sessionAffinity: None
