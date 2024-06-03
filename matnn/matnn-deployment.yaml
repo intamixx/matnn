@@ -17,11 +17,13 @@ spec:
         image: intamixx/matnn:latest
         ports:
         - name: nodejs
+          containerPort: 8090
+        - name: vuejs
           containerPort: 9090
         - name: fastapi
           containerPort: 8000
         securityContext:
-          privileged: true       
+          privileged: true
         volumeMounts:
         - name: config-volume
           mountPath: /fastapi/config
@@ -46,6 +48,6 @@ spec:
               path: certificate.pem
       - name: nfs
         nfs:
-          server: 10.42.3.107
+          server: 10.43.3.234
           path: /exports
       restartPolicy: Always
