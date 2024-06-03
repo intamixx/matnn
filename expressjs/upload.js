@@ -185,41 +185,34 @@ router.post('/', function (req, res) {
 
     console.log("++++++++++++++++++++++++++++++++++++");
     //onsole.log(req);
+    console.log(req.body);
+    //const obj = Object.assign({},req.body.tagselection);
+    const obj_parse = JSON.parse(req.body.tagselection);
+    console.log(obj_parse);
+
     console.log("++++++++++++++++++++++++++++++++++++");
-    if (req.body.webhook_url) {
-        console.log(req.body.webhook_url);
-        //tagobj.push({ "genre": "true"});
-        //tagobj.push('genre');
-        tagobj.tags.webhook_url = req.body.webhook_url;
+    if (obj_parse.tags.webhook_url) {
+        console.log(obj.webhook_url);
+        tagobj.tags.webhook_url = obj_parse.tags.webhook_url;
     }
-    if (req.body.genre_discogs_effnet) {
-        console.log(req.body.genre_discogs_effnet);
-        //tagobj.push({ "genre": "true"});
-        //tagobj.push('genre');
+    if (obj_parse.tags.genre_discogs_effnet) {
+        console.log(obj_parse.tags.genre_discogs_effnet);
         tagobj.tags.genre_discogs_effnet = true;
     }
-    if (req.body.genre_musicnn) {
-        console.log(req.body.genre_musicnn);
-        //tagobj.push({ "genre": "true"});
-        //tagobj.push('genre');
+    if (obj_parse.tags.genre_musicnn) {
+        console.log(obj_parse.tags.genre_musicnn);
         tagobj.tags.genre_musicnn = true;
     }
-    if (req.body.bpm) {
-        console.log(req.body.bpm);
-        //tagobj.push({ "bpm": "true"});
-        //tagobj.push('bpm');
+    if (obj_parse.tags.bpm) {
+        console.log(obj_parse.tags.bpm);
         tagobj.tags.bpm = true;
     }
-    if (req.body.key) {
-        console.log(req.body.key);
-        //tagobj.push({ "key": "true"});
-        //tagobj.push('key');
+    if (obj_parse.tags.key) {
+        console.log(obj_parse.tags.key);
         tagobj.tags.key = true;
     }
-    if (req.body.classifiers) {
-        console.log(req.body.key);
-        //tagobj.push({ "classifiers": "true"});
-        //tagobj.push('classifiers');
+    if (obj_parse.tags.classifiers) {
+        console.log(obj_parse.tags.key);
         tagobj.tags.classifiers = true;
     }
     console.log("Selections are : " + JSON.stringify(tagobj));
@@ -305,7 +298,8 @@ router.post('/', function (req, res) {
                 if (req.baseUrl.match(/api\/upload/)) {
                         res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
                 } else {
-                        res.status(fast_api_response['http_status']).redirect("/status/" + id);
+                        //res.status(fast_api_response['http_status']).redirect("/status/" + id);
+                        res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
                 }
                 break;
             case 413:
