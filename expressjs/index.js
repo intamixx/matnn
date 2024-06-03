@@ -20,7 +20,7 @@ var options = {
     cert: fs.readFileSync('./ssl/certificate.pem'),
 };
 //var options = {};
-var port = 9090;
+var port = 8090;
 
 // Register ejs as .html. If we did
 // not call this, we would need to
@@ -42,6 +42,8 @@ app.set('views', path.join(__dirname, 'views'));
 // Path to our public directory
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended : true }));
+//app.use(express.json());
 
 // Without this you would need to
 // supply the extension to res.render()
@@ -176,7 +178,7 @@ const upload_post_route = require('./upload')
 app.use('/upload', upload_post_route)
 app.use('/api/upload', upload_post_route)
 
-//app.listen(9090)
+//app.listen(8090)
 //var server = https.createServer(options, app).listen(port, function(){
 //  console.log("Express server listening on port " + port);
 //  });
@@ -248,8 +250,8 @@ app.get('/api/result/:id', (req, res) => {
 
 /* istanbul ignore next */
 //if (!module.parent) {
-//  app.listen(9090);
-//  console.log('Express started on port 9090');
+//  app.listen(8090);
+//  console.log('Express started on port 8090');
 //}
 var server = https.createServer(options, app).listen(port, function(){
   console.log("Express server listening on port " + port);
