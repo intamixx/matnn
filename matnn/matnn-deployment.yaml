@@ -1,53 +1,42 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: matnn
-    #  namespace: default
+  creationTimestamp: "2023-11-22T14:05:19Z"
+  name: matnn-service
+  namespace: default
+  resourceVersion: "5582172"
+  uid: 35d3b508-ea59-43b0-be6d-8780c27eb8b4
 spec:
+  allocateLoadBalancerNodePorts: true
+  clusterIP: 10.43.3.235
+  clusterIPs:
+  - 10.43.3.235
+  externalIPs:
+  - 10.0.0.7
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: port-1
+    nodePort: 31566
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  - name: port-2
+    nodePort: 31713
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  - name: port-3
+    nodePort: 31715
+    port: 8090
+    protocol: TCP
+    targetPort: 8090
   selector:
-    matchLabels:
-      app: matnn
-  template:
-    metadata:
-      labels:
-        app: matnn
-    spec:
-      containers:
-      - name: matnn
-        image: intamixx/matnn:latest
-        ports:
-        - name: nodejs
-          containerPort: 8090
-        - name: vuejs
-          containerPort: 9090
-        - name: fastapi
-          containerPort: 8000
-        securityContext:
-          privileged: true
-        volumeMounts:
-        - name: config-volume
-          mountPath: /fastapi/config
-        - name: ssl-volume
-          mountPath: /nodejs/ssl
-        - name: nfs
-          mountPath: /mnt
-      volumes:
-      - name: config-volume
-        configMap:
-          name: matnn-config
-          items:
-            - key: matnn-config
-              path: matnn.ini
-      - name: ssl-volume
-        configMap:
-          name: matnn-config
-          items:
-            - key: ssl-privatekey
-              path: privatekey.pem
-            - key: ssl-certificate
-              path: certificate.pem
-      - name: nfs
-        nfs:
-          server: 10.43.3.234
-          path: /exports
-      restartPolicy: Always
+    app: matnn
+  sessionAffinity: None
+  type: LoadBalancer
+status:
+  loadBalancer: {}
