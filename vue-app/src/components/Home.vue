@@ -287,6 +287,6 @@ const delay = async (id) => {
   console.log("Second")
   await sleep(3000)
   console.log("Third")
-location.replace("status/" + id);
+location.replace("/status/" + id);
 }
 </script>
