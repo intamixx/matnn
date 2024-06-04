@@ -231,7 +231,7 @@ import axios from 'axios';
 //        .then((data) => console.log('Success:', data))
 //        .catch((error) => console.error('Error:', error));
 
-        axios.post( '/upload',
+        axios.post( '/api/upload',
           //formData,
           form,
           {
