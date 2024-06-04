@@ -88,8 +88,6 @@ RUN chown web:web -R /vuejs
 RUN chown web:web -R /mnt
 COPY supervisor-app.conf /etc/supervisor/conf.d
 
-RUN apt-get -y autoremove
-
 # Supervisor
 RUN mkdir -p /var/log/supervisor
 CMD ["/usr/bin/supervisord"]
