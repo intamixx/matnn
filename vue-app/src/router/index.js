@@ -11,6 +11,10 @@ const routes = [
         component: Home,
     },
     {
+        path: "/predict",
+        component: Home,
+    },
+    {
         name: "Status",
         path: "/status/:id",
         component: Status,
