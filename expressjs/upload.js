@@ -186,35 +186,50 @@ router.post('/', function (req, res) {
     console.log("++++++++++++++++++++++++++++++++++++");
     //onsole.log(req);
     console.log(req.body);
-    //const obj = Object.assign({},req.body.tagselection);
-    const obj_parse = JSON.parse(req.body.tagselection);
-    console.log(obj_parse);
+    //const obj_parse = Object.assign({},req.body);
+    // Pass parameters from vuejs first, fallback to api
+    try {
+        obj_parse = JSON.parse(req.body.tagselection);
+        console.log(obj_parse);
+        console.log("hello");
+    } catch (e) {
+        //obj_parse = JSON.parse(req.body);
+        obj_parse = Object.assign({},req.body);
+        obj_parse.tags = {} // Ugly hack to satisfy undefined errors
+        console.log(obj_parse);
+    }
 
     console.log("++++++++++++++++++++++++++++++++++++");
-    if (obj_parse.tags.webhook_url) {
-        console.log(obj.webhook_url);
+    if (req.body.webhook_url) {
+        console.log(req.body.webhook_url);
         tagobj.tags.webhook_url = obj_parse.tags.webhook_url;
     }
-    if (obj_parse.tags.genre_discogs_effnet) {
-        console.log(obj_parse.tags.genre_discogs_effnet);
+
+    if ((typeof obj_parse.tags.genre_discogs_effnet == 'boolean') || (req.body.genre_discogs_effnet)) {
+        console.log("Setting Discogs");
         tagobj.tags.genre_discogs_effnet = true;
-    }
-    if (obj_parse.tags.genre_musicnn) {
-        console.log(obj_parse.tags.genre_musicnn);
+        }
+
+    if ((typeof obj_parse.tags.genre_musicnn == 'boolean') || (req.body.genre_musicnn)) {
+        console.log("Setting Musicnn");
         tagobj.tags.genre_musicnn = true;
-    }
-    if (obj_parse.tags.bpm) {
-        console.log(obj_parse.tags.bpm);
+        }
+
+    if ((typeof obj_parse.tags.bpm == 'boolean') || (req.body.bpm)) {
+        console.log("Setting BPM");
         tagobj.tags.bpm = true;
-    }
-    if (obj_parse.tags.key) {
-        console.log(obj_parse.tags.key);
+        }
+
+    if ((typeof obj_parse.tags.key == 'boolean') || (req.body.key)) {
+        console.log("Setting Key");
         tagobj.tags.key = true;
-    }
-    if (obj_parse.tags.classifiers) {
-        console.log(obj_parse.tags.key);
+        }
+
+    if ((typeof obj_parse.tags.classifiers == 'boolean') || (req.body.classifiers)) {
+        console.log("Setting Classifiers");
         tagobj.tags.classifiers = true;
-    }
+        }
+
     console.log("Selections are : " + JSON.stringify(tagobj));
     if (req.fileValidationError) {
             var err = req.fileValidationError;
