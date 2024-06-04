@@ -313,8 +313,7 @@ router.post('/', function (req, res) {
                 if (req.baseUrl.match(/api\/upload/)) {
                         res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
                 } else {
-                        //res.status(fast_api_response['http_status']).redirect("/status/" + id);
-                        res.status(fast_api_response['http_status']).json(fast_api_response['http_body']);
+                        res.status(fast_api_response['http_status']).redirect("/status/" + id);
                 }
                 break;
             case 413:
