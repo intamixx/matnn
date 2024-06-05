@@ -3,7 +3,9 @@ Tested on a kubernetes cluster v1.26.4 with Kueue 0.5.2
 
 Main Website: [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
-Direct service frontend GUI: [https://mat.intamixx.uk:9090/upload](https://mat.intamixx.uk:9090/upload)
+Vue App - [https://matnn.intamixx.uk/predict](https://matnn.intamixx.uk/predict)
+
+Direct service frontend GUI: [https://mat.intamixx.uk:8090/upload](https://mat.intamixx.uk:9090/upload)
 
 Provide a simple web frontend for the API using nodejs, expressjs, multer, fetch etc
 Kueue scheduler is controlled and queried by fastapi backend.
@@ -30,12 +32,12 @@ Select musical attributes for analysis by specifying tags required. This reduces
 
 Shell
 ```
-curl -k -X POST 'https://mat.intamixx.uk:9090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "classifiers=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
+curl -k -X POST 'https://mat.intamixx.uk:8090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "classifiers=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
 ```
 In Python
 ```
 import requests
-url = 'https://mat.intamixx.uk:9090/api/upload'
+url = 'https://mat.intamixx.uk:8090/api/upload'
 data = {'genre_discogs_effnet':'True', 'bpm':'True', 'key':'True', 'classifiers':'True'}
 file = {'file': ('audio.mp3', open('audio.mp3', 'rb'), 'audio/mpeg')}
 resp = requests.post(url=url, files=file, data=data, verify=False)
@@ -68,12 +70,12 @@ Provides the result of prediction
 
 Bash
 ```
-curl -k 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
+curl -k 'https://mat.intamixx.uk:8090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
 ```
 In Python
 ```
 import requests
-url = 'https://mat.intamixx.uk:9090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
+url = 'https://mat.intamixx.uk:8090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
 resp = requests.get(url=url, verify=False)
 print(resp.json())
 ```
