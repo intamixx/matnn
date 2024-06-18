@@ -81,7 +81,7 @@ RUN cd /vuejs && npm install
 # Copy ssl certs
 #COPY ssl/* /nodejs/ssl
 
-# Get example python scripts
+# Ensure UID web : 1000.  runas container user in fastapi should be same.
 RUN chown web:web -R /fastapi
 RUN chown web:web -R /nodejs
 RUN chown web:web -R /vuejs
