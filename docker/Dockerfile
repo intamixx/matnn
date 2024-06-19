@@ -55,20 +55,17 @@ RUN useradd -ms /bin/bash web
 #USER web
 #WORKDIR /home/web
 
-# Get application code
+# Install files for FastAPI (backend)
 RUN mkdir /fastapi
 RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/fastapi/main.py -O /fastapi/main.py
 
-#RUN mkdir /vuejs
-#RUN mkdir -p /vuejs/src/components
-
-# Install files for VueJS
+# Install files for VueJS (app frontend)
 RUN cd /
 RUN git clone --depth 1 https://github.com/intamixx/matnn.git /tmp/matnn
 RUN mv /tmp/matnn/vue-app /
 RUN mv /vue-app /vuejs
 
-# Install files for VueJS
+# Install files for ExpressJS (middleware)
 RUN mv /tmp/matnn/expressjs /
 RUN mv /expressjs /nodejs
 RUN mkdir /nodejs/uploads
