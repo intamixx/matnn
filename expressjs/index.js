@@ -207,6 +207,8 @@ app.get('/status/:id', (req, res) => {
 });
 
 app.get('/api/status/:id', (req, res) => {
+    let userIp = req.header('x-forwarded-for') || req.connection.remoteAddress;
+    console.log("Source IP is: " + userIp);
     var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
@@ -236,6 +238,8 @@ app.get('/result/:id', (req, res) => {
 });
 
 app.get('/api/result/:id', (req, res) => {
+    let userIp = req.header('x-forwarded-for') || req.connection.remoteAddress;
+    console.log("Source IP is: " + userIp);
     var id = req.params.id;
     console.log("!!!!!!!!");
     console.log(id);
