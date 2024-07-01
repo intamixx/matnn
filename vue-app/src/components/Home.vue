@@ -254,6 +254,7 @@ import axios from 'axios';
           console.log(error);
           //alert('Something went wrong!!');
           alert(error.message);
+          window.location.reload();
         })
       },
       /*
