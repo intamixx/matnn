@@ -202,7 +202,7 @@ router.post('/', function (req, res) {
     console.log("++++++++++++++++++++++++++++++++++++");
     if (req.body.webhook_url) {
         console.log(req.body.webhook_url);
-        tagobj.tags.webhook_url = obj_parse.tags.webhook_url;
+        tagobj.tags.webhook_url = req.body.webhook_url;
     }
 
     if ((typeof obj_parse.tags.genre_discogs_effnet == 'boolean') || (req.body.genre_discogs_effnet)) {
