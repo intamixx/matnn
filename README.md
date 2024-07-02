@@ -103,7 +103,7 @@ print(resp.json())
 ```
 # Webhook
 
-HTTP-based callback function to desired URL with header signature created from a secret and the payload. Body contains original id and event status.
+HTTP-based callback function to desired URL with header signature created from a secret and the payload in attribute X-Matnn-Signature. Body contains original id and event status.
 Please contact for the webhooksecret key
 
 ```
