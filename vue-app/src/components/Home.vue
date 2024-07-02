@@ -189,8 +189,11 @@ import axios from 'axios';
         /*
           Initialize the form data
         */
-        //let formData = new FormData();
-        //let form = new FormData();
+            if ((this.MusicnnisChecked === true) && (this.DiscogsEffnetisChecked === true)) {
+                alert('Please select either Musicnn or Discogs-Effnet as the model to use');
+                window.location.reload();
+            }
+
     const FormData = require('form-data');
     const form = new FormData();
 
