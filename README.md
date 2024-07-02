@@ -101,6 +101,37 @@ print(resp.json())
   }
 }
 ```
+## Webhook
+
+HTTP-based callback function to desired URL with header signature created from a secret and the payload. Body contains original id and event status.
+Please contact for the webhooksecret key
+
+```
+digest = hmac.new(bytes(key, 'UTF-8'), bytes(payload, 'UTF-8'), hashlib.sha256)
+signature = digest.hexdigest()
+```
+
+Use webhook_url in the request
+
+```
+curl -k -X POST 'https://mat.intamixx.uk:8090/api/upload' -H 'Content-Type: multipart/form-data' -F "webhook_url=http://yoursite.domain:1234" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
+```
+
+Webhook received at destination
+
+```
+POST / HTTP/1.1
+Host: yoursite.domain:1234
+User-Agent: python-requests/2.31.0
+Accept-Encoding: gzip, deflate
+Accept: */*
+Connection: keep-alive
+X-Matnn-Signature: 0cad7db6d6a210bacb734744770be2305ba69664c3497c97d05248c8e98df9eb
+Content-Type: application/json
+Content-Length: 81
+
+{"id": "01f436c22d490885a90853d7d048c5ff-ntrh9", "event": {"status": "finished"}}
+```
 
 # Example Usage
 
@@ -120,6 +151,6 @@ Or use a method / language of your choice.
 Questions? - intamixx@hotmail.com
 
 # To Do
-Provide API functionality for a webhook HTTPS URL to call when predictions are ready.
+Improve App frontend
 
 
