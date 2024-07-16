@@ -5,7 +5,7 @@ Main Website: [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
 Vue App - [https://matnn.intamixx.uk/predict](https://matnn.intamixx.uk/predict)
 
-Direct service frontend GUI: [https://mat.intamixx.uk:8090/upload](https://mat.intamixx.uk:9090/upload)
+Direct service frontend GUI: [https://mat.intamixx.uk:8090/upload](https://mat.intamixx.uk:8090/upload)
 
 Provide a simple web frontend for the API using nodejs, expressjs, multer, fetch etc
 Kueue scheduler is controlled and queried by fastapi backend.
