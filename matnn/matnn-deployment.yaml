@@ -31,6 +31,24 @@ spec:
           mountPath: /nodejs/ssl
         - name: nfs
           mountPath: /mnt
+        livenessProbe:
+          httpGet:
+            path: /upload
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 300
+          successThreshold: 1
+          failureThreshold: 3
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /upload
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 300
+          successThreshold: 1
+          failureThreshold: 3
+          timeoutSeconds: 1
       volumes:
       - name: config-volume
         configMap:
