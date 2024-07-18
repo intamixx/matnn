@@ -27,6 +27,9 @@ Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and 
 API Usage example
 Currently files must be MP3 and under 10 MB.  File mimetype and extension must be set as shown in curl example below.  Select musical attributes for analysis by specifying tags required. This reduces time taken for analysis to complete. Select either 'genre_discogs_effnet' OR 'genre_musicnn'.
 
+# Application Architecture
+![alt text](https://github.com/intamixx/matnn/blob/main/matnn-application-architecuture.jpg?raw=true)
+
 # Submission / Upload API (POST)
 Select musical attributes for analysis by specifying tags required. This reduces time taken for analysis to complete. Select either 'genre_discogs_effnet' OR 'genre_musicnn'. Set just the filename with no options to perform a full set of predictions.
 
