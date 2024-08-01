@@ -61,7 +61,7 @@ curl -k 'https://mat.intamixx.uk:8090/api/status/01f436c22d490885a90853d7d048c5f
 ```
 ```
 {
-  "id": "discogseffnet-01f436c22d490885a90853d7d048c5ff-ntrh9",
+  "id": "01f436c22d490885a90853d7d048c5ff-ntrh9",
   "detail": "Successful Job discogseffnet-01f436c22d490885a90853d7d048c5ff-ntrh9"
   "started_at": "08-12-2023 03:36:25",
   "completed_at": "08-12-2023 03:41:19",
