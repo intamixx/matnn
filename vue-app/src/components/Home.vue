@@ -85,7 +85,7 @@
 
         <div class="row mt-4">
           <div class="col-md-2">
-            <button class="btn btn-primary" v-on:click="submitFiles()">Submit</button>
+            <button class="btn btn-primary" v-on:click="submitFiles()">Predict!</button>
           </div>
         </div>
       </div>
