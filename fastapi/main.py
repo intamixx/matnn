@@ -298,7 +298,7 @@ def generate_job_crd(job_name, image, args):
         kind="Job",
         metadata=metadata,
         spec=client.V1JobSpec(
-            parallelism=1, completions=1, suspend=True, template=template
+            parallelism=1, completions=1, suspend=True, template=template, backoff_limit=0
         ),
     )
 
