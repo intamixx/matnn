@@ -57,7 +57,7 @@ There is an average wait of around 30 seconds for a typical prediction to comple
 # Status API (GET)
 This will show the status of the prediction using the ID returned from the upload step above.
 ```
-curl -k 'https://mat.intamixx.uk:9090/api/status/01f436c22d490885a90853d7d048c5ff-ntrh9'
+curl -k 'https://mat.intamixx.uk:8090/api/status/01f436c22d490885a90853d7d048c5ff-ntrh9'
 ```
 ```
 {
