@@ -274,6 +274,8 @@ def generate_job_crd(job_name, image, args):
     """
     nfs_server = confparser('nfs-server', 'host')
     print (nfs_server)
+    mountdir = confparser('nfs-server', 'mountdir')
+    print (mountdir)
 
     metadata = client.V1ObjectMeta(
         generate_name=job_name, labels={"kueue.x-k8s.io/queue-name": "user-queue"}
@@ -286,7 +288,7 @@ def generate_job_crd(job_name, image, args):
         args=args,
         resources=client.V1ResourceRequirements(requests={'cpu': 1, 'memory': '200Mi',} ),
         security_context=client.V1SecurityContext(run_as_user=1000),
-        volume_mounts=[client.V1VolumeMount(name='nfs',mount_path='/mnt')],
+        volume_mounts=[client.V1VolumeMount(name='nfs',mount_path=mountdir)],
         )
     nfsvol = client.V1NFSVolumeSource(path="/exports", server=nfs_server)
     volume = client.V1Volume(name='nfs', nfs=nfsvol)
@@ -359,6 +361,7 @@ def epochtodatetime(epochtime):
 # Get the result of the job
 @app.get("/result/{job_id}")
 async def result_job(job_id):
+    mountdir = confparser('nfs-server', 'mountdir')
     # Check if in database
     result = db_search(job_id)
     if not result:
@@ -427,11 +430,12 @@ async def result_job(job_id):
         return {'id': job_id, 'audiofile': f'{audiofile}', 'started_at': f'{epochtodatetime(started_at)}', 'completed_at': f'{epochtodatetime(completed_at)}', 'completed': completed, 'result': tagdict}
 
 def check_uploaded_file_exists(job_id):
+    mountdir = confparser('nfs-server', 'mountdir')
     try:
-        if os.path.isdir('/mnt'):
+        if os.path.isdir(mountdir):
             # Extract filename (md5 based) from job_id
             fn = job_id.split('-')
-            uploaded_file="{}/{}".format("/mnt",fn[0])
+            uploaded_file="{}/{}".format(mountdir,fn[0])
             if os.path.exists(uploaded_file):
                return uploaded_file
             else:
@@ -521,6 +525,7 @@ def submit_job(filename, tagselection):
     """
     Run a job.
     """
+    mountdir = confparser('nfs-server', 'mountdir')
     md5=compute_md5(filename)
     print (tagselection)
     # Form the json formatted tag to go into database
@@ -528,7 +533,6 @@ def submit_job(filename, tagselection):
     webhook = {}
     #print (filename);
     mn_args_genre = "-x"
-    #mn_args_genre_type = "-x"
 
     # split out webhook into another dict
     try:
@@ -548,7 +552,6 @@ def submit_job(filename, tagselection):
         tags['genre'] = ''
         mn_args_genre = "-g"
         mn_args_genre_type = "musicnn"
-        #result_genre_output_file="/mnt/{}.genre".format(md5)
     except:
         print ("Genre musicnn not selected")
 
@@ -558,7 +561,6 @@ def submit_job(filename, tagselection):
         tags['genre'] = ''
         mn_args_genre = "-g"
         mn_args_genre_type = "discogseffnet"
-        #result_genre_output_file="/mnt/{}.genre".format(md5)
     except:
         print ("Genre discogs-effnet not selected")
 
@@ -567,7 +569,6 @@ def submit_job(filename, tagselection):
         print (f"BPM: {bpm}")
         tags['bpm'] = ''
         mn_args_bpm = "-b"
-        #result_bpm_output_file="/mnt/{}.bpm".format(md5)
     except:
         print ("BPM not selected")
         mn_args_bpm = "-x"
@@ -577,7 +578,6 @@ def submit_job(filename, tagselection):
         print (f"Key: {key}")
         tags['key'] = ''
         mn_args_key = "-k"
-        #result_key_output_file="/mnt/{}.key".format(md5)
     except:
         print ("Key not selected")
         mn_args_key = "-x"
@@ -587,7 +587,6 @@ def submit_job(filename, tagselection):
         print (f"Classifiers: {key}")
         tags['classifiers'] = ''
         mn_args_classifiers = "-a"
-        #result_classifiers_output_file="/mnt/{}.ae".format(md5)
     except:
         print ("APPR / ENGAGE not selected")
         mn_args_classifiers = "-x"
@@ -618,16 +617,15 @@ def submit_job(filename, tagselection):
 
     md5=compute_md5(filename)
     # This will run in a pod soon and will change here
-    #nfs_file="/data/nfs/{}".format(md5)
-    nfs_file="/mnt/{}".format(md5)
-    matnn_pod_nfs_file="/mnt/{}".format(md5)
+    #matnn_pod_nfs_file="/mnt/{}".format(md5)
+    matnn_pod_nfs_file="{}/{}".format(mountdir, md5)
 
     rand_id = id_generator()
     #print (rand_id)
 
     # Copy into nfs shared directory
     try:
-        shutil.move(filename, nfs_file)
+        shutil.move(filename, matnn_pod_nfs_file)
         #print("File %s copied successfully into %s" % (filename, output_file))
     except:
         raise HTTPException(status_code=500, detail=f'Error copying upload file {filename}')
