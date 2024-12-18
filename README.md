@@ -156,4 +156,33 @@ Questions? - intamixx@hotmail.com
 # To Do
 Improve App frontend
 
+# Run container locally
+Wrapper script for container intamixx/musicnn_v2
+```
+# docker run -v /home/local_mp3_dir:/container_mnt --rm -it intamixx/musicnn_v2:latest /musicnn/run.sh -h
+run.sh v1
 
+Usage: run.sh [options]
+Wrapper script to run matnn jobs
+
+-f filename of song
+-g genre tag required (musicnn or discogseffnet)
+-b bpm tag required
+-k key tag required
+-a approachability / engagement required
+-w webhook required (destination url)
+-i display job_id
+-h Display this help message and exit
+```
+```docker run -v /home/local_mp3_dir:/container_mnt --rm -it intamixx/musicnn_v2:latest /musicnn/run.sh -f /container_mnt/audio.mp3 -g discogseffnet -b -k -a
+```
+Puts the results into the mounted directory;
+```
+rwxr-xr-x 2 root root 4096 Jul 2 16:26 .
+drwx------ 10 root root 4096 Jul 2 16:24 ..
+-rw-r--r-- 1 root root 4877720 Jul 2 16:23 audio.mp3
+-rw-r--r-- 1 root root 200 Jul 2 16:28 audio.mp3.ae
+-rw-r--r-- 1 root root 24 Jul 2 16:28 audio.mp3.bpm
+-rw-r--r-- 1 root root 166 Jul 2 16:28 audio.mp3.genre
+-rw-r--r-- 1 root root 32 Jul 2 16:28 audio.mp3.key
+```
