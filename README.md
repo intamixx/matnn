@@ -174,11 +174,13 @@ Wrapper script to run matnn jobs
 -i display job_id
 -h Display this help message and exit
 ```
-```docker run -v /home/local_mp3_dir:/container_mnt --rm -it intamixx/musicnn_v2:latest /musicnn/run.sh -f /container_mnt/audio.mp3 -g discogseffnet -b -k -a
+
+```
+docker run -v /home/local_mp3_dir:/container_mnt --rm -it intamixx/musicnn_v2:latest /musicnn/run.sh -f /container_mnt/audio.mp3 -g discogseffnet -b -k -a
 ```
 Puts the results into the mounted directory;
 ```
-rwxr-xr-x 2 root root 4096 Jul 2 16:26 .
+drwxr-xr-x 2 root root 4096 Jul 2 16:26 .
 drwx------ 10 root root 4096 Jul 2 16:24 ..
 -rw-r--r-- 1 root root 4877720 Jul 2 16:23 audio.mp3
 -rw-r--r-- 1 root root 200 Jul 2 16:28 audio.mp3.ae
