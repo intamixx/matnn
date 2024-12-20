@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nfs-networkpolicy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: nfs-server
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.42.0.0/16
+    - ipBlock:
+        cidr: 10.43.0.0/16
+          #    - namespaceSelector:
+          #        matchLabels:
+          #          app: myproject
+    - podSelector:
+        matchLabels:
+          app: matnn
+    ports:
+    - protocol: TCP
+      port: 111
+    - protocol: UDP
+      port: 111
+    - protocol: TCP
+      port: 2049
+    - protocol: UDP
+      port: 2049
+    - protocol: TCP
+      port: 20048
+    - protocol: UDP
+      port: 20048
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.42.0.0/16
