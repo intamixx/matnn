@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: matnn-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: matnn
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 8090
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
