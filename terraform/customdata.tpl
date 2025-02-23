@@ -11,8 +11,7 @@ sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/u
 sudo apt-get update -y &&
 #sudo apt-get install docker-ce docker-ce-cli containerd.io -y &&
 export VERSION_STRING=5:24.0.0-1~ubuntu.22.04~jammy
-sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plug
-in -y
+sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin -y
 sudo usermod -aG docker ubuntu
 
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
