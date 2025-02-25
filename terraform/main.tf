@@ -6,7 +6,7 @@ terraform {
       version = "~> 2.15.0"
     }
     rke = {
-      source = "rancher/rke"
+      source  = "rancher/rke"
       version = "1.5.0"
     }
   }
@@ -20,6 +20,7 @@ variable "server_names" {
 
 provider "azurerm" {
   skip_provider_registration = true
+  subscription_id            = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   features {}
 }
 
@@ -62,12 +63,12 @@ resource "azurerm_subnet" "mtc-subnet" {
 
   #delegation {
   #  name = "delegation"
-#
-#    service_delegation {
-#      name    = "Microsoft.ContainerInstance/containerGroups"
-#      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action", "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"]
-#    }
-#  }
+  #
+  #    service_delegation {
+  #      name    = "Microsoft.ContainerInstance/containerGroups"
+  #      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action", "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"]
+  #    }
+  #  }
 }
 
 resource "azurerm_network_security_group" "mtc-sg" {
@@ -152,26 +153,26 @@ resource "azurerm_network_interface" "mtc-nic" {
 }
 
 resource "azurerm_network_interface_security_group_association" "mtc-nic-sg" {
-  for_each                  = toset(var.server_names)
+  for_each = toset(var.server_names)
   #name                      = each.value
   network_interface_id      = azurerm_network_interface.mtc-nic[each.key].id
   network_security_group_id = azurerm_network_security_group.mtc-sg.id
 }
 
 resource "azurerm_linux_virtual_machine" "mtc-vm" {
-  for_each            = toset(var.server_names)
-  name                = each.value
-  resource_group_name = azurerm_resource_group.mtc-rg.name
-  location            = azurerm_resource_group.mtc-rg.location
-  size                = "Standard_A4_v2"
-  admin_username      = "adminuser"
-  network_interface_ids = [ azurerm_network_interface.mtc-nic[each.key].id, ]
+  for_each              = toset(var.server_names)
+  name                  = each.value
+  resource_group_name   = azurerm_resource_group.mtc-rg.name
+  location              = azurerm_resource_group.mtc-rg.location
+  size                  = "Standard_A4_v2"
+  admin_username        = "adminuser"
+  network_interface_ids = [azurerm_network_interface.mtc-nic[each.key].id, ]
 
   custom_data = filebase64("customdata.tpl")
 
   admin_ssh_key {
     username   = "adminuser"
-    public_key = file("/root/terraform/mtcazurekey.pub")
+    public_key = file("~/.ssh/id_rsa.pub")
   }
 
   os_disk {
@@ -186,14 +187,14 @@ resource "azurerm_linux_virtual_machine" "mtc-vm" {
     version   = "latest"
   }
   provisioner "local-exec" {
-      command = templatefile("${var.host_os}-ssh-script.tpl", {
-          hostname = self.public_ip_address,
-          user = "adminuser",
-          identityfile = "~/.ssh/mtcazurekey"
-      })
-      #interpreter = var.host_os == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
-      #interpreter = "linux" == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
-      interpreter = ["bash", "-c"]
+    command = templatefile("${var.host_os}-ssh-script.tpl", {
+      hostname     = self.public_ip_address,
+      user         = "adminuser",
+      identityfile = "~/.ssh/mtcazurekey"
+    })
+    #interpreter = var.host_os == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
+    #interpreter = "linux" == "windows" ? ["Powershell", "-Command"] : ["bash", "-c"]
+    interpreter = ["bash", "-c"]
   }
 
   tags = {
@@ -202,20 +203,32 @@ resource "azurerm_linux_virtual_machine" "mtc-vm" {
 }
 
 data "azurerm_public_ip" "mtc-ip-data" {
-    for_each = toset(var.server_names)
-    name = azurerm_public_ip.mtc-ip[each.key].name
-    resource_group_name = azurerm_resource_group.mtc-rg.name
+  for_each            = toset(var.server_names)
+  name                = azurerm_public_ip.mtc-ip[each.key].name
+  resource_group_name = azurerm_resource_group.mtc-rg.name
+}
+data "azurerm_network_interface" "mtc-nic-data" {
+  for_each            = toset(var.server_names)
+  name                = azurerm_network_interface.mtc-nic[each.key].name
+  resource_group_name = azurerm_resource_group.mtc-rg.name
 }
 output "server_names" {
   value = [
-    for sn in var.server_names:
-        azurerm_linux_virtual_machine.mtc-vm[sn].name
-        ]
+    for sn in var.server_names :
+    azurerm_linux_virtual_machine.mtc-vm[sn].name
+  ]
 }
 output "server_ips" {
   value = [
-    for sn in var.server_names:
-        data.azurerm_public_ip.mtc-ip-data[sn].ip_address
+    for sn in var.server_names :
+    data.azurerm_public_ip.mtc-ip-data[sn].ip_address
+  ]
+}
+# Output private IP addresses from the NIC
+output "private_ips" {
+  value = [
+    for sn in var.server_names :
+    data.azurerm_network_interface.mtc-nic-data[sn].ip_configuration[*].private_ip_address
   ]
 }
 
