@@ -12,11 +12,11 @@ terraform {
   }
 }
 
-variable "server_names" {
-  type    = list(string)
-  default = ["k8-01", "k8-02"]
-  #count     = length(var.server_names)
-}
+#variable "server_names" {
+#  type    = list(string)
+#  default = ["k8-01", "k8-02"]
+#  #count     = length(var.server_names)
+#}
 
 provider "azurerm" {
   skip_provider_registration = true
