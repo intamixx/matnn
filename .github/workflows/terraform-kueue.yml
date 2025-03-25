@@ -1,0 +1,88 @@
+# This is a basic workflow that is manually triggered
+
+name: Terraform Kueue workflow
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # to trigger workflow on code push
+  #push:
+  #  branches:
+  #    - main
+
+  # to trigger workflow on PRs
+  pull_request:
+    branches:
+      - main
+#       with:
+#         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job
+  kueue-terraform-init:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-kueue
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Runs a single command using the runners shell
+    - name: run hello
+      run: echo "Hello ${{ inputs.name }}"
+    - name: terraform init
+      run: terraform init
+
+  kueue-terraform-plan:
+    needs: [kueue-terraform-init]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-kueue
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Terraform format
+      id: fmt
+      run: terraform fmt
+    - name: Terraform validate
+      id: validate
+      run: terraform validate
+    - name: terraform plan
+      id: plan
+      run: terraform plan
+      continue-on-error: false
+
+  kueue-terraform-apply:
+    needs: [kueue-terraform-init, kueue-terraform-plan]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-kueue
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Terraform apply
+      id: apply
+      run: terraform apply -auto-approve -input=false
+      continue-on-error: false
+
+  kueue-get-token:
+    needs: [kueue-terraform-init, kueue-terraform-plan, kueue-terraform-apply]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-kueue
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: get-sa-token
+      id: get-sa-cert
+      run: /bin/bash ./get_token.sh >> ../terraform-grafana/terraform.tfvars
