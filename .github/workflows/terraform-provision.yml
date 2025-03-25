@@ -1,0 +1,96 @@
+# This is a basic workflow that is manually triggered
+
+name: Terraform Provision workflow
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # to trigger workflow on code push
+  #push:
+  #  branches:
+  #    - main
+
+  # to trigger workflow on PRs
+  pull_request:
+    branches:
+      - main
+#       with:
+#         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "greet"
+  provision-terraform-init:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Runs a single command using the runners shell
+    - name: clone repo
+      run: git clone https://github.com/intamixx/yd/
+    - name: run hello
+      run: echo "Hello ${{ inputs.name }}"
+    - name: terraform init
+      run: cd yd/terraform-provision; terraform init
+
+  provision-terraform-plan:
+    needs: [provision-terraform-init]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-provision
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Terraform format
+      id: fmt
+      run: terraform fmt
+    - name: Terraform validate
+      id: validate
+      run: terraform validate
+    - name: terraform plan
+      id: plan
+      run: terraform plan
+      continue-on-error: false
+
+  provision-terraform-apply:
+    needs: [provision-terraform-init, provision-terraform-plan]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-provision
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Terraform apply
+      id: apply
+      run: terraform apply -auto-approve -input=false
+      continue-on-error: false
+
+  provision-create-node-list:
+    needs: [provision-terraform-init, provision-terraform-plan, provision-terraform-apply]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-provision
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Create node list kueue
+      id: create-nodes-kueue
+      run: /bin/bash ./create_terraform_nodes_list.sh >> ../terraform-kueue/terraform.tfvars
+    - name: Create node list rke
+      id: create-nodes-rke
+      run: /bin/bash ./create_terraform_nodes_list.sh >> ../terraform-rke/terraform.tfvars
+    - name: Create node list grafana
+      id: create-nodes-grafana
+      run: /bin/bash ./create_terraform_nodes_list.sh >> ../terraform-grafana/terraform.tfvars
