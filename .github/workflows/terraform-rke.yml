@@ -1,0 +1,91 @@
+# This is a basic workflow that is manually triggered
+
+name: Terraform RKE workflow
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # to trigger workflow on code push
+  #push:
+  #  branches:
+  #    - main
+
+  # to trigger workflow on PRs
+  pull_request:
+    branches:
+      - main
+#       with:
+#         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job
+  rke-terraform-init:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-rke
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Runs a single command using the runners shell
+    - name: run hello
+      run: echo "Hello ${{ inputs.name }}"
+    - name: terraform init
+      run: terraform init
+
+  rke-terraform-plan:
+    needs: [rke-terraform-init]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-rke
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Terraform format
+      id: fmt
+      run: terraform fmt
+    - name: Terraform validate
+      id: validate
+      run: terraform validate
+    - name: terraform plan
+      id: plan
+      run: terraform plan
+      continue-on-error: false
+
+  rke-terraform-apply:
+    needs: [rke-terraform-init, rke-terraform-plan]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-rke
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Terraform apply
+      id: apply
+      run: terraform apply -auto-approve -input=false
+      continue-on-error: false
+
+  rke-get-ca-cert:
+    needs: [rke-terraform-init, rke-terraform-plan, rke-terraform-apply]
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /mmfs1/data/scratch/runner/yd/terraform-rke
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: get-ca-cert
+      id: get-ca-cert
+      run: /bin/bash ./get_ca_cert.sh >> ../terraform-grafana/terraform.tfvars
+    - name: copy kube cluster config
+      id: copy
+      run: cp -v kube_config_cluster.yml ../terraform-kueue
