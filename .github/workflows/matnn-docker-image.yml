@@ -1,4 +1,4 @@
-name: Musicnn Docker Image CI
+name: Matnn Docker Image CI
 
 on:
   # Allows you to run this workflow manually from the Actions tab
@@ -20,4 +20,4 @@ jobs:
     - name: run hello
       run: echo "Hello ${{ inputs.name }}"
     - name: Build the Docker image
-      run: cd matnn/musicnn/docker && docker build . --file Dockerfile --tag musicnn_v3:$(date +%s)
+      run: cd matnn/matnn/docker && docker build . --file Dockerfile --tag matnn_v3:$(date +%s)
