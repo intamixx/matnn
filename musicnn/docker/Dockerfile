@@ -94,3 +94,4 @@ RUN chmod 750 -Rv /musicnn/*.py
 RUN chmod 750 -Rv /musicnn/*.sh
 
 WORKDIR "/musicnn"
+CMD ["/musicnn/run.sh"]
