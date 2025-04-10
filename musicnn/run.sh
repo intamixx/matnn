@@ -144,6 +144,7 @@ if ${key}; then
 fi
 if ${appr_engage}; then
                 echo "Approachability / Engagement tag required"
+                cd /musicnn/approach-engage
                 cmdstr="python3 /musicnn/approach-engage/approachability-engagement.py -f '${filename}'"
                 APPR_ENGAGE=`bash -c "${cmdstr}"`
                 echo "Approach / Engagement is $APPR_ENGAGE"
