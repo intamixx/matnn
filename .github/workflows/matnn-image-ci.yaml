@@ -1,0 +1,23 @@
+name: Musicnn Docker Image CI
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+#  push:
+#    branches: [ "main" ]
+#  pull_request:
+#    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clone the repository
+      run: git clone https://github.com/intamixx/matnn
+    - name: run hello
+      run: echo "Hello ${{ inputs.name }}"
+    - name: Build the Docker image
+      run: cd matnn/musicnn/docker && docker build . --file Dockerfile --tag musicnn_v3:$(date +%s)
