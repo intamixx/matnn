@@ -119,6 +119,11 @@ if ${genre}; then
                 cmdstr="python3 -m musicnn.tagger '${filename}' --model MSD_musicnn --topN 3 --length 3 --overlap 1 --print --save '${filename}.genre'"
                 bash -c "${cmdstr}"
                 ;;
+        magnatagatune)
+                echo "MagnaTagATune Genre tag required"
+                cmdstr="python3 -m musicnn.tagger '${filename}' --model MTT_musicnn --topN 3 --length 3 --overlap 1 --print --save '${filename}.genre'"
+                bash -c "${cmdstr}"
+                ;;
         discogseffnet)
                 echo "Discogs-effnet Genre tag required"
                 cmdstr="python3 /musicnn/genre-discogs-effnet.py -f '${filename}'"
