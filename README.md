@@ -21,7 +21,7 @@ Currently music files must be MP3 format and under 10 MB.
 
 Web upload form
 
-Uses [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [musicnn](https://github.com/jordipons/musicnn) or [magnatagatune] [https://mirg.city.ac.uk/codeapps/the-magnatagatune-dataset] to determine genres of music uploaded using API or website.
+Uses [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [musicnn](https://github.com/jordipons/musicnn) or [magnatagatune] (https://mirg.city.ac.uk/codeapps/the-magnatagatune-dataset) to determine genres of music uploaded using API or website.
 Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and return result to API.
 
 # Application Architecture
