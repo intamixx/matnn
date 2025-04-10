@@ -1,5 +1,6 @@
 # matnn
 [![Musicnn Docker Image CI](https://github.com/intamixx/matnn/actions/workflows/musicnn-docker-image.yml/badge.svg)](https://github.com/intamixx/matnn/actions/workflows/musicnn-docker-image.yml)
+[![Matnn Docker Image CI](https://github.com/intamixx/matnn/actions/workflows/matnn-docker-image.yml/badge.svg)](https://github.com/intamixx/matnn/actions/workflows/matnn-docker-image.yml)
 
 Tested on a kubernetes cluster v1.26.4 with Kueue 0.8.0
 
