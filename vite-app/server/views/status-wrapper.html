@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+   <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+//jobid = "00ba46e6fd66e7eae9ec9c43d0828580-opuft";
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+
+const delay = async () => {
+  await sleep(1000)
+  console.log("First")
+  await sleep(1000)
+  console.log("Second")
+  await sleep(1000)
+  console.log("Third")
+location.replace("/result/<%= id %>");
+}
+        function updateMatnn(){
+             $.ajax({
+        url: "/api/status/<%= id %>",
+        dataType: "json",
+        cache: false,
+        statusCode: {
+                200: function(JSONObject) {
+                        console.log(JSONObject)
+                        console.log("Done")
+                        console.log(JSONObject.detail);
+                        $("#currentJob").html(JSONObject.detail);
+                        delay()
+                        //location.replace("/test2.html");
+                        },
+                202: function(JSONObject) {
+                        console.log(JSONObject)
+                        console.log("Processing")
+                        console.log(JSONObject.detail);
+                        $("#currentJob").html(JSONObject.detail);
+                        },
+                404: function(JSONObject, textStatus, errorThrown) {
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject)
+                        console.log("TUTI")
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseJSON.detail);
+                        },
+                410: function(JSONObject, textStatus, errorThrown) {
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject);
+                        console.log(JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseJSON.detail);
+                        },
+                500: function(JSONObject, textStatus, errorThrown) {
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject);
+                        console.log(JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseJSON.detail);
+                        },
+                }
+                     });
+                    };
+        updateMatnn();
+        setInterval( "updateMatnn()", 10000 ); // refreshed every 60 sec
+</script>
+
+<body class="bg-gray-100 text-gray-800">
+
+  <div class="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-md">
+    <h1 class="text-2xl font-bold mb-4 text-center">Matnn Job Status</h1>
+
+                <h4 class="font-bold mb-4 text-left"><div id="currentJob"></div></h4>
+                <h4 class="font-bold mb-4 text-left">Kueue Job ID : <%= id %></h4>
+
+
+  </div>
+
+</body>
+</html>

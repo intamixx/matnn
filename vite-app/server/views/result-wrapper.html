@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+   <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+        function updateMatnn(){
+             $.ajax({
+        url: "/api/result/<%= id %>",
+        dataType: "json",
+        cache: false,
+        statusCode: {
+                200: function(JSONObject) {
+                        console.log(JSONObject)
+                        console.log("Done")
+                        //const substr = 'Successful';
+                        //if (html.includes(substr)) {
+                        //              console.log("Found shit");
+                        //      }
+                        //result = JSON.stringify(JSON.parse(html));
+                        //const json = JSON.parse(JSONObject)
+                        //console.log(JSONObject.result);
+                        //JSONObject = JSON.stringify(JSONObject);
+                        if (JSONObject.audiofile != "") {
+                                $("#currentJob_audiofile").html(JSONObject.audiofile);
+                                }
+                        if (JSONObject.result.genre == undefined) {
+                                console.log("No Genre details found");
+                                } else {
+                                console.log(JSONObject.result.genre);
+                                //console.log(JSONObject.result.genre);
+                                var genre_heading = "Genre :";
+                                $("#genre_heading").html(genre_heading);
+                                var genre = JSONObject.result.genre.join(', ');
+                                $("#currentJob_result_genre").html((genre));
+                                }
+                        if (JSONObject.result.bpm == undefined) {
+                                console.log("No BPM details found");
+                                } else {
+                                console.log(JSONObject.result.bpm);
+                                var bpm_heading = "BPM :";
+                                $("#bpm_heading").html(bpm_heading);
+                                $("#currentJob_result_bpm").html(JSONObject.result.bpm);
+                                }
+                        if (JSONObject.result.key == undefined) {
+                                console.log("No Key details found");
+                                } else {
+                                console.log(JSONObject.result.key);
+                                var key_heading = "Key :";
+                                $("#key_heading").html(key_heading);
+                                $("#currentJob_result_key").html(JSONObject.result.key);
+                                }
+                        //if ((JSONObject.result.classifiers != "") || (typeof JSONObject.result.classifiers === undefined)) {
+                        if (JSONObject.result.classifiers == undefined) {
+                                console.log("No classifiers found")
+                                } else {
+                                console.log(JSONObject.result.classifiers);
+                                //const res = JSON.parse(JSONObject.result.classifiers);
+                                Object.entries(JSONObject.result.classifiers).forEach((entry) => {
+                                  const [key, value] = entry;
+                                  console.log(`${key}: ${value}`);
+                                });
+                                var cleaned = JSON.stringify(JSONObject.result.classifiers, null, 2);
+                                //cleaned = (cleaned.replace(/\"/g, ""));
+                                cleaned = cleaned.replace(/[\"\[\]\{\}]+/g, '')
+                                var classifiers_heading = "Classifier :";
+                                $("#classifiers_heading").html(classifiers_heading);
+                                $("#currentJob_result_classifiers").html(cleaned);
+                                }
+                        if (JSONObject.started_at != "") {
+                                $("#currentJob_started_at").html(JSONObject.started_at);
+                                }
+                        if (JSONObject.completed_at != "") {
+                                $("#currentJob_completed_at").html(JSONObject.completed_at);
+                                }
+                        if (JSONObject.id != "") {
+                                $("#currentJob_id").html(JSONObject.id);
+                                }
+                        //delay()
+                        },
+                202: function(JSONObject) {
+                        console.log(JSONObject)
+                        console.log("Processing")
+                        //const substr = 'Successful';
+                        //if (html.includes(substr)) {
+                        //              console.log("Found shit");
+                        //      }
+                        //result = JSON.stringify(JSON.parse(html));
+                        console.log(JSONObject.detail);
+                        $("#currentJob").html(JSONObject.detail);
+                        },
+                404: function(JSONObject, textStatus, errorThrown) {
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject)
+                        console.log("TUTI")
+                        //const substr = 'Successful';
+                        //if (html.includes(substr)) {
+                        //              console.log("Found shit");
+                        //      }
+                        //result = JSON.stringify(JSON.parse(html));
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown);
+                        },
+                500: function(JSONObject, textStatus, errorThrown) {
+                        console.log(textStatus + ": " + JSONObject.status + " " + errorThrown);
+                        console.log(JSONObject);
+                        console.log(JSONObject.responseText);
+                        $("#currentJob").html(JSONObject.status + " " + errorThrown + " : " + JSONObject.responseText);
+                        },
+                }
+                     });
+                    };
+        updateMatnn();
+        //setInterval( "updateMatnn()", 10000 ); // refreshed every 60 sec
+</script>
+<body class="bg-gray-100 text-gray-800">
+
+  <div class="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-md">
+    <h1 class="text-2xl font-bold mb-4 text-center">Matnn Job Result</h1>
+
+                <div id="currentJob"></div>
+                <h4 class="font-bold mb-4 text-left">File : <div id="currentJob_audiofile"></div></h4>
+                <h4 class="font-bold mb-4 text-left"><div id="genre_heading"></div><div id="currentJob_result_genre"></div></h4>
+                <h4 class="font-bold mb-4 text-left"><div id="bpm_heading"></div><div id="currentJob_result_bpm"></div></h4>
+                <h4 class="font-bold mb-4 text-left"><div id="key_heading"></div><div id="currentJob_result_key"></div></h4>
+                <h4 class="font-bold mb-4 text-left"><div id="classifiers_heading"></div><div id="currentJob_result_classifiers"></div></h4>
+                <h4 class="font-bold mb-4 text-left">Id : <div id="currentJob_id"></div></h4>
+                <h4 class="font-bold mb-4 text-left">Started At : <div id="currentJob_started_at"></div></h4>
+                <h4 class="font-bold mb-4 text-left">Completed At : <div id="currentJob_completed_at"></div></h4>
+
+  </div>
+
+</body>
+</html>
