@@ -565,6 +565,15 @@ def submit_job(filename, tagselection):
         print ("Genre discogs-effnet not selected")
 
     try:
+        genre = tagselection['tags']['genre_magnatagatune']
+        print (f"Genre magnatagatune_effnet: {genre}")
+        tags['genre'] = ''
+        mn_args_genre = "-g"
+        mn_args_genre_type = "magnatagatune"
+    except:
+        print ("Genre magnatagatune not selected")
+
+    try:
         bpm = tagselection['tags']['bpm']
         print (f"BPM: {bpm}")
         tags['bpm'] = ''
