@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --allow-downgrades --allow-change-held-
         python${PYTHON_VERSION}-pip \
         python${PYTHON_VERSION}-dev \
         npm \
+        jq \
         supervisor
 
 RUN apt install -y ca-certificates curl gnupg
