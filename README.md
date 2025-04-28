@@ -4,7 +4,7 @@
 
 Tested on a kubernetes cluster v1.26.4 with Kueue 0.8.0
 
-Main Website: [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
+Main Website: [https://matnn.intamixx.uk/about](https://matnn.intamixx.uk/about)
 
 Vue App - [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
