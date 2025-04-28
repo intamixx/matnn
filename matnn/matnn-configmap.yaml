@@ -9,7 +9,7 @@ data:
     host = 10.43.3.235
     mountdir = /mnt
     [dockerhub]
-    image = intamixx/musicnn_v2:latest
+    image = intamixx/musicnn_v3:latest
   ssl-privatekey: |
     -----BEGIN PRIVATE KEY-----
     MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDcmv1egWUXq/+7
