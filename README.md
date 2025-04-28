@@ -6,7 +6,7 @@ Tested on a kubernetes cluster v1.26.4 with Kueue 0.8.0
 
 Main Website: [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
-Vue App - [https://matnn.intamixx.uk/predict](https://matnn.intamixx.uk/predict)
+Vue App - [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
 Direct service frontend GUI: [https://mat.intamixx.uk:8090/upload](https://mat.intamixx.uk:8090/upload)
 
