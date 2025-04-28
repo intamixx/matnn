@@ -14,11 +14,11 @@ spec:
     spec:
       containers:
       - name: matnn
-        image: intamixx/matnn:latest
+        image: intamixx/matnn_v3:latest
         ports:
         - name: nodejs
           containerPort: 8090
-        - name: vuejs
+        - name: vitejs
           containerPort: 9090
         - name: fastapi
           containerPort: 8000
