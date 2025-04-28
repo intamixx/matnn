@@ -51,6 +51,7 @@ RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
 
 # Add user to container
+RUN userdel ubuntu
 RUN useradd -ms /bin/bash web
 #USER web
 #WORKDIR /home/web
