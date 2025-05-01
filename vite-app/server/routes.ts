@@ -252,7 +252,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 	    case 422:
 	        return res.status(500).json({ message: "Error with backend" });
 		break;
-	    case 404:
+	    case 503:
 	        return res.status(500).json({ message: "Error with backend" });
 		break;
 	    default:
