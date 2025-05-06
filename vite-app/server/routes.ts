@@ -236,30 +236,32 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
      const fastapi_call = start(filepath, tagobj).then((response) => {
         console.log('*********************************Received outside:', response);
-	console.log(response);
-	switch (response.status) {
+        switch (response.status) {
             case 200:
-        	validatedData.faid = response.data.id;
-        	console.log(response.data.id);
-      		return res.status(200).json({ message: "Form submitted successfully", data: validatedData });
-		break;
-	    case 404:
-	        return res.status(500).json({ message: "Error with backend" });
-		break;
-	    case 413:
-	        return res.status(500).json({ message: "Error with backend" });
-		break;
-	    case 422:
-	        return res.status(500).json({ message: "Error with backend" });
-		break;
-	    case 503:
-	        return res.status(500).json({ message: "Error with backend" });
-		break;
-	    default:
-	        return res.status(500).json({ message: "Error with backend" });
-		break;
-	}
- 
+                console.log(response.data.id);
+                validatedData.faid = response.data.id;
+                if (validatedData.faid == "") {
+                        return res.status(500).json({ message: "Error with backend", data: validatedData });
+                }
+                return res.status(200).json({ message: "Form submitted successfully", data: validatedData });
+                break;
+            case 404:
+                return res.status(500).json({ message: "Error with backend", data: validatedData });
+                break;
+            case 413:
+                return res.status(500).json({ message: "Error with backend", data: validatedData });
+                break;
+            case 422:
+                return res.status(500).json({ message: "Error with backend", data: validatedData });
+                break;
+            case 404:
+                return res.status(500).json({ message: "Error with backend", data: validatedData });
+                break;
+            default:
+                return res.status(500).json({ message: "Error with backend", data: validatedData });
+                break;
+        }
+
      });
 
      await fastapi_call;
