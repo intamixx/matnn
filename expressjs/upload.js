@@ -215,7 +215,7 @@ router.post('/', function (req, res) {
         tagobj.tags.genre_musicnn = true;
         }
 
-    if ((typeof obj_parse.tags.genre_magnatagatune == 'boolean') || (req.body.genre_musicnn)) {
+    if ((typeof obj_parse.tags.genre_magnatagatune == 'boolean') || (req.body.genre_magnatagatune) {
        console.log("Setting Magnatagatune");
        tagobj.tags.genre_magnatagatune = true;
     }
