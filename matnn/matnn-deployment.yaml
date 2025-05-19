@@ -65,7 +65,6 @@ spec:
             - key: ssl-certificate
               path: certificate.pem
       - name: nfs
-        nfs:
-          server: 10.43.3.234
-          path: /exports
+        persistentVolumeClaim:
+          claimName: nfs-claim
       restartPolicy: Always
