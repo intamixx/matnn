@@ -290,8 +290,10 @@ def generate_job_crd(job_name, image, args):
         security_context=client.V1SecurityContext(run_as_user=1000),
         volume_mounts=[client.V1VolumeMount(name='nfs',mount_path=mountdir)],
         )
-    nfsvol = client.V1NFSVolumeSource(path="/exports", server=nfs_server)
-    volume = client.V1Volume(name='nfs', nfs=nfsvol)
+    #nfsvol = client.V1NFSVolumeSource(path="/exports", server=nfs_server)
+    volume = client.V1Volume(name='nfs', persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+        claim_name="nfs-claim"
+    ))
 
     # Job template
     template = {"spec": {"containers": [container], "volumes": [volume], "restartPolicy": "Never"}}
