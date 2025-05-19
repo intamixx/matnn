@@ -33,7 +33,7 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: clone repo
-      run: git clone https://github.com/intamixx/yd/
+      run: git clone https://github.com/intamixx/matnn/
     - name: run hello
       run: echo "Hello ${{ inputs.name }}"
     - name: terraform init
@@ -45,7 +45,7 @@ jobs:
     runs-on: self-hosted
     defaults:
       run:
-        working-directory: /mmfs1/data/scratch/runner/yd/terraform-provision
+        working-directory: /mmfs1/data/scratch/runner/matnn/terraform/terraform-provision
     
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -66,7 +66,7 @@ jobs:
     runs-on: self-hosted
     defaults:
       run:
-        working-directory: /mmfs1/data/scratch/runner/yd/terraform-provision
+        working-directory: /mmfs1/data/scratch/runner/matnn/terraform/terraform-provision
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -81,7 +81,7 @@ jobs:
     runs-on: self-hosted
     defaults:
       run:
-        working-directory: /mmfs1/data/scratch/runner/yd/terraform-provision
+        working-directory: /mmfs1/data/scratch/runner/matnn/terraform/terraform-provision
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
