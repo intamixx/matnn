@@ -276,6 +276,8 @@ def generate_job_crd(job_name, image, args):
     print (nfs_server)
     mountdir = confparser('nfs-server', 'mountdir')
     print (mountdir)
+    mountdir = confparser('nfs-server', 'claim_name')
+    print (claim_name)
 
     metadata = client.V1ObjectMeta(
         generate_name=job_name, labels={"kueue.x-k8s.io/queue-name": "user-queue"}
@@ -292,7 +294,7 @@ def generate_job_crd(job_name, image, args):
         )
     #nfsvol = client.V1NFSVolumeSource(path="/exports", server=nfs_server)
     volume = client.V1Volume(name='nfs', persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-        claim_name="nfs-claim"
+        claim_name=claim_name
     ))
 
     # Job template
