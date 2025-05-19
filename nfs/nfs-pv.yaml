@@ -9,10 +9,13 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: "nfs-service.default.svc.cluster.local"
-    path: "/exports"
+    server: "10.43.3.234"
+    path: "/"
   mountOptions:
-    - nfsvers=4
+    - vers=4.2
+    - noatime
+    - rsize=1048576
+    - wsize=1048576
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
