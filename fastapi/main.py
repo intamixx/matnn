@@ -276,7 +276,7 @@ def generate_job_crd(job_name, image, args):
     print (nfs_server)
     mountdir = confparser('nfs-server', 'mountdir')
     print (mountdir)
-    mountdir = confparser('nfs-server', 'claim_name')
+    claim_name = confparser('nfs-server', 'claim_name')
     print (claim_name)
 
     metadata = client.V1ObjectMeta(
