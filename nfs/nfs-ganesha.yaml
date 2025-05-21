@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-server
+  template:
+    metadata:
+      labels:
+        app: nfs-server
+    spec:
+      containers:
+      - name: nfs-server
+        image: intamixx/nfs-ganesha:latest
+        ports:
+        - name: nfs
+          containerPort: 2049
+        - name: mountd
+          containerPort: 20048
+        - name: rpcbind
+          containerPort: 111
+        securityContext:
+          privileged: true
+        env:
+        - name: PSEUDO_PATH
+          value: /exports
+        - name: EXPORT_PATH
+          value: /exports
+        - name: ANON_USER
+          value: web
+        - name: ANON_GROUP
+          value: web
+        volumeMounts:
+        - name: storage
+          mountPath: /exports
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: nfs-local-claim
