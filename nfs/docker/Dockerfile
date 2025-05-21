@@ -9,14 +9,11 @@ ENV EXPORT_PATH "/exports"
 RUN apt-get update && apt-get install -y --allow-downgrades --allow-change-held-packages --no-install-recommends \
         nfs-ganesha \
         nfs-ganesha-vfs \
-        curl \
         vim \
         wget \
         ca-certificates \
         apt-transport-https \
-        ca-certificates \
         netbase \
-        wget \
         curl \
         gnupg \
         procps \
@@ -50,7 +47,6 @@ RUN apt-get update && apt-get install -y --allow-downgrades --allow-change-held-
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
 
 ADD Dockerfile entrypoint.sh /
 RUN chmod +x /entrypoint.sh
@@ -65,5 +61,5 @@ RUN useradd -ms /bin/bash web
 EXPOSE 111 111/udp 2049 20048 38465-38467
 
 # entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/tini", "--", "/entrypoint.sh"]
 CMD ["-F", "-L", "/dev/stdout", "-f", "/etc/ganesha/ganesha.conf"]
