@@ -9,6 +9,7 @@ data:
     host = 10.43.3.235
     mountdir = /mnt
     claim_name = nfs-claim
+    storage_volume = nfs
     [dockerhub]
     image = intamixx/musicnn_v3:latest
   ssl-privatekey: |
