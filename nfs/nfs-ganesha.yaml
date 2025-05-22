@@ -36,6 +36,24 @@ spec:
         volumeMounts:
         - name: storage
           mountPath: /exports
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "showmount -e localhost"
+          initialDelaySeconds: 10
+          periodSeconds: 15
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "rpcinfo -u localhost nfs 3"
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          failureThreshold: 3
       volumes:
       - name: storage
         persistentVolumeClaim:
