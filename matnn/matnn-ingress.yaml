@@ -9,8 +9,13 @@ metadata:
     nginx.org/proxy-read-timeout: 300s
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  tls:
+    - hosts:
+        - matnn-app.intamixx.uk
+      secretName: matnn-app-tls-secret
   rules:
-  - http:
+  - host: matnn-app.intamixx.uk
+    http:
       paths:
       - path: /
         pathType: Prefix
