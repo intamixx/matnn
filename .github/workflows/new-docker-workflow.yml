@@ -9,12 +9,14 @@ on:
 #    branches: [ "main" ]
 
 jobs:
-
   docker:
+    runs-on: ubuntu-latest
     env:
       IMAGE: intamixx/musicnn
-    runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Prepare
         id: prep
         run: |
@@ -30,7 +32,6 @@ jobs:
           echo BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') >> $GITHUB_OUTPUT
           echo BUILD_ID=${BUILD_ID} >> $GITHUB_OUTPUT
           echo LATEST_ID=${LATEST_ID} >> $GITHUB_OUTPUT          
-
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -54,7 +55,6 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ steps.prep.outputs.BUILD_ID }}
             ${{ env.IMAGE }}:${{ steps.prep.outputs.LATEST_ID }}
-
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
