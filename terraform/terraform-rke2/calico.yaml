@@ -1,0 +1,58 @@
+# calico.yaml (minimal)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: calico-system
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: calico-node
+  namespace: calico-system
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: calico-node
+  namespace: calico-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: calico-node
+  template:
+    metadata:
+      labels:
+        k8s-app: calico-node
+    spec:
+      hostNetwork: true
+      serviceAccountName: calico-node
+      containers:
+        - name: calico-node
+          image: calico/node:v3.25.0
+          env:
+            - name: CALICO_NETWORKING_BACKEND
+              value: "bird"
+            - name: CLUSTER_TYPE
+              value: "k8s,operator"
+            - name: CALICO_K8S_NODE_REF
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /lib/modules
+              name: lib-modules
+              readOnly: true
+            - mountPath: /run/xtables.lock
+              name: xtables-lock
+              readOnly: false
+      volumes:
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+        - name: xtables-lock
+          hostPath:
+            path: /run/xtables.lock
