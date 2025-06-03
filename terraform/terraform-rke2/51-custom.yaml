@@ -1,0 +1,14 @@
+# 51-custom.yaml
+disable:
+  - rke2-canal            # disables the default CNI so you can install your own (e.g., Cilium)
+
+node-label:
+  - "node=<node-name>"    # useful for targeting nodes in workloads
+
+node-ip: "<internal-node-ip>"  # helps RKE2 bind to the internal IP for inter-node communication
+
+# Optional extras:
+# kubelet-arg:
+#   - "eviction-hard=memory.available<500Mi,nodefs.available<10%"
+# tls-san:
+#   - "<load-balancer-or-external-name>"
