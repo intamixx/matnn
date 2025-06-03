@@ -1,0 +1,53 @@
+# cilium.yaml (minimal)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-system
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cilium
+  namespace: kube-system
+  labels:
+    k8s-app: cilium
+spec:
+  selector:
+    matchLabels:
+      k8s-app: cilium
+  template:
+    metadata:
+      labels:
+        k8s-app: cilium
+    spec:
+      hostNetwork: true
+      serviceAccountName: cilium
+      containers:
+        - name: cilium-agent
+          image: cilium/cilium:v1.15.4
+          securityContext:
+            privileged: true
+          env:
+            - name: KUBERNETES_SERVICE_HOST
+              value: "<API_SERVER_IP>"
+            - name: KUBERNETES_SERVICE_PORT
+              value: "6443"
+          volumeMounts:
+            - mountPath: /var/run/cilium
+              name: cilium-run
+            - mountPath: /sys/fs/bpf
+              name: bpf
+      volumes:
+        - name: cilium-run
+          hostPath:
+            path: /var/run/cilium
+        - name: bpf
+          hostPath:
+            path: /sys/fs/bpf
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cilium
+  namespace: kube-system
