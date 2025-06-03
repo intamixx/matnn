@@ -8,11 +8,35 @@ terraform {
   }
 }
 
+variable "nodes" {
+  type = map(object({
+    address          = string
+    internal_address = string
+    user             = string
+    ssh_key          = string
+    role             = list(string)
+  }))
+}
+
+variable "cni" {
+  type    = string
+  default = "cilium"
+  description = "CNI plugin to install. Supported: cilium, calico, none"
+  validation {
+    condition     = contains(["cilium", "calico", "none"], var.cni)
+    error_message = "cni must be one of cilium, calico, or none"
+  }
+}
+
 locals {
   join_info = {
     url   = try(module.rke2_nodes["node1"].join_url, "")
     token = try(module.rke2_nodes["node1"].join_token, "")
   }
+
+  cni_file = var.cni == "cilium" ? "${path.root}/cilium.yaml" :
+             var.cni == "calico" ? "${path.root}/calico.yaml" :
+             ""
 }
 
 module "rke2_nodes" {
@@ -21,19 +45,19 @@ module "rke2_nodes" {
 
   for_each = var.nodes
 
-  server_use_strategy               = "create"
-  server_address                    = each.value.address
-  server_domain_name                = each.key
-  server_add_domain                 = false
+  server_use_strategy                = "create"
+  server_address                   = each.value.address
+  server_domain_name               = each.key
+  server_add_domain               = false
   server_direct_access_use_strategy = "ssh"
   server_cloudinit_use_strategy     = "skip"
 
   server_user = {
-    user             = each.value.user
-    public_ssh_key   = file("${each.value.ssh_key}.pub")
-    ssh_private_key  = file(each.value.ssh_key)
-    user_workfolder  = "/home/${each.value.user}"
-    timeout          = 10
+    user            = each.value.user
+    public_ssh_key  = file("${each.value.ssh_key}.pub")
+    ssh_private_key = file(each.value.ssh_key)
+    user_workfolder = "/home/${each.value.user}"
+    timeout         = 10
   }
 
   install_use_strategy     = "tar"
@@ -48,6 +72,8 @@ module "rke2_nodes" {
   config_use_strategy     = "merge"
   config_supplied_name    = "51-custom.yaml"
   config_supplied_content = <<-EOT
+disable:
+  - rke2-canal
 node-label:
   - "node=${each.key}"
 node-ip: "${each.value.internal_address}"
@@ -56,25 +82,38 @@ EOT
   retrieve_kubeconfig = each.key == "node1"
 }
 
-# Write kubeconfig to file
 resource "local_file" "kube_config" {
   filename          = "${path.root}/kube_config_cluster.yml"
   sensitive_content = module.rke2_nodes["node1"].kube_config
 }
 
-# Write CA certificate to file
 resource "local_file" "ca_crt" {
   filename          = "${path.root}/ca.crt"
   sensitive_content = module.rke2_nodes["node1"].ca_crt
 }
 
-# Write join token to file
 resource "local_file" "join_token" {
   filename          = "${path.root}/rke2_join.token"
   sensitive_content = module.rke2_nodes["node1"].join_token
 }
 
-# Outputs
+resource "null_resource" "install_cni" {
+  count = local.cni_file != "" ? 1 : 0
+
+  triggers = {
+    cni_file   = filesha256(local.cni_file)
+    kubeconfig = filesha256(local_file.kube_config.filename)
+  }
+
+  provisioner "local-exec" {
+    command = "kubectl apply -f ${local.cni_file} --kubeconfig=${local_file.kube_config.filename}"
+  }
+
+  depends_on = [
+    local_file.kube_config
+  ]
+}
+
 output "join_token" {
   value     = module.rke2_nodes["node1"].join_token
   sensitive = true
