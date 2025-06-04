@@ -6,7 +6,7 @@ Tested on a kubernetes cluster v1.26.4 with Kueue 0.8.0
 
 Main Website: [https://matnn.intamixx.uk/about](https://matnn.intamixx.uk/about)
 
-Vue App - [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
+Vite App - [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
 Direct service frontend GUI: [https://mat.intamixx.uk:8090/upload](https://mat.intamixx.uk:8090/upload)
 
@@ -21,8 +21,6 @@ Matnn utilizes the Discogs-EffNet model from Essentia to predict music classific
 To upload your music, use either the simple web form or the CLI driven API service.
 
 Currently music files must be MP3 format and under 10 MB.
-
-Web upload form
 
 Uses [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [musicnn](https://github.com/jordipons/musicnn) or [magnatagatune](https://mirg.city.ac.uk/codeapps/the-magnatagatune-dataset) to determine genres of music uploaded using API or website.
 Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and return result to API.
