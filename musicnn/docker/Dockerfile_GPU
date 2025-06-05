@@ -30,14 +30,24 @@ RUN apt-get update && apt-get install -y --allow-downgrades --allow-change-held-
         python${PYTHON_VERSION} \
         python${PYTHON_VERSION}-dev
 
-RUN curl -L -o cuda-repo-ubuntu2004-11-0-local_11.0.2-450.51.05-1_amd64.deb http://developer.download.nvidia.com/compute/cuda/11.0.2/local_installers/cuda-repo-ubuntu2004-11-0-local_11.0.2-450.51.05-1_amd64.deb
-RUN dpkg -i cuda-repo-ubuntu2004-11-0-local_11.0.2-450.51.05-1_amd64.deb
-RUN cd /var/cuda-repo-ubuntu2004-11-0-local && apt-get install ./cuda-cudart-11-0_11.0.194-1_amd64.deb ./cuda-nvrtc-11-0_11.0.194-1_amd64.deb ./libcusolver-11-0_10.5.0.218-1_amd64.deb
-RUN cd /var/cuda-repo-ubuntu2004-11-0-local && apt-get install ./libcublas-11-0_11.1.0.229-1_amd64.deb ./libcufft-11-0_10.2.0.218-1_amd64.deb ./libcurand-11-0_10.2.1.218-1_amd64.deb ./libcusparse-11-0_11.1.0.218-1_amd64.deb
-RUN cd /var/cuda-repo-ubuntu2004-11-0-local && dpkg --force-all --ignore-depends=cuda-compiler-11-0,cuda-documentation-11-0,cuda-nvml-dev-11-0,cuda-samples-11-0,libnpp-11-0,libnvjpeg-11-0,cuda-tools-11-0,cuda-libraries-dev-11-0 -i cuda-toolkit-11-0_11.0.2-1_amd64.deb
-RUN cd /var/cuda-repo-ubuntu2004-11-0-local && dpkg --force-all --ignore-depends=cuda-cudart-dev-11-0 -i cuda-nvcc-11-0_11.0.194-1_amd64.deb
-RUN rm -fv /cuda-repo-ubuntu2004-11-0-local_11.0.2-450.51.05-1_amd64.deb /var/cuda-repo-ubuntu2004-11-0-local/*
-RUN ln -s /usr/local/cuda-11.0/targets/x86_64-linux/lib/libcusolver.so.10 /usr/local/cuda-11.0/targets/x86_64-linux/lib/libcusolver.so.11
+RUN curl -L -o cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb
+RUN dpkg -i cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb
+RUN cd /var/cuda-repo-ubuntu2004-11-8-local && dpkg --force-all -i ./cuda-cudart-11-8_11.8.89-1_amd64.deb ./cuda-nvrtc-11-8_11.8.89-1_amd64.deb ./libcusolver-11-8_11.4.1.48-1_amd64.deb ./cuda-toolkit-11-8-config-common_11.8.89-1_all.deb
+RUN cd /var/cuda-repo-ubuntu2004-11-8-local && dpkg --force-all -i ./libcublas-11-8_11.11.3.6-1_amd64.deb ./libcufft-11-8_10.9.0.58-1_amd64.deb ./libcurand-11-8_10.3.0.86-1_amd64.deb ./libcusparse-11-8_11.7.5.86-1_amd64.deb
+RUN cd /var/cuda-repo-ubuntu2004-11-8-local && dpkg --force-all --ignore-depends=cuda-compiler-11-8,cuda-documentation-11-8,cuda-nvml-dev-11-8,cuda-samples-11-8,libnpp-11-8,libnvjpeg-11-8,cuda-tools-11-8,cuda-libraries-dev-11-8 -i cuda-toolkit-11-8_11.8.0-1_amd64.deb
+RUN cd /var/cuda-repo-ubuntu2004-11-8-local && dpkg --force-all --ignore-depends=cuda-cudart-dev-11-8 -i cuda-nvcc-11-8_11.8.89-1_amd64.deb
+RUN rm -fv /cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb /var/cuda-repo-ubuntu2004-11-8-local/*
+
+# For TensorRT optimizations, install packages
+# python3-libnvinfer_8.6.1.6-1+cuda11.8_amd64.deb, libnvinfer8_8.6.1.6-1+cuda11.8_amd64.deb, libnvinfer-plugin8_8.6.1.6-1+cuda11.8_amd64.deb
+# from
+# https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/secure/8.6.1/local_repos/nv-tensorrt-local-repo-ubuntu2004-8.6.1-cuda-11.8_1.0-1_amd64.deb
+
+# install cuDNN v8.9.7
+# First register here: https://developer.nvidia.com/developer-program/signup
+# install libcudnn8_8.9.7.29-1+cuda11.8_amd64.deb
+# from
+# https://developer.nvidia.com/downloads/compute/cudnn/secure/8.9.7/local_installers/11.x/cudnn-local-repo-ubuntu2004-8.9.7.29_1.0-1_amd64.deb/
 
 #RUN if [[ "${PYTHON_VERSION}" == "3" ]]; then \
 #        apt-get install -y python${PYTHON_VERSION}-distutils; \
