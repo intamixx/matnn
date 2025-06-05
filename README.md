@@ -174,11 +174,11 @@ Wrapper script to run matnn jobs
 ```
 
 ```
-docker run -v /home/local_mp3_dir:/container_mnt --rm -it intamixx/musicnn_v2:latest /musicnn/run.sh -f /container_mnt/audio.mp3 -g discogseffnet -b -k -a
+docker run -v /home/local_mp3_dir:/container_mnt --rm -it intamixx/musicnn_v3:latest /musicnn/run.sh -f /container_mnt/audio.mp3 -g discogseffnet -b -k -a
 ```
-or with GPU support provided by the docker image musicnn_v2_gpu:latest
+or with GPU support (Cuda 11.8) provided by the docker image musicnn_v3_gpu:latest
 ```
-docker run -v /home/local_mp3_dir:/container_mnt -e "PATH=$PATH:/usr/local/cuda/bin" -e "LD_LIBRARY_PATH=/usr/local/cuda-11.0/lib64" --gpus all -it --rm intamixx/musicnn_v2_gpu:latest /musicnn/run.sh -f /container_mnt/audio.mp3 -g discogseffnet -b -k -a
+docker run -v /home/local_mp3_dir:/container_mnt -e "PATH=$PATH:/usr/local/cuda/bin" -e "LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64" --gpus all -it --rm intamixx/musicnn_v3_gpu:latest /musicnn/run.sh -f /container_mnt/audio.mp3 -g discogseffnet -b -k -a
 
 ```
 Puts the results into the mounted directory;
