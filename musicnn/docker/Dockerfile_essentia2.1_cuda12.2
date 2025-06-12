@@ -1,0 +1,184 @@
+FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04
+
+ENV LANG C.UTF-8
+
+ENV TENSORFLOW_VERSION=2.15
+ENV NUMPY_VERSION=1.26.4
+ENV MATPLOTLIB_VERSION=3.10.3
+ENV ATTRS_VERSION=23.2.0
+ENV KERAS_VERSION=2.15
+ENV LIBROSA_VERSION=0.11.0
+ENV ESSENTIA_VERSION=2.1b6.dev1110
+
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+ARG python=3
+ENV PYTHON_VERSION=${python}
+
+# Set default shell to /bin/bash
+SHELL ["/bin/bash", "-cu"]
+
+RUN apt-get update \
+    && apt-get -y upgrade \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+       python3-six python3-yaml python3-dev python3-pip libeigen3-dev \
+       libfftw3-3 libyaml-0-2 libtag1v5 libsamplerate0 \
+       libavcodec58 libavformat58 libavutil56 libswresample3 libchromaprint1
+
+RUN apt-get update \
+    && apt-get install -y build-essential git python3-dev libeigen3-dev \
+    libfftw3-dev libavcodec-dev libavformat-dev libswresample-dev \
+    libsamplerate0-dev libtag1-dev libyaml-dev libchromaprint-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        curl \
+        vim \
+        rsync \
+        pkg-config \
+        wget
+
+# Install Keras, numpy, librosa
+RUN pip install future typing cog pandas seaborn
+RUN pip install numpy==${NUMPY_VERSION} \
+        librosa==${LIBROSA_VERSION} \
+        keras==${KERAS_VERSION} \
+        attrs==${ATTRS_VERSION} \
+        matplotlib==${MATPLOTLIB_VERSION}
+
+# Install bazel
+RUN wget https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-amd64 && chmod +x bazelisk-linux-amd64 && mv bazelisk-linux-amd64 /usr/local/bin/bazel
+
+# Setup pkgconfig for essentia to find tensorflow and paths for tensorflow headers
+RUN mkdir /usr/local/lib/pkgconfig && mkdir -p /usr/local/lib/tensorflow/c && mkdir -p /usr/local/lib/tensorflow/cc && mkdir -p /usr/local/lib/tensorflow/tsl
+
+RUN cat <<'EOF' > /usr/local/lib/pkgconfig/tensorflow.pc
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/tensorflow
+
+Name: tensorflow
+Description: TensorFlow C API
+Version: 2.x
+Cflags: -I${includedir}
+Libs: -L${libdir} -ltensorflow
+EOF
+
+# Compile tensorflow
+# Set environment variables for non-interactive ./configure
+ENV PYTHON_BIN_PATH="/usr/bin/python3" \
+    USE_DEFAULT_PYTHON_LIB_PATH="1" \
+    TF_ENABLE_XLA="1" \
+    TF_NEED_CUDA="1" \
+    CUDA_TOOLKIT_PATH="/usr/local/cuda-12.2" \
+    CUDNN_INSTALL_PATH="/usr/lib/x86_64-linux-gnu" \
+    TF_CUDA_VERSION="12.2" \
+    TF_CUDNN_VERSION="8" \
+    TF_CUDA_COMPUTE_CAPABILITIES="7.5,8.6" \
+    TF_NEED_TENSORRT="0" \
+    TF_NEED_MPI="0" \
+    TF_NEED_ROCM="0" \
+    TF_SET_ANDROID_WORKSPACE="0"
+
+RUN cd /opt && git clone https://github.com/tensorflow/tensorflow.git \
+    && cd /opt/tensorflow && git checkout r${TENSORFLOW_VERSION}
+RUN cat <<'EOF' > /opt/tensorflow/.tf_configure.bazelrc
+    build --action_env PYTHON_BIN_PATH="/usr/bin/python3"
+    build --action_env PYTHON_LIB_PATH="/usr/lib/python3/dist-packages"
+    build --python_path="/usr/bin/python3"
+    build --action_env CUDA_TOOLKIT_PATH="/usr/local/cuda-12.2"
+    build --action_env TF_CUDA_COMPUTE_CAPABILITIES="7.5,8.6"
+    build --action_env LD_LIBRARY_PATH="/usr/local/cuda-12.2/lib64"
+    build --action_env GCC_HOST_COMPILER_PATH="/usr/bin/x86_64-linux-gnu-gcc-11"
+    build --config=cuda
+    build:opt --copt=-Wno-sign-compare
+    build:opt --host_copt=-Wno-sign-compare
+    test --test_size_filters=small,medium
+    test --test_env=LD_LIBRARY_PATH
+    test:v1 --test_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu,-oss_serial
+    test:v1 --build_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu
+    test:v2 --test_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu,-oss_serial,-v1only
+    test:v2 --build_tag_filters=-benchmark-test,-no_oss,-oss_excluded,-no_gpu,-v1only
+EOF
+
+# Small hack for tensorflow
+RUN ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python
+
+RUN cd /opt/tensorflow && bazel build --config=cuda --copt=-DXNN_ENABLE_AVXVNNI=0  --copt=-DXNN_ENABLE_AVXVNNIINT8=0 --define=XNN_ENABLE_AVX512FP16=0 --define=XNNPACK_ENABLE_AVXVNNI=0 --repo_env=CC=/usr/bin/gcc --repo_env=CXX=/usr/bin/g++ //tensorflow:libtensorflow.so
+RUN cd /opt/tensorflow && bazel build --config=cuda --copt=-DXNN_ENABLE_AVXVNNI=0  --copt=-DXNN_ENABLE_AVXVNNIINT8=0 --define=XNN_ENABLE_AVX512FP16=0 --define=XNNPACK_ENABLE_AVXVNNI=0 --repo_env=CC=/usr/bin/gcc --repo_env=CXX=/usr/bin/g++ //tensorflow:libtensorflow_cc.so
+
+# Build tensorflow pip package
+RUN cd /opt/tensorflow && bazel build --config=cuda --copt=-Wno-sign-compare //tensorflow/tools/pip_package:build_pip_package
+RUN /opt/tensorflow/bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
+RUN pip3 install /tmp/tensorflow_pkg/tensorflow-2.15*
+
+# copy tensorflow headers over
+RUN cd /opt/tensorflow && find tensorflow/c -name '*.h' | xargs -I {} cp -v {} /usr/local/include/tensorflow/c
+RUN cd /opt/tensorflow && find tensorflow/cc -name '*.h' | xargs -I {} cp -v {} /usr/local/include/tensorflow/cc
+RUN cp -prv /opt/tensorflow/bazel-bin/external/local_tsl/tsl/* /usr/local/include/tensorflow/tsl
+
+# rsync tensorflow libs over
+RUN cd /opt/tensorflow/bazel-bin/tensorflow && rsync -av lib* /usr/local/lib && ldconfig
+
+
+
+# Compile essentia
+RUN cd /opt && git clone https://github.com/MTG/essentia.git \
+    && cd /opt/essentia/ && python3 waf configure --build-static --with-python --with-cpptests --with-tensorflow --with-vamp \
+    && python3 waf && python3 waf install && ldconfig
+    #apt-get remove -y build-essential git libyaml-dev libfftw3-dev libavcodec-dev \
+    #    libavforat-dev libavutil-dev libswresample-dev python-dev libsamplerate0-dev \
+    #    libtag1-dev libeigen3-dev libchromaprint-dev \
+    #&& apt-get autoremove -y \
+    #&& apt-get clean -y \
+    #&& rm -rf /var/lib/apt/lists/* \
+    #&& cd / && rm -rf /essentia/essentia
+
+ENV PYTHONPATH /usr/local/lib/python3/dist-packages
+
+# Add Tini
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+
+# Install musicnn
+RUN git clone https://github.com/jordipons/musicnn.git
+COPY musicnn/setup.py /musicnn
+RUN ls -la
+RUN cd /musicnn && python3 setup.py install
+
+# Install essentia scripts and models
+RUN cd /
+RUN git clone https://github.com/intamixx/matnn.git /tmp/matnn
+RUN mv -v /tmp/matnn/musicnn/* /musicnn
+
+# Get discogs effnet models
+RUN cd /musicnn
+RUN curl -L -o /musicnn/discogs-effnet-bs64-1.pb "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb"
+RUN curl -L -o /musicnn/genre_discogs400-discogs-effnet-1.pb "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb"
+RUN cd /musicnn/approach-engage
+RUN mkdir -p /musicnn/approach-engage/models
+RUN cd /musicnn/approach-engage/models
+RUN curl -L -o /musicnn/approach-engage/models/discogs-effnet-bs64-1.pb "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb"
+RUN curl -L -o /musicnn/approach-engage/models/approachability-2class.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_2c-discogs-effnet-1.pb"
+RUN curl -L -o /musicnn/approach-engage/models/engagement-2class.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_2c-discogs-effnet-1.pb"
+RUN curl -L -o /musicnn/approach-engage/models/approachability-3class.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_3c-discogs-effnet-1.pb"
+RUN curl -L -o /musicnn/approach-engage/models/engagement-3class.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_3c-discogs-effnet-1.pb"
+RUN curl -L -o /musicnn/approach-engage/models/approachability-regression.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_regression-discogs-effnet-1.pb"
+RUN curl -L -o /musicnn/approach-engage/models/engagement-regression.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_regression-discogs-effnet-1.pb"
+
+# Add web user with uid 1000
+
+RUN useradd -ms /bin/bash web
+
+# Change permissions to web
+
+RUN chown web:web -Rv /musicnn
+RUN chmod 750 -Rv /musicnn/*.py
+RUN chmod 750 -Rv /musicnn/*.sh
+
+WORKDIR "/musicnn"
+CMD ["/musicnn/run.sh"]
