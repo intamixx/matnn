@@ -14,7 +14,7 @@ run.sh v1
 Usage: run.sh [options]
 Wrapper script to run matnn jobs
 
-  -f   filename of song
+  -f   filename of song (full path only)
   -g   genre tag required (musicnn, magnatagatune or discogseffnet)
   -b   bpm tag required
   -k   key tag required
