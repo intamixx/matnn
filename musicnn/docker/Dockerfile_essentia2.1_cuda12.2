@@ -50,8 +50,8 @@ RUN pip install numpy==${NUMPY_VERSION} \
 # Install bazel
 RUN wget https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-amd64 && chmod +x bazelisk-linux-amd64 && mv bazelisk-linux-amd64 /usr/local/bin/bazel
 
-# Setup pkgconfig for essentia to find tensorflow and paths for tensorflow headers
-RUN mkdir /usr/local/lib/pkgconfig && mkdir -p /usr/local/lib/tensorflow/c && mkdir -p /usr/local/lib/tensorflow/cc && mkdir -p /usr/local/lib/tensorflow/tsl
+# Setup pkgconfig for essentia to find tensorflow
+RUN mkdir /usr/local/lib/pkgconfig
 
 RUN cat <<'EOF' > /usr/local/lib/pkgconfig/tensorflow.pc
 prefix=/usr/local
@@ -111,18 +111,21 @@ RUN cd /opt/tensorflow && bazel build --config=cuda --copt=-DXNN_ENABLE_AVXVNNI=
 
 # Build tensorflow pip package
 RUN cd /opt/tensorflow && bazel build --config=cuda --copt=-Wno-sign-compare //tensorflow/tools/pip_package:build_pip_package
-RUN /opt/tensorflow/bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
+RUN apt-get install -y patchelf
+RUN cd /opt/tensorflow && /opt/tensorflow/bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
 RUN pip3 install /tmp/tensorflow_pkg/tensorflow-2.15*
 
+# paths for tensorflow headers
+RUN mkdir -p /usr/local/include/tensorflow/c
+RUN mkdir -p /usr/local/include/tensorflow/cc
+RUN mkdir -p /usr/local/include/tensorflow/tsl
 # copy tensorflow headers over
 RUN cd /opt/tensorflow && find tensorflow/c -name '*.h' | xargs -I {} cp -v {} /usr/local/include/tensorflow/c
 RUN cd /opt/tensorflow && find tensorflow/cc -name '*.h' | xargs -I {} cp -v {} /usr/local/include/tensorflow/cc
 RUN cp -prv /opt/tensorflow/bazel-bin/external/local_tsl/tsl/* /usr/local/include/tensorflow/tsl
 
 # rsync tensorflow libs over
-RUN cd /opt/tensorflow/bazel-bin/tensorflow && rsync -av lib* /usr/local/lib && ldconfig
-
-
+RUN cd /opt/tensorflow/bazel-bin/tensorflow && rsync -av --exclude='*params*' lib* /usr/local/lib && ldconfig
 
 # Compile essentia
 RUN cd /opt && git clone https://github.com/MTG/essentia.git \
