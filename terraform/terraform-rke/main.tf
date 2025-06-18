@@ -37,7 +37,7 @@ resource "rke_cluster" "cluster" {
 }
 
 resource "local_file" "kube_cluster_yaml" {
-  filename = "${path.root}/kube_config_cluster.yml"
+  filename = "${path.root}/kube_config_cluster.yaml"
   sensitive_content  = "${rke_cluster.cluster.kube_config_yaml}"
 }
 
