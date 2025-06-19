@@ -1,4 +1,8 @@
-# Configure Terraform for Kubernetes / Kueue
+# Configure the Kubernetes provider
+provider "kubernetes" {
+  # Ensure your kubeconfig is set correctly
+  config_path = "./kube_config_cluster.yaml"
+}
 
 # Create Kubernetes Service Account
 resource "kubernetes_service_account" "terraform_sa" {
@@ -36,15 +40,9 @@ data "kubernetes_secret" "terraform_sa_token" {
   depends_on = [local_file.kube_cluster_yaml]
 }
 
-# Configure the Kubernetes provider
-provider "kubernetes" {
-  # Ensure your kubeconfig is set correctly
-  config_path = "./kube_config_cluster.yml"  # Adjust path to your kubeconfig if needed
-}
-
 resource "local_file" "kube_cluster_yaml" {
-  filename = "${path.root}/kube_config_cluster.yml"
-  source = "${path.root}/kube_config_cluster.yml"
+  filename = "${path.root}/kube_config_cluster.yaml"
+  source = "${path.root}/kube_config_cluster.yaml"
   #sensitive_content  = "${rke_cluster.cluster[each.key].kube_config_yaml}"
   #local_sensitive_file  = "${rke_cluster.cluster.kube_config_yaml}"
 
@@ -59,7 +57,7 @@ resource "local_file" "kube_cluster_yaml" {
   }
 
   provisioner "file" {
-    source      = "kube_config_cluster.yml"
+    source      = "kube_config_cluster.yaml"
     destination = "/root/.kube/config"
   }
 
