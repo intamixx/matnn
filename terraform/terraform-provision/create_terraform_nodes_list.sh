@@ -13,7 +13,7 @@ for ((i = 0 ; i < COUNT ; i++ ));
         #echo "$i"
         if [[ $i == 0 ]];
                 then
-                echo '          role : ["controlplane", "worker", "etcd"]'
+                echo '          role : ["control-plane", "worker", "etcd"]'
         fi
         if [[ $i > 0 ]];
                 then
