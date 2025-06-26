@@ -1,3 +1,17 @@
+terraform {
+  required_providers {
+    kubectl = {
+      source = "alekc/kubectl"
+      version = "2.1.3"
+    }
+  }
+}
+
+provider "kubectl" {
+  # Configuration options
+  config_path = "./kube_config_cluster.yaml"
+}
+
 # Configure the Kubernetes provider
 provider "kubernetes" {
   # Ensure your kubeconfig is set correctly
@@ -40,6 +54,57 @@ data "kubernetes_secret" "terraform_sa_token" {
   depends_on = [local_file.kube_cluster_yaml]
 }
 
+# Create the monitoring namespace
+resource "kubectl_manifest" "monitoring_namespace" {
+    yaml_body = <<YAML
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+YAML
+}
+
+# Create the terraform-sa secret
+resource "kubectl_manifest" "terraform_sa_secret" {
+    yaml_body = <<YAML
+apiVersion: v1
+kind: Secret
+metadata:
+  name: terraform-sa
+  namespace: default
+  annotations:
+    kubernetes.io/service-account.name: "terraform-sa"
+type: kubernetes.io/service-account-token
+YAML
+}
+
+# Create the graphana ingress
+resource "kubectl_manifest" "graphana_ingress" {
+    yaml_body = <<YAML
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: prometheus-grafana
+              port:
+                number: 80
+YAML
+}
+
 resource "local_file" "kube_cluster_yaml" {
   filename = "${path.root}/kube_config_cluster.yaml"
   source = "${path.root}/kube_config_cluster.yaml"
@@ -55,23 +120,9 @@ resource "local_file" "kube_cluster_yaml" {
     private_key = file("~/.ssh/id_rsa")
     host     = values(var.nodes)[0].address
   }
-
-  provisioner "file" {
-    source      = "kube_config_cluster.yaml"
-    destination = "/root/.kube/config"
-  }
-
   provisioner "file" {
       source      = "./install_kueue.sh"  # Local script file path
       destination = "/tmp/install_kueue.sh"
-  }
-  provisioner "file" {
-      source      = "./secret.yaml"  # Local script file path
-      destination = "/tmp/secret.yaml"
-  }
-  provisioner "file" {
-      source      = "./ingress.yaml"  # Local script file path
-      destination = "/tmp/ingress.yaml"
   }
   provisioner "remote-exec" {
     inline = [
