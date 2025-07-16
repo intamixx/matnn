@@ -14,9 +14,9 @@ provider "kubectl" {
 
 # Configure the Kubernetes provider
 provider "kubernetes" {
-  # Ensure your kubeconfig is set correctly
   config_path = "./kube_config_cluster.yaml"
 }
+
 
 # Create Kubernetes Service Account
 resource "kubernetes_service_account" "terraform_sa" {
@@ -43,6 +43,7 @@ resource "kubernetes_cluster_role_binding" "terraform_sa_binding" {
     name     = "cluster-admin"  # Modify this if you want to limit the permissions
     api_group = "rbac.authorization.k8s.io"
   }
+  depends_on = [kubernetes_service_account.terraform_sa]
 }
 
 data "kubernetes_secret" "terraform_sa_token" {
@@ -63,6 +64,7 @@ metadata:
   name: monitoring
 YAML
 }
+
 
 # Create the terraform-sa secret
 resource "kubectl_manifest" "terraform_sa_secret" {
@@ -120,10 +122,24 @@ resource "local_file" "kube_cluster_yaml" {
     private_key = file("~/.ssh/id_rsa")
     host     = values(var.nodes)[0].address
   }
+
+#  provisioner "file" {
+#    source      = "kube_config_cluster.yaml"
+#    destination = "/root/.kube/config"
+#  }
+
   provisioner "file" {
       source      = "./install_kueue.sh"  # Local script file path
       destination = "/tmp/install_kueue.sh"
   }
+#  provisioner "file" {
+#      source      = "./secret.yaml"  # Local script file path
+#      destination = "/tmp/secret.yaml"
+#  }
+#  provisioner "file" {
+#      source      = "./ingress.yaml"  # Local script file path
+#      destination = "/tmp/ingress.yaml"
+#  }
   provisioner "remote-exec" {
     inline = [
       "echo 'Running setup script...'",
