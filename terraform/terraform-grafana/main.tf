@@ -1,3 +1,16 @@
+terraform {
+  required_providers {
+    kubectl = {
+      source = "alekc/kubectl"
+      version = "2.1.3"
+    }
+  }
+}
+provider "kubectl" {
+  # Configuration options
+  config_path = "./kube_config_cluster.yaml"
+}
+
 # Define provider for Kubernetes
 provider "kubernetes" {
   #host                   = "https://${var.kube_host}:6443"
@@ -15,6 +28,36 @@ provider "helm" {
     token                  = var.kube_token
   }
 }
+
+resource "kubectl_manifest" "nginx_ingress_patch" {
+    yaml_body = <<YAML
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+spec:
+  type: NodePort
+  externalTrafficPolicy: Cluster
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+      nodePort: 31000
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: https
+      nodePort: 32000
+YAML
+  depends_on = [helm_release.prometheus]
+}
+
 
 # Install Prometheus using Helm
 resource "helm_release" "prometheus" {
@@ -80,5 +123,27 @@ resource "helm_release" "prometheus" {
               source_labels: [__meta_kubernetes_service_name]
               target_label: kubernetes_name
     EOT
+  ]
+}
+
+resource "helm_release" "ingress_nginx" {
+  name       = "ingress-nginx"
+  namespace  = "ingress-nginx"
+  repository = "https://kubernetes.github.io/ingress-nginx"
+  chart      = "ingress-nginx"
+  version    = "4.10.0"
+
+  create_namespace = true
+
+  values = [
+    <<-EOF
+      controller:
+        service:
+          type: NodePort
+          nodePorts:
+            http: 31000
+            https: 32000
+          externalTrafficPolicy: Cluster
+    EOF
   ]
 }
