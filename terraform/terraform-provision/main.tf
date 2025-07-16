@@ -131,6 +131,17 @@ resource "azurerm_network_security_group" "mtc-sg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+  security_rule {
+    name                       = "rule-32000"
+    priority                   = 150
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "32000"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 
   tags = {
     environment = "dev"
@@ -242,5 +253,3 @@ output "private_ips" {
     data.azurerm_network_interface.mtc-nic-data[sn].ip_configuration[*].private_ip_address
   ]
 }
-
-### azurerm_public_ip.mtc-ip["k8-01"]
