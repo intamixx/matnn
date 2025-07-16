@@ -89,3 +89,6 @@ jobs:
     - name: copy kube cluster config
       id: copy
       run: cp -v kube_config_cluster.yaml ../terraform-kueue
+    - name: copy kube cluster config
+      id: copy
+      run: cp -v kube_config_cluster.yaml ../terraform-grafana
