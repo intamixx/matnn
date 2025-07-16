@@ -127,21 +127,21 @@ resource "null_resource" "label_nodes" {
 }
 
 # Install CNI on first controlplane node
-resource "null_resource" "cni_install" {
-  depends_on = [null_resource.label_nodes]
-  count = local.server_node_key != "" ? 1 : 0
-
-  connection {
-    host        = local.server_node.address
-    user        = local.server_node.user
-    private_key = file(local.server_node.ssh_key)
-  }
-  provisioner "remote-exec" {
-    inline = [
-    "kubectl apply -f /tmp/cni.yaml --force-conflicts --server-side"
-    ]
-  }
-}
+#resource "null_resource" "cni_install" {
+#  depends_on = [null_resource.label_nodes]
+#  count = local.server_node_key != "" ? 1 : 0
+#
+#  connection {
+#    host        = local.server_node.address
+#    user        = local.server_node.user
+#    private_key = file(local.server_node.ssh_key)
+#  }
+#  provisioner "remote-exec" {
+#    inline = [
+#    "kubectl apply -f /tmp/cni.yaml --force-conflicts --server-side"
+#    ]
+#  }
+#}
 
 
 resource "null_resource" "fetch_kubeconfig" {
@@ -166,6 +166,7 @@ resource "null_resource" "fetch_kubeconfig" {
     EOT
   }
 }
+
 
 data "local_file" "kubeconfig" {
   depends_on = [null_resource.fetch_kubeconfig]
