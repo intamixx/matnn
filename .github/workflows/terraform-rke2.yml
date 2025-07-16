@@ -85,7 +85,7 @@ jobs:
     steps:
     - name: get-ca-cert
       id: get-ca-cert
-      run: /bin/bash ./get_ca_cert.sh >> ../terraform-grafana/terraform.tfvars
+      run: /bin/bash ./get_ca_cert_rke2.sh >> ../terraform-grafana/terraform.tfvars
     - name: copy kube cluster config
       id: copy
       run: cp -v kube_config_cluster.yaml ../terraform-kueue
