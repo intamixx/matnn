@@ -91,6 +91,9 @@ jobs:
     - name: Create node list rke
       id: create-nodes-rke
       run: /bin/bash ./create_terraform_nodes_list.sh >> ../terraform-rke/terraform.tfvars
+    - name: Create node list rke2
+      id: create-nodes-rke2
+      run: /bin/bash ./create_terraform_nodes_list.sh >> ../terraform-rke2/terraform.tfvars
     - name: Create node list grafana
       id: create-nodes-grafana
       run: /bin/bash ./create_terraform_nodes_list.sh >> ../terraform-grafana/terraform.tfvars
