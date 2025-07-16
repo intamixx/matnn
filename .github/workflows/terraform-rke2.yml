@@ -83,8 +83,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: get-ca-cert
-      id: get-ca-cert
+    - name: get-ca-cert-rke2
+      id: get-ca-cert-rke2
       run: /bin/bash ./get_ca_cert_rke2.sh >> ../terraform-grafana/terraform.tfvars
     - name: copy kube cluster config
       id: copy
