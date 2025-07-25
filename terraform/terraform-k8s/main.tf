@@ -35,6 +35,33 @@ resource "null_resource" "bootstrap_control_plane" {
   }
 }
 
+resource "null_resource" "pull_join_command" {
+  depends_on = [null_resource.bootstrap_control_plane]
+
+  provisioner "remote-exec" {
+    inline = [
+      "cat /root/join.sh"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = local.server_node.user
+      private_key = file(local.server_node.ssh_key)
+      host        = local.server_node.address
+    }
+
+    # Exports output to stdout, which is captured below
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+ssh -o StrictHostKeyChecking=no -i ${local.server_node.ssh_key} ${local.server_node.user}@${local.server_node.address} 'cat /root/join.sh' > ./join-command.sh
+chmod +x ./join-command.sh
+echo "Join command saved to ./join-command.sh"
+EOT
+  }
+}
+
 # Provision all worker nodes
 resource "null_resource" "worker_nodes" {
   for_each = local.worker_nodes
@@ -124,4 +151,9 @@ output "kube_config_file" {
 output "ca_certificate" {
   value     = local.ca_cert
   sensitive = true
+}
+
+output "kubeadm_join_command" {
+  value = trimspace(data.external.join_command.result["command"])
+  description = "Kubeadm join command from the control-plane node"
 }
