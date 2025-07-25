@@ -111,7 +111,7 @@ resource "null_resource" "label_nodes" {
 }
 
 resource "null_resource" "fetch_kubeconfig" {
-  depends_on = [null_resource.rke2_server_install]
+  depends_on = [null_resource.pull_join_command]
 
   provisioner "remote-exec" {
     connection {
