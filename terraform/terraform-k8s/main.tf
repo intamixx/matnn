@@ -11,6 +11,8 @@ locals {
   server_node = local.controlplane_nodes[local.server_node_key]
 
   pod_cidr = "10.10.0.0/16"
+
+  kubeadm_join_cmd = trimspace(data.external.join_command.result["stdout"])
 }
 
 # Provision the bootstrap control-plane node
@@ -33,6 +35,16 @@ resource "null_resource" "bootstrap_control_plane" {
       "/tmp/cloudinit_master.sh ${local.pod_cidr}"
     ]
   }
+}
+
+# Get join command from server after install
+data "external" "join_command" {
+  program = [
+    "bash", "-c",
+    "ssh -o StrictHostKeyChecking=no -i ${replace(local.server_node.ssh_key, "~", abspath("~"))} ${local.server_node.user}@${local.server_node.address} 'cat /root/join.sh'"
+  ]
+
+  depends_on = [null_resource.bootstrap_control_plane]
 }
 
 resource "null_resource" "pull_join_command" {
@@ -62,7 +74,6 @@ EOT
   }
 }
 
-# Provision all worker nodes
 resource "null_resource" "worker_nodes" {
   for_each = local.worker_nodes
 
@@ -81,9 +92,13 @@ resource "null_resource" "worker_nodes" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/cloudinit_worker.sh",
-      "/tmp/cloudinit_worker.sh ${local.server_node.address}"
+      "/tmp/cloudinit_worker.sh '${local.kubeadm_join_cmd}'"
     ]
   }
+
+  depends_on = [null_resource.bootstrap_control_plane]
+}
+
 
   depends_on = [null_resource.bootstrap_control_plane]
 }
