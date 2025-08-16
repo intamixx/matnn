@@ -15,6 +15,20 @@ apt-mark hold kubelet kubeadm kubectl
 sudo systemctl restart kubelet.service
 sudo systemctl enable --now kubelet
 
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
 # Install containerd
 apt-get install -y containerd.io
 mkdir -p /etc/containerd
@@ -38,7 +52,7 @@ VERSION="v1.30.0"  # change to latest version if needed
 curl -LO https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
 sudo tar -C /usr/local/bin -xzvf crictl-$VERSION-linux-amd64.tar.gz
 
-sudo mkdir /root/.kube
+sudo mkdir -p /root/.kube
 
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" <<< y
 
