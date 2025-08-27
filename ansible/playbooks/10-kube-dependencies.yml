@@ -1,0 +1,151 @@
+- hosts: all
+  become: yes
+  tasks:
+    - fail:
+       msg: "OS should be Ubuntu 22.04, not {{ ansible_distribution }} {{ ansible_distribution_version }}"
+      when: ansible_distribution != 'Ubuntu' or ansible_distribution_version != '22.04'
+
+    - name: update APT packages
+      apt:
+        update_cache: yes
+
+        #    - name: reboot and wait for reboot to complete
+        #      reboot:
+
+    - name: disable SWAP (Kubeadm requirement)
+      shell: |
+        swapoff -a
+
+    - name: disable SWAP in fstab (Kubeadm requirement)
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: create an empty file for the Containerd module
+      copy:
+        content: ""
+        dest: /etc/modules-load.d/containerd.conf
+        force: no
+
+    - name: configure modules for Containerd
+      blockinfile:
+        path: /etc/modules-load.d/containerd.conf
+        block: |
+             overlay
+             br_netfilter
+
+    - name: create an empty file for Kubernetes sysctl params
+      copy:
+        content: ""
+        dest: /etc/sysctl.d/99-kubernetes-cri.conf
+        force: no
+
+    - name: configure sysctl params for Kubernetes
+      lineinfile:
+        path: /etc/sysctl.d/99-kubernetes-cri.conf
+        line: "{{ item }}"
+      with_items:
+        - 'net.bridge.bridge-nf-call-iptables  = 1'
+        - 'net.ipv4.ip_forward                 = 1'
+        - 'net.bridge.bridge-nf-call-ip6tables = 1'
+
+    - name: apply sysctl params without reboot
+      command: sysctl --system
+
+    - name: install APT Transport HTTPS
+      apt:
+        name: apt-transport-https
+        state: present
+
+    - name: add Docker apt-key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker-apt-keyring.asc
+        mode: '0644'
+        force: true
+
+    - name: add Docker's APT repository
+      apt_repository:
+        repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/docker-apt-keyring.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        update_cache: yes
+
+    - name: add Kubernetes apt-key
+      get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+        mode: '0644'
+        force: true
+
+    - name: add Kubernetes' APT repository
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /"
+        state: present
+        update_cache: yes
+
+    - name: install Containerd
+      apt:
+        name: containerd.io
+        state: present
+
+    - name: create Containerd directory
+      file:
+        path: /etc/containerd
+        state: directory
+
+    - name: add Containerd configuration
+      shell: /usr/bin/containerd config default > /etc/containerd/config.toml
+
+    - name: configuring the systemd cgroup driver for Containerd
+      lineinfile:
+        path: /etc/containerd/config.toml
+        regexp: '            SystemdCgroup = false'
+        line: '            SystemdCgroup = true'
+
+    - name: enable the Containerd service and start it
+      systemd:
+        name: containerd
+        state: restarted
+        enabled: yes
+        daemon-reload: yes
+
+    - name: install Kubelet
+      apt:
+        name: kubelet=1.32.*
+        state: present
+        update_cache: true
+
+    - name: install Kubeadm
+      apt:
+        name: kubeadm=1.32.*
+        state: present
+
+    - name: enable the Kubelet service, and enable it persistently
+      service:
+        name: kubelet
+        enabled: yes
+
+    - name: install Kubectl
+      apt:
+        name: kubectl=1.32.*
+        state: present
+        force: yes # allow downgrades
+
+    - name: load br_netfilter kernel module
+      modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: set bridge-nf-call-iptables
+      sysctl:
+        name: net.bridge.bridge-nf-call-iptables
+        value: 1
+
+    - name: set ip_forward
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+
+        #    - name: reboot and wait for reboot to complete
+        #      reboot:
