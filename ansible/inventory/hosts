@@ -1,0 +1,11 @@
+[master]
+k8-01 ansible_host=52.174.245.135
+
+[workers]
+k8-02 ansible_host=4.210.192.237
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_user=root
