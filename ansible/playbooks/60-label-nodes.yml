@@ -1,0 +1,23 @@
+---
+- name: Label Kubernetes nodes from master
+  hosts: master
+  become: yes
+  vars:
+    master_nodes: "{{ groups['master'] }}"
+    worker_nodes: "{{ groups['workers'] }}"
+
+  tasks:
+
+    - name: Label master nodes with control-plane role
+      shell: >
+        kubectl label node {{ item }} node-role.kubernetes.io/control-plane='true' --overwrite
+      loop: "{{ master_nodes }}"
+      args:
+        executable: /bin/bash
+
+    - name: Label worker nodes with worker role
+      shell: >
+        kubectl label node {{ item }} node-role.kubernetes.io/worker='true' --overwrite
+      loop: "{{ worker_nodes }}"
+      args:
+        executable: /bin/bash
