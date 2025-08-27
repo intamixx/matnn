@@ -1,0 +1,90 @@
+- hosts: master
+  become: yes
+  tasks:
+
+    - name: Remove taint from control plane
+      shell: kubectl taint nodes {{ inventory_hostname }} node-role.kubernetes.io/control-plane:NoSchedule-
+      args:
+        chdir: $HOME
+        creates: taint.log
+      ignore_errors: True
+
+    - name: initialize kueue
+      shell: kubectl apply --server-side -f https://github.com/kubernetes-sigs/kueue/releases/download/v0.13.3/manifests.yaml --force-conflicts >> kueue.log
+      args:
+        chdir: $HOME
+        creates: kueue.log
+
+    - name: Sleep for 10 seconds and continue with play
+      wait_for:
+        timeout: 10
+
+    - name: initialize kueue queue
+      shell: kubectl apply --server-side -f https://raw.githubusercontent.com/kubernetes-sigs/kueue/main/site/static/examples/admin/single-clusterqueue-setup.yaml --force-conflicts >> queue.log
+      args:
+        chdir: $HOME
+        creates: queue.log
+
+    - name: Sleep for 10 seconds and continue with play
+      wait_for:
+        timeout: 10
+
+    - name: initialize CRD operator
+      shell: kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/refs/heads/main/manifests/setup/0servicemonitorCustomResourceDefinition.yaml --force-conflicts
+      args:
+        chdir: $HOME
+        creates: prometheus-operator.log
+
+    - name: Sleep for 3 seconds and continue with play
+      wait_for:
+        timeout: 3
+
+    - name: initialize jobset
+      shell: kubectl apply --server-side -f https://github.com/kubernetes-sigs/jobset/releases/download/v0.8.0/manifests.yaml
+      args:
+        chdir: $HOME
+        creates: jobset.log
+      ignore_errors: True
+
+    - name: Sleep for 3 seconds and continue with play
+      wait_for:
+        timeout: 3
+
+    - name: initialize kueue prometheus metric
+      shell: kubectl apply --server-side -f https://github.com/kubernetes-sigs/kueue/releases/download/v0.13.3/prometheus.yaml --force-conflicts
+      args:
+        chdir: $HOME
+        creates: prometheus.log
+      ignore_errors: True
+
+
+    - name: Sleep for 3 seconds and continue with play
+      wait_for:
+        timeout: 3
+
+    - name: initialize mpi operator
+      shell: kubectl apply --server-side -f https://raw.githubusercontent.com/kubeflow/mpi-operator/master/deploy/v2beta1/mpi-operator.yaml --force-conflicts
+      args:
+        chdir: $HOME
+        creates: mpi.log
+      ignore_errors: True
+
+    - name: Sleep for 3 seconds and continue with play
+      wait_for:
+        timeout: 3
+
+    - name: annotate kueue-controller
+      shell: kubectl annotate svc kueue-controller-manager-metrics-service prometheus.io/scrape='true' -n kueue-system >> annotate.log
+      args:
+        chdir: $HOME
+        creates: annotate.log
+
+    - name: Sleep for 3 seconds and continue with play
+      wait_for:
+        timeout: 3
+
+    - name: initialize metallb operator
+      shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml >> metallb.log
+      args:
+        chdir: $HOME
+        creates: metallb.log
