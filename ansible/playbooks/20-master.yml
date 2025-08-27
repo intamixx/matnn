@@ -1,0 +1,104 @@
+- hosts: master
+  become: yes
+  tasks:
+    - name: create an empty file for Kubeadm configuring
+      copy:
+        content: ""
+        dest: /etc/kubernetes/kubeadm-config.yaml
+        force: no
+
+    - name: configuring the container runtime including its cgroup driver
+      blockinfile:
+        path: /etc/kubernetes/kubeadm-config.yaml
+        block: |
+             kind: ClusterConfiguration
+             apiVersion: kubeadm.k8s.io/v1beta3
+             networking:
+               podSubnet: "10.42.0.0/16"
+             ---
+             kind: KubeletConfiguration
+             apiVersion: kubelet.config.k8s.io/v1beta1
+             runtimeRequestTimeout: "15m"
+             cgroupDriver: "systemd"
+             systemReserved:
+               cpu: 100m
+               memory: 350M
+             kubeReserved:
+               cpu: 100m
+               memory: 50M
+             enforceNodeAllocatable:
+             - pods
+
+    - name: initialize the cluster (this could take some time)
+      shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+      args:
+        chdir: $HOME
+        creates: cluster_initialized.log
+
+    - name: create .kube directory
+      become: yes
+      file:
+        path: $HOME/.kube
+        state: directory
+        mode: 0755
+
+    - name: copy admin.conf to user's kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: $HOME/.kube/config
+        remote_src: yes
+        owner: root
+
+        #    - name: install Pod network
+        #      become: yes
+        #      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
+        #      args:
+        #        chdir: $HOME
+        #        creates: pod_network_setup.log
+
+    - name: install Pod Calico network
+      become: yes
+      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.0/manifests/tigera-operator.yaml --force-conflicts --server-side >> pod_network_setup.log
+      args:
+        chdir: $HOME
+        creates: pod_network_calico_setup.log
+
+    - name: Sleep for 10 seconds and continue with play
+      wait_for:
+       timeout: 10
+
+    - name: install Pod network - get custom resources
+      become: yes
+      shell: curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/custom-resources.yaml -O
+      args:
+        chdir: $HOME
+        creates: pod_network_setup1.log
+
+    - name: Sleep for 10 seconds and continue with play
+      wait_for:
+        timeout: 10
+
+    - name: install Pod network - replace CIDR range
+      become: yes
+      shell: 'sed -i "s/cidr: 192\.168\.0\.0\/16/cidr: 10.42.0.0\/16/g" custom-resources.yaml'
+      args:
+        chdir: $HOME
+        creates: pod_network_setup2.log
+
+    - name: label node - controlplane
+      become: yes
+      shell: kubectl label node {{ inventory_hostname }} node-role.kubernetes.io/control-plane='true' --overwrite >> label.log
+      args:
+        chdir: $HOME
+        creates: label.log
+
+    - name: Sleep for 5 seconds and continue with play
+      wait_for:
+        timeout: 5
+
+    - name: install Pod network - custom resources
+      become: yes
+      shell: kubectl create -f custom-resources.yaml >> pod_network_setup3.log
+      args:
+        chdir: $HOME
+        creates: pod_network_setup3.log
