@@ -1,0 +1,40 @@
+---
+- name: Manage Kubernetes resources with kubectl shell commands
+  hosts: master
+  become: true
+  gather_facts: no
+  vars:
+    sa_name: terraform-sa
+    sa_namespace: default
+    token_secret_name: terraform-sa-token
+    kubeconfig: ~/.kube/config
+
+  tasks:
+
+    - name: Create Service Account
+      shell: |
+        kubectl --kubeconfig {{ kubeconfig }} -n {{ sa_namespace }} get sa {{ sa_name }} || \
+        kubectl --kubeconfig {{ kubeconfig }} -n {{ sa_namespace }} create sa {{ sa_name }}
+
+    - name: Create ClusterRoleBinding
+      shell: |
+        kubectl --kubeconfig {{ kubeconfig }} get clusterrolebinding {{ sa_name }}-binding || \
+        kubectl --kubeconfig {{ kubeconfig }} create clusterrolebinding {{ sa_name }}-binding \
+          --clusterrole=cluster-admin \
+          --serviceaccount={{ sa_namespace }}:{{ sa_name }}
+
+    - name: Create token secret for service account (with annotation)
+      shell: |
+        kubectl --kubeconfig {{ kubeconfig }} -n {{ sa_namespace }} get secret {{ token_secret_name }} || \
+        kubectl create secret generic {{ token_secret_name }} \
+          --namespace={{ sa_namespace }} \
+          --type=kubernetes.io/service-account-token \
+          --dry-run=client -o yaml \
+          --from-literal=dummy=dummy \
+          | kubectl annotate -f - kubernetes.io/service-account.name={{ sa_name }} --local --overwrite -o yaml \
+          | kubectl apply -f -
+
+    - name: Create monitoring namespace if not exists
+      shell: |
+        kubectl --kubeconfig {{ kubeconfig }} get ns monitoring || \
+        kubectl --kubeconfig {{ kubeconfig }} create namespace monitoring
