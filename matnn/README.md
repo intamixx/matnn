@@ -11,4 +11,5 @@ kubectl create secret tls matnn-app-tls-secret --cert=tls.crt --key=tls.key -n d
 
 
 kubectl scale deployment matnn --replicas=2
+
 kubectl get node -o jsonpath --template='{range .items[*]}{.metadata.name}{"\n"}{range .status.conditions[*]}{"\t"}{.type}{" : "}{.status}{" -> "}{.reason}{" ("}{.message}{")"}{"\n"}{end}{end}'
