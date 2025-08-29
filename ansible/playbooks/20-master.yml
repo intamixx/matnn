@@ -56,34 +56,56 @@
         #        chdir: $HOME
         #        creates: pod_network_setup.log
 
-    - name: install Pod Calico network
+        #- name: install Pod Calico network
+        #      become: yes
+        #      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.0/manifests/tigera-operator.yaml --force-conflicts --server-side >> pod_network_setup.log
+        #      args:
+        #        chdir: $HOME
+        #        creates: pod_network_calico_setup.log
+
+    - name: install canal Pod network - get manifest
       become: yes
-      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.0/manifests/tigera-operator.yaml --force-conflicts --server-side >> pod_network_setup.log
+      shell: curl https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml -O
       args:
         chdir: $HOME
-        creates: pod_network_calico_setup.log
+        creates: pod_network_setup.log
+
+    - name: install Pod network - replace CIDR range
+      become: yes
+      shell: |
+        sed -i 's/"Network": "10\.244\.0\.0\/16"/"Network": "10.42.0.0\/16"/g' canal.yaml
+      args:
+        chdir: $HOME
+        creates: pod_network_setup2.log
+
+    - name: install Pod Canal network
+      become: yes
+      shell: kubectl apply -f canal.yaml --force-conflicts --server-side >> pod_network_canal.log
+      args:
+        chdir: $HOME
+        creates: pod_network_canal.log
 
     - name: Sleep for 10 seconds and continue with play
       wait_for:
        timeout: 10
 
-    - name: install Pod network - get custom resources
-      become: yes
-      shell: curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/custom-resources.yaml -O
-      args:
-        chdir: $HOME
-        creates: pod_network_setup1.log
+       #- name: install Pod network - get custom resources
+       #      become: yes
+       #      shell: curl https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/custom-resources.yaml -O
+       #      args:
+       #        chdir: $HOME
+       #        creates: pod_network_setup1.log
 
     - name: Sleep for 10 seconds and continue with play
       wait_for:
         timeout: 10
 
-    - name: install Pod network - replace CIDR range
-      become: yes
-      shell: 'sed -i "s/cidr: 192\.168\.0\.0\/16/cidr: 10.42.0.0\/16/g" custom-resources.yaml'
-      args:
-        chdir: $HOME
-        creates: pod_network_setup2.log
+        #- name: install Pod network - replace CIDR range
+        #      become: yes
+        #      shell: 'sed -i "s/cidr: 192\.168\.0\.0\/16/cidr: 10.42.0.0\/16/g" custom-resources.yaml'
+        #      args:
+        #        chdir: $HOME
+        #        creates: pod_network_setup2.log
 
     - name: label node - controlplane
       become: yes
@@ -96,9 +118,9 @@
       wait_for:
         timeout: 5
 
-    - name: install Pod network - custom resources
-      become: yes
-      shell: kubectl create -f custom-resources.yaml >> pod_network_setup3.log
-      args:
-        chdir: $HOME
-        creates: pod_network_setup3.log
+        #    - name: install Pod network - custom resources
+        #      become: yes
+        #      shell: kubectl create -f custom-resources.yaml >> pod_network_setup3.log
+        #      args:
+        #        chdir: $HOME
+        #        creates: pod_network_setup3.log
