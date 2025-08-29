@@ -15,9 +15,9 @@
         chdir: $HOME
         creates: kueue.log
 
-    - name: Sleep for 10 seconds and continue with play
+    - name: Sleep for 30 seconds and continue with play
       wait_for:
-        timeout: 10
+        timeout: 30
 
     - name: initialize kueue queue
       shell: kubectl apply --server-side -f https://raw.githubusercontent.com/kubernetes-sigs/kueue/main/site/static/examples/admin/single-clusterqueue-setup.yaml --force-conflicts >> queue.log
@@ -57,7 +57,6 @@
         creates: prometheus.log
       ignore_errors: True
 
-
     - name: Sleep for 3 seconds and continue with play
       wait_for:
         timeout: 3
@@ -88,3 +87,23 @@
       args:
         chdir: $HOME
         creates: metallb.log
+
+    - name: Sleep for 3 seconds and continue with play
+      wait_for:
+        timeout: 3
+
+    - name: initialize nginx ingress operator
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/baremetal/deploy.yaml > ingress.log
+      args:
+        chdir: $HOME
+        creates: ingress.log
+
+    - name: Sleep for 30 seconds and continue with play
+      wait_for:
+        timeout: 30
+
+    - name: patch nginx ingress for Loadbalancer
+      shell: kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "LoadBalancer"}}'
+      args:
+        chdir: $HOME
+        creates: patchingress.log
