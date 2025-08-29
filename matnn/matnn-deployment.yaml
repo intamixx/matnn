@@ -4,6 +4,7 @@ metadata:
   name: matnn
     #  namespace: default
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: matnn
