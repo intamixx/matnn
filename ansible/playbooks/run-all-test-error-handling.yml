@@ -1,0 +1,21 @@
+---
+- name: Run all playbooks with error handling
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  vars:
+    playbooks:
+      - "10-kube-dependencies.yml"
+      - "20-master.yml"
+      - "30-workers.yml"
+      - "40-kueue.yml"
+      - "50-terraform-creds.yml"
+      - "60-label-nodes.yml"
+
+  tasks:
+    - name: Run playbooks one by one with error handling
+      include_tasks: playbook_runner.yml
+      loop: "{{ playbooks }}"
+      loop_control:
+        loop_var: playbook_name
