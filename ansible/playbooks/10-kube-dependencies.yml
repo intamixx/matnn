@@ -132,6 +132,9 @@
         state: present
         force: yes # allow downgrades
 
+    - name: apt mark hold for kubectl, kubeadm, kubelet
+      shell: apt-mark hold kubelet kubeadm kubectl
+
     - name: load br_netfilter kernel module
       modprobe:
         name: br_netfilter
