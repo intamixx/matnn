@@ -6,7 +6,7 @@ metadata:
 data:
   matnn-config: |
     [nfs-server]
-    host = 10.43.3.235
+    host = 10.96.3.234
     mountdir = /mnt
     claim_name = nfs-claim
     storage_volume = nfs
