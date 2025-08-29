@@ -9,7 +9,7 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: "10.43.3.234"
+    server: "10.96.3.234"
     path: "/exports"
   mountOptions:
     - vers=4.2
