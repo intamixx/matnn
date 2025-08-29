@@ -4,7 +4,7 @@ metadata:
   name: nfs-service
     #namespace: storage
 spec:
-  clusterIP: 10.43.3.234
+  clusterIP: 10.96.3.234
   ports:
   - name: nfs
     port: 2049
