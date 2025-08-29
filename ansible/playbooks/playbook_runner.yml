@@ -1,0 +1,12 @@
+---
+- name: Run {{ playbook_name }}
+  block:
+    - name: Execute playbook {{ playbook_name }}
+      ansible.builtin.command: ansible-playbook {{ playbook_name }}
+      register: playbook_result
+      ignore_errors: true
+
+    - name: Report result of {{ playbook_name }}
+      ansible.builtin.debug:
+        msg: >
+          Playbook {{ playbook_name }} {{ 'FAILED' if playbook_result.rc != 0 else 'SUCCEEDED' }} with return code {{ playbook_result.rc }}
