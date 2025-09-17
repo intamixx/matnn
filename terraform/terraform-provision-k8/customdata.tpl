@@ -17,6 +17,10 @@ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scrip
 chmod 700 get_helm.sh
 ./get_helm.sh
 
+curl -LO https://github.com/derailed/k9s/releases/download/v0.50.9/k9s_Linux_amd64.tar.gz
+tar -xzvf k9s_Linux_amd64.tar.gz
+sudo mv k9s /usr/local/bin
+
 sudo mkdir /root/.kube
 
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" <<< y
