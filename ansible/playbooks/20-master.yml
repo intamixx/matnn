@@ -15,6 +15,14 @@
              apiVersion: kubeadm.k8s.io/v1beta3
              networking:
                podSubnet: "10.42.0.0/16"
+             apiServer:
+               certSANs:
+                 - '127.0.0.1'
+                 - '10.96.0.1'
+                 - '10.123.1.4'
+                 - '10.123.1.5'
+                 - 'kubernetes-node-1'
+                 - 'kubernetes-node-2'             
              ---
              kind: KubeletConfiguration
              apiVersion: kubelet.config.k8s.io/v1beta1
