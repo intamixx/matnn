@@ -4,60 +4,40 @@ terraform {
       source = "alekc/kubectl"
       version = "2.1.3"
     }
+    kubernetes = {
+      source = "hashicorp/kubernetes"
+      version = "2.0.0"  # Ensure you have the correct version of the kubernetes provider
+    }
+    helm = {
+      source = "hashicorp/helm"
+      version = "2.9.0"  # Ensure you have the correct version of the helm provider
+    }
   }
 }
+
 provider "kubectl" {
   # Configuration options
   config_path = "./kube_config_cluster.yaml"
+  insecure    = true
 }
 
 # Define provider for Kubernetes
 provider "kubernetes" {
-  #host                   = "https://${var.kube_host}:6443"
   host                   = "https://${values(var.nodes)[0].address}:6443"
-  cluster_ca_certificate = base64decode(var.kube_ca_certificate)
+  #cluster_ca_certificate = base64decode(var.kube_ca_certificate)
   token                  = var.kube_token
+  insecure               = true
 }
 
-# Define provider for Helm
+# Define provider for Helm with Kubernetes block
 provider "helm" {
   kubernetes {
-    #host                   = "https://${var.kube_host}:6443"
     host                   = "https://${values(var.nodes)[0].address}:6443"
-    cluster_ca_certificate = base64decode(var.kube_ca_certificate)
+    #cluster_ca_certificate = base64decode(var.kube_ca_certificate)
     token                  = var.kube_token
+    insecure               = true
   }
 }
-
-resource "kubectl_manifest" "nginx_ingress_patch" {
-    yaml_body = <<YAML
-apiVersion: v1
-kind: Service
-metadata:
-  name: ingress-nginx-controller
-  namespace: ingress-nginx
-spec:
-  type: NodePort
-  externalTrafficPolicy: Cluster
-  selector:
-    app.kubernetes.io/component: controller
-    app.kubernetes.io/instance: ingress-nginx
-    app.kubernetes.io/name: ingress-nginx
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: http
-      nodePort: 31000
-    - name: https
-      protocol: TCP
-      port: 443
-      targetPort: https
-      nodePort: 32000
-YAML
-  depends_on = [helm_release.prometheus]
-}
-
 
 # Install Prometheus using Helm
 resource "helm_release" "prometheus" {
@@ -123,27 +103,5 @@ resource "helm_release" "prometheus" {
               source_labels: [__meta_kubernetes_service_name]
               target_label: kubernetes_name
     EOT
-  ]
-}
-
-resource "helm_release" "ingress_nginx" {
-  name       = "ingress-nginx"
-  namespace  = "ingress-nginx"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  version    = "4.10.0"
-
-  create_namespace = true
-
-  values = [
-    <<-EOF
-      controller:
-        service:
-          type: NodePort
-          nodePorts:
-            http: 31000
-            https: 32000
-          externalTrafficPolicy: Cluster
-    EOF
   ]
 }
