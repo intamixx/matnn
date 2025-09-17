@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-grafana
+  namespace: default
+spec:
+  type: ExternalName  # This creates a DNS alias for the external service
+  externalName: prometheus-grafana.monitoring.svc.cluster.local  # Full service name
+  ports:
+    - name: http-web
+      port: 80         # External port to access the service
+      targetPort: 80   # Port on the `prometheus-grafana` service (Grafana's port)
