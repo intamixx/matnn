@@ -15,9 +15,9 @@
         chdir: $HOME
         creates: kueue.log
 
-    - name: Sleep for 30 seconds and continue with play
+    - name: Sleep for 60 seconds and continue with play
       wait_for:
-        timeout: 30
+        timeout: 60
 
     - name: initialize kueue queue
       shell: kubectl apply --server-side -f https://raw.githubusercontent.com/kubernetes-sigs/kueue/main/site/static/examples/admin/single-clusterqueue-setup.yaml --force-conflicts >> queue.log
@@ -103,7 +103,8 @@
         timeout: 30
 
     - name: patch nginx ingress for Loadbalancer
-      shell: kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "LoadBalancer"}}'
+      shell: |
+        kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "LoadBalancer"}}'
       args:
         chdir: $HOME
         creates: patchingress.log
