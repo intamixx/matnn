@@ -1,29 +1,65 @@
 - hosts: master
   become: yes
-  #gather_facts: false
-  tasks:
-    - name: get join command
-      shell: kubeadm token create --print-join-command
-      register: join_command_raw
+  gather_facts: yes
 
-    - name: set join command
+  tasks:
+
+    - name: Upload control-plane certs and extract certificate key
+      run_once: true
+      command: kubeadm init phase upload-certs --upload-certs
+      register: upload_output
+
+    - name: Extract certificate key from output
       set_fact:
-        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+        cert_key: "{{ upload_output.stdout_lines | select('search', '^[a-f0-9]{64}$') | list | first }}"
+      run_once: true
 
-- hosts: workers
+    - name: Generate kubeadm token join command
+      command: kubeadm token create --print-join-command
+      register: join_output
+      run_once: true
+
+    - name: Save full control-plane join command in hostvars for other plays
+      set_fact:
+        control_plane_join_command: "{{ join_output.stdout }} --control-plane --certificate-key {{ cert_key }}"
+        worker_join_command: "{{ join_output.stdout }}"
+      run_once: true
+
+- hosts: control_plane_nodes
   become: yes
+  gather_facts: no
+
   tasks:
-    - name: Wait until port 6443 on master is reachable
+    - name: Wait for API server to become reachable
       wait_for:
         host: "{{ hostvars[groups['master'][0]]['ansible_default_ipv4']['address'] }}"
         port: 6443
-        timeout: 10
+        timeout: 60
 
-    - name: Join worker to the Kubernetes cluster
-      shell: "{{ hostvars[groups['master'][0]].join_command }} >> node_joined.log"
+    - name: Join node to control-plane
+      shell: "{{ hostvars[groups['master'][0]].control_plane_join_command }}"
       args:
-        chdir: $HOME
-        creates: node_joined.log
+        creates: /etc/kubernetes/kubelet.conf
+      register: hello
+
+    - debug: msg={{ hello.stdout }}
+
+
+- hosts: workers
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Wait for API server to become reachable
+      wait_for:
+        host: "{{ hostvars[groups['master'][0]]['ansible_default_ipv4']['address'] }}"
+        port: 6443
+        timeout: 60
+
+    - name: Join worker node to cluster
+      shell: "{{ hostvars[groups['master'][0]].worker_join_command }}"
+      args:
+        creates: /etc/kubernetes/kubelet.conf
       register: hello
 
     - debug: msg={{ hello.stdout }}
