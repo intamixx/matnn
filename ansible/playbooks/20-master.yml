@@ -11,31 +11,39 @@
       blockinfile:
         path: /etc/kubernetes/kubeadm-config.yaml
         block: |
-             kind: ClusterConfiguration
-             apiVersion: kubeadm.k8s.io/v1beta3
-             networking:
-               podSubnet: "10.42.0.0/16"
-             apiServer:
-               certSANs:
-                 - '127.0.0.1'
-                 - '10.96.0.1'
-                 - '10.123.1.4'
-                 - '10.123.1.5'
-                 - 'kubernetes-node-1'
-                 - 'kubernetes-node-2'             
-             ---
-             kind: KubeletConfiguration
-             apiVersion: kubelet.config.k8s.io/v1beta1
-             runtimeRequestTimeout: "15m"
-             cgroupDriver: "systemd"
-             systemReserved:
-               cpu: 100m
-               memory: 350M
-             kubeReserved:
-               cpu: 100m
-               memory: 50M
-             enforceNodeAllocatable:
-             - pods
+          apiVersion: kubeadm.k8s.io/v1beta3
+          kind: ClusterConfiguration
+          certificatesDir: "/etc/kubernetes/pki"
+          #kubernetesVersion: "v1.29.0"             # adjust to your version
+          controlPlaneEndpoint: "{{ ansible_eth0.ipv4.address }}:6443"  # << use this instead of CLI
+          networking:
+            podSubnet: "10.42.0.0/16"
+          apiServer:
+            certSANs:
+              - '127.0.0.1'
+              - '10.123.0.100'
+              - '10.123.1.4'
+              - '10.123.1.5'
+              - 'kubernetes-node-1'
+          ---
+          apiVersion: kubeadm.k8s.io/v1beta3
+          kind: InitConfiguration
+          localAPIEndpoint:
+            advertiseAddress: "{{ ansible_eth0.ipv4.address }}"
+            bindPort: 6443
+          ---
+          apiVersion: kubelet.config.k8s.io/v1beta1
+          kind: KubeletConfiguration
+          runtimeRequestTimeout: "15m"
+          cgroupDriver: "systemd"
+          systemReserved:
+            cpu: 100m
+            memory: 350M
+          kubeReserved:
+            cpu: 100m
+            memory: 50M
+          enforceNodeAllocatable:
+            - pods
 
     - name: initialize the cluster (this could take some time)
       shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
