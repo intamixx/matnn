@@ -2,13 +2,6 @@
   become: yes
   tasks:
 
-    - name: Remove taint from control plane
-      shell: kubectl taint nodes {{ inventory_hostname }} node-role.kubernetes.io/control-plane:NoSchedule-
-      args:
-        chdir: $HOME
-        creates: taint.log
-      ignore_errors: True
-
     - name: initialize kueue
       shell: kubectl apply --server-side -f https://github.com/kubernetes-sigs/kueue/releases/download/v0.13.3/manifests.yaml --force-conflicts >> kueue.log
       args:
