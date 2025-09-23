@@ -4,6 +4,7 @@
   become: yes
   vars:
     master_nodes: "{{ groups['master'] }}"
+    control_plane_nodes: "{{ groups['control_plane_nodes'] }}"
     worker_nodes: "{{ groups['workers'] }}"
 
   tasks:
@@ -15,9 +16,24 @@
       args:
         executable: /bin/bash
 
+    - name: Label control-plane nodes with control-plane role
+      shell: >
+        kubectl label node {{ item }} node-role.kubernetes.io/control-plane='true' --overwrite
+      loop: "{{ control_plane_nodes }}"
+      args:
+        executable: /bin/bash
+
     - name: Label worker nodes with worker role
       shell: >
         kubectl label node {{ item }} node-role.kubernetes.io/worker='true' --overwrite
       loop: "{{ worker_nodes }}"
+      args:
+        executable: /bin/bash
+
+    - name: Remove taint from master nodes
+      shell: >
+        kubectl taint nodes {{ item }} node-role.kubernetes.io/control-plane:NoSchedule-
+      loop: "{{ master_nodes + control_plane_nodes }}"
+      ignore_errors: true
       args:
         executable: /bin/bash
