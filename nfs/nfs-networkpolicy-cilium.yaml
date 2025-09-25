@@ -1,0 +1,27 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-nfs-ingress
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      app: nfs-server
+  ingress:
+  - fromEntities:
+    - cluster
+    - host
+    toPorts:
+    - ports:
+      - port: "111"
+        protocol: TCP
+      - port: "111"
+        protocol: UDP
+      - port: "2049"
+        protocol: TCP
+      - port: "2049"
+        protocol: UDP
+      - port: "20048"
+        protocol: TCP
+      - port: "20048"
+        protocol: UDP
