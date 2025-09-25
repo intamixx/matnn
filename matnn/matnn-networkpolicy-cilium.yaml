@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-matnn-ingress
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      app: matnn
+  ingress:
+  - fromEntities:
+    - cluster
+    - host
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP
+      - port: "8090"
+        protocol: TCP
+      - port: "8000"
+        protocol: TCP
