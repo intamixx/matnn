@@ -1,0 +1,46 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: matnn-restricted-egress
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      app: matnn
+
+  # Ingress rules remain the same
+  ingress:
+  - fromEntities:
+    - cluster
+    - host
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP
+      - port: "8090"
+        protocol: TCP
+      - port: "8000"
+        protocol: TCP
+
+  # Egress rules
+  egress:
+  # 1. Allow pods to talk to themselves on TCP 9090
+  - toEndpoints:
+    - matchLabels:
+        app: matnn
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP
+
+  # 2. Allow HTTP (80) and HTTPS (443) to anywhere (for ACME and external API calls)
+  - toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      - port: "443"
+        protocol: TCP
+    toEntities:
+    - world
+    #    egressDeny:
+    #  - toEntities: ["world"]   # explicitly deny all internet traffic
