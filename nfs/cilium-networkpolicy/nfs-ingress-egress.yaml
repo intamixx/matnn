@@ -1,0 +1,31 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-nfs-egress-ingress
+  namespace: default
+spec:
+  # Select NFS server pods
+  endpointSelector:
+    matchLabels:
+      app: nfs-server
+
+  # Allow ingress from anywhere to NFS ports
+  ingress:
+  - fromEntities:
+    - cluster
+    - host
+    toPorts:
+    - ports:
+      - port: "2049"
+        protocol: TCP
+      - port: "20048"
+        protocol: TCP
+      - port: "111"
+        protocol: TCP
+
+  # Allow egress to the internet / world
+  #  egress:
+  #  - toEntities:
+  #  - world
+  egressDeny:
+    - toEntities: ["world"]   # explicitly deny all internet traffic
