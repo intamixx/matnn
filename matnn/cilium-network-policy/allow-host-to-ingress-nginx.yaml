@@ -1,0 +1,26 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-ingress-nginx
+  namespace: ingress-nginx
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+  ingress:
+  - fromEntities:
+    - cluster
+    - host
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      - port: "443"
+        protocol: TCP
+      - port: "8443"
+        protocol: TCP
+  egress:
+  - toEntities:
+    - cluster
+    - kube-apiserver
+    - world
