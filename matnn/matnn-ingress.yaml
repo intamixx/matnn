@@ -12,11 +12,12 @@ metadata:
     nginx.ingress.kubernetes.io/affinity: "cookie"
     nginx.ingress.kubernetes.io/session-cookie-name: "route"
     nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
     - hosts:
         - matnn-app.intamixx.uk
-      secretName: matnn-app-tls-secret
+      secretName: letsencrypt-prod
   rules:
   - host: matnn-app.intamixx.uk
     http:
