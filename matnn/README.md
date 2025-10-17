@@ -40,4 +40,5 @@ patch ingress with VIP for external access
 
 
 Forward traffic to VIP
-iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination 10.123.1.100:443
+iptables -t nat -A PREROUTING -p tcp -d 10.123.1.4 --dport 443 -j DNAT --to-destination 10.123.100.100:443
+iptables -t nat -A PREROUTING -p tcp -d 10.123.1.4 --dport 80 -j DNAT --to-destination 10.123.100.100:80
