@@ -25,6 +25,7 @@ sudo mkdir /root/.kube
 
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" <<< y
 
+# Kubespray v2.29, ansible [core 2.17.3]
 sudo mkdir -p /opt/cni/bin
 sudo chmod 755 /opt/cni/bin
 sudo chown root:root /opt/cni/bin
