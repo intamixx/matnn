@@ -17,15 +17,12 @@ spec:
     - ports:
       - port: "9090"
         protocol: TCP
-      - port: "8090"
-        protocol: TCP
       - port: "8000"
         protocol: TCP
-        
-  # Ingress rules for matnn api
-  ingress:
   - fromEntities:
     - world
+    - cluster
+    - host
     toPorts:
     - ports:
       - port: "8090"
