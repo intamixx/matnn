@@ -5,6 +5,7 @@ apt-transport-https \
 ca-certificates \
 curl \
 gnupg-agent \
+nfs-common \
 software-properties-common &&
 sudo apt-get update -y &&
 sudo usermod -aG ubuntu
