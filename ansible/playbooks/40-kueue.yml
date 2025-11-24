@@ -3,7 +3,7 @@
   tasks:
 
     - name: initialize kueue
-      shell: kubectl apply --server-side -f https://github.com/kubernetes-sigs/kueue/releases/download/v0.13.3/manifests.yaml --force-conflicts >> kueue.log
+      shell: kubectl apply --server-side -f https://github.com/kubernetes-sigs/kueue/releases/download/v0.14.4/manifests.yaml --force-conflicts >> kueue.log
       args:
         chdir: $HOME
         creates: kueue.log
@@ -13,7 +13,7 @@
         timeout: 60
 
     - name: initialize kueue queue
-      shell: kubectl apply --server-side -f https://raw.githubusercontent.com/kubernetes-sigs/kueue/main/site/static/examples/admin/single-clusterqueue-setup.yaml --force-conflicts >> queue.log
+      shell: kubectl apply --server-side -f https://raw.githubusercontent.com/intamixx/matnn/refs/heads/main/kueue/single-clusterqueue-setup-14.4.yaml --force-conflicts >> queue.log
       args:
         chdir: $HOME
         creates: queue.log
@@ -90,6 +90,12 @@
       args:
         chdir: $HOME
         creates: ingress.log
+
+    - name: initialize cert manageringress operator
+      shell:  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.1/cert-manager.yaml > cert-manager.log
+      args:
+        chdir: $HOME
+        creates: cert-manager.log
 
     - name: Sleep for 30 seconds and continue with play
       wait_for:
