@@ -1,3 +1,4 @@
+# Apply for the UI
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -8,7 +9,8 @@ metadata:
     nginx.ingress.kubernetes.io/affinity-mode: "persistent"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/rewrite-target: /
+      #nginx.ingress.kubernetes.io/rewrite-target: $request_uri
+      #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/affinity: "cookie"
     nginx.ingress.kubernetes.io/session-cookie-name: "route"
     nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
@@ -29,13 +31,3 @@ spec:
             name: matnn-service
             port:
               number: 9090
-  - host: grafana.matnn-app.intamixx.uk  # Grafana hostname
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: prometheus-grafana
-            port:
-              number: 80
