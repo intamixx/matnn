@@ -6,9 +6,7 @@ Tested on a kubernetes cluster v1.30.4 with Kueue 14.4
 
 Main Website: [https://matnn.intamixx.uk/about](https://matnn.intamixx.uk/about)
 
-Vite App - [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
-
-Direct service frontend GUI: [https://mat.intamixx.uk:8090/upload](https://mat.intamixx.uk:8090/upload)
+Vite App - [https://matnn-app.intamixx.uk](https://matnn-app.intamixx.uk)
 
 Provide a simple web frontend for the API using nodejs, expressjs, multer, fetch etc
 Kueue scheduler is controlled and queried by fastapi backend.
@@ -33,12 +31,12 @@ Select musical attributes for analysis by specifying tags required. This reduces
 
 Shell
 ```
-curl -k -X POST 'https://mat.intamixx.uk:8090/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "classifiers=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
+curl -k -X POST 'https://matnn-app.intamixx.uk/api/upload' -H 'Content-Type: multipart/form-data' -F "bpm=true" -F "key=true" -F "genre_discogs_effnet=true" -F "classifiers=true" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
 ```
 In Python
 ```
 import requests
-url = 'https://mat.intamixx.uk:8090/api/upload'
+url = 'https://matnn-app.intamixx.uk/api/upload'
 data = {'genre_discogs_effnet':'True', 'bpm':'True', 'key':'True', 'classifiers':'True'}
 file = {'file': ('audio.mp3', open('audio.mp3', 'rb'), 'audio/mpeg')}
 resp = requests.post(url=url, files=file, data=data, verify=False)
@@ -55,7 +53,7 @@ There is an average wait of around 30 seconds for a typical prediction to comple
 # Status API (GET)
 This will show the status of the prediction using the ID returned from the upload step above.
 ```
-curl -k 'https://mat.intamixx.uk:8090/api/status/01f436c22d490885a90853d7d048c5ff-ntrh9'
+curl -k 'https://matnn-app.intamixx.uk/api/status/01f436c22d490885a90853d7d048c5ff-ntrh9'
 ```
 ```
 {
@@ -71,12 +69,12 @@ Provides the result of prediction
 
 Bash
 ```
-curl -k 'https://mat.intamixx.uk:8090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
+curl -k 'https://matnn-app.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
 ```
 In Python
 ```
 import requests
-url = 'https://mat.intamixx.uk:8090/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
+url = 'https://matnn-app.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9'
 resp = requests.get(url=url, verify=False)
 print(resp.json())
 ```
@@ -115,7 +113,7 @@ signature = digest.hexdigest()
 Use webhook_url in the request
 
 ```
-curl -k -X POST 'https://mat.intamixx.uk:8090/api/upload' -H 'Content-Type: multipart/form-data' -F "webhook_url=http://yoursite.domain:1234" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
+curl -k -X POST 'https://matnn-app.intamixx.uk/api/upload' -H 'Content-Type: multipart/form-data' -F "webhook_url=http://yoursite.domain:1234" -F "file=@/path/to/audio.mp3;type=audio/mpeg"
 ```
 
 Webhook received at destination
@@ -138,12 +136,12 @@ Content-Length: 81
 
 BPM Tag a file
 ```
-id3v2 --TBPM `curl -k 'https://matnn.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9' \
+id3v2 --TBPM `curl -k 'https://matnn-app.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9' \
  | jq -r '.result["bpm"]'` audio.mp3
 ```
 Genre Tag a file
 ```
-id3v2 --TCON `curl -k 'https://matnn.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9' \
+id3v2 --TCON `curl -k 'https://matnn-app.intamixx.uk/api/result/01f436c22d490885a90853d7d048c5ff-ntrh9' \
  | jq -r '.result["genre"]' | tr -d "\n" | sed 's/ //g; s/[]["]//g'` audio.mp3
 ```
 Or use a method / language of your choice.
