@@ -4,7 +4,7 @@
 
 Tested on a kubernetes cluster v1.30.4 with Kueue 14.4
 
-Main Website: [https://matnn.intamixx.uk/about](https://matnn.intamixx.uk/about)
+Main Website: [https://matnn.intamixx.uk](https://matnn.intamixx.uk)
 
 Vite App - [https://matnn-app.intamixx.uk](https://matnn-app.intamixx.uk)
 
