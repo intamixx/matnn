@@ -413,21 +413,36 @@ async def result_job(job_id):
         # Section run if results called without a status call. i.e. using api via cli
         elif (result[0]['completed']) == False:
             print ("COMPLETED FALSE!")
-            audiofile = (result[0]['audiofile'])
+            # Check the status of the job first, is it still running?
+            crd_api = client.CustomObjectsApi()
+            try:
+                listing = crd_api.list_namespaced_custom_object(
+                _request_timeout=1,
+                group="batch",
+                version="v1",
+                #namespace=args.namespace,
+                namespace="default",
+                plural="jobs",
+                )
+            except:
+                raise HTTPException(status_code=500, detail=f'Internal server error: {job_id}')
+                return {'detail': f'Internal server error: {job_id}'}
+            return (status_kueue_job(listing, job_id))
+            #audiofile = (result[0]['audiofile'])
             # Get the tags from filesystem and get completed time
-            (tags, completed_at) = (read_tags(job_id))
-            if tags == False:
-                raise HTTPException(status_code=202, detail=f'Reading tags for {job_id} processing')
-                return {'detail': f'Reading tags for {job_id} processing'}
-            else:
-                # Set completion to True with tagdata
-                db_update('', job_id, '', completed_at, True, tags)
-                started_at = (result[0]['start_epoch'])
-                #completed_at = (result[0]['finish_epoch'])
-                completed = True
-                tagdict = (tags.items())
-                print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                print (tagdict)
+            #(tags, completed_at) = (read_tags(job_id))
+            #if tags == False:
+            #    raise HTTPException(status_code=202, detail=f'Reading tags for {job_id} processing')
+            #    return {'detail': f'Reading tags for {job_id} processing'}
+            #else:
+            #    # Set completion to True with tagdata
+            #    db_update('', job_id, '', completed_at, True, tags)
+            #    started_at = (result[0]['start_epoch'])
+            #    #completed_at = (result[0]['finish_epoch'])
+            #    completed = True
+            #    tagdict = (tags.items())
+            #    print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #    print (tagdict)
         else:
             raise HTTPException(status_code=404, detail=f'Result {job_id} not found')
             return {'detail': f'Result {job_id} not found'}
