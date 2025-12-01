@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: arbitrary
+
+commonLabels:
+  app: matnn
+
+resources:
+- allow-host-to-ingress-nginx.yaml
+- allow-k8s-api-clusterwide.yaml
+- allow-k8s-api.yaml
+- allow-vip-to-egress.yaml
+- cert-manager-ingress-egress.yaml
+- matnn-ingress-egress.yaml
