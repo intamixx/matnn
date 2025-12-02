@@ -8,7 +8,7 @@ commonLabels:
 
 resources:
 - allow-host-to-ingress-nginx.yaml
-- allow-k8s-api.yaml
+- allow-k8s-api-and-limited-internet.yaml
 - allow-vip-to-egress.yaml
 - cert-manager-ingress-egress.yaml
 - matnn-ingress-egress.yaml
