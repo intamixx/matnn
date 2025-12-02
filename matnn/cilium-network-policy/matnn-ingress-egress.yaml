@@ -8,45 +8,59 @@ spec:
     matchLabels:
       app: matnn
 
-  # Ingress rules remain the same
   ingress:
   - fromEntities:
     - cluster
     - host
     toPorts:
-    - ports:
-      - port: "9090"
-        protocol: TCP
-      - port: "8000"
-        protocol: TCP
+      - ports:
+        - port: "9090"
+          protocol: TCP
+        - port: "8000"
+          protocol: TCP
+
   - fromEntities:
     - world
     - cluster
     - host
     toPorts:
-    - ports:
-      - port: "8090"
-        protocol: TCP
+      - ports:
+        - port: "8090"
+          protocol: TCP
 
-  # Egress rules
   egress:
-  # 1. Allow pods to talk to themselves on TCP 9090
+  # 1. Allow API server + node communications
+  - toEntities:
+    - host
+    - remote-node
+    - kube-apiserver
+    toPorts:
+      - ports:
+          - port: "6443"
+            protocol: TCP
+
+  # 2. Allow DNS only to kube-dns
   - toEndpoints:
     - matchLabels:
-        app: matnn
+        k8s-app: kube-dns
     toPorts:
-    - ports:
-      - port: "9090"
-        protocol: TCP
+      - ports:
+          - port: "53"
+            protocol: UDP
+          - port: "53"
+            protocol: TCP
 
-  # 2. Allow HTTP (80) and HTTPS (443) to anywhere (for ACME and external API calls)
-  - toPorts:
-    - ports:
-      - port: "80"
-        protocol: TCP
-      - port: "443"
-        protocol: TCP
-    toEntities:
+  # 3. Allow HTTP/HTTPS to world
+  - toEntities:
     - world
-    #    egressDeny:
-    #  - toEntities: ["world"]   # explicitly deny all internet traffic
+    - cluster
+    toPorts:
+      - ports:
+          - port: "80"
+            protocol: TCP
+          - port: "443"
+            protocol: TCP
+          - port: "53"
+            protocol: UDP
+          - port: "53"
+            protocol: TCP
