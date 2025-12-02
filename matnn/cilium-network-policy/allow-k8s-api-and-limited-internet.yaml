@@ -1,0 +1,46 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-k8s-api-and-limited-internet
+  namespace: default
+spec:
+  # applies to all pods in the 'default' namespace
+  endpointSelector: {}
+
+  # Ingress left out (unchanged). This policy controls egress.
+  egress:
+  # Allow kube-apiserver and node/host as before (API on 6443)
+  - toEntities:
+    - host
+    - remote-node
+    - kube-apiserver
+    toPorts:
+      - ports:
+        - port: "6443"
+          protocol: TCP
+
+  # Allow DNS only to kube-dns (UDP and TCP for larger replies)
+  - toEndpoints:
+    - matchLabels:
+        "k8s:io.kubernetes.pod.namespace": "kube-system"
+        "k8s:k8s-app": "kube-dns"
+    toPorts:
+      - ports:
+        - port: "53"
+          protocol: UDP
+        - port: "53"
+          protocol: TCP
+
+  # Allow restricted internet egress — only HTTP and HTTPS to 'world' for webhook calls
+  - toEntities:
+    - world
+    toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+        - port: "443"
+          protocol: TCP
+        - port: "53"
+          protocol: TCP
+        - port: "53"
+          protocol: UDP
