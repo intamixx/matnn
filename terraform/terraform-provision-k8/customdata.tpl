@@ -22,6 +22,18 @@ curl -LO https://github.com/derailed/k9s/releases/download/v0.50.9/k9s_Linux_amd
 tar -xzvf k9s_Linux_amd64.tar.gz
 sudo mv k9s /usr/local/bin
 
+HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
+HUBBLE_ARCH=amd64
+if [ "$(uname -m)" = "aarch64" ]; then HUBBLE_ARCH=arm64; fi
+curl -L --fail --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
+sha256sum --check hubble-linux-${HUBBLE_ARCH}.tar.gz.sha256sum
+sudo tar xzvfC hubble-linux-${HUBBLE_ARCH}.tar.gz /usr/local/bin
+rm hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
+
+LATEST=$(curl -s https://api.github.com/repos/fullstorydev/grpcurl/releases/latest | grep browser_download_url | grep linux_x86_64 | cut -d '"' -f 4)
+sudo install -m 0755 grpcurl_*_linux_x86_64 /usr/local/bin/grpcurl
+sudo tar xzvfC grpcurl_*_linux_x86_64.tar.gz /usr/local/bin
+
 sudo mkdir /root/.kube
 
 ssh-keygen -t rsa -f ~/.ssh/id_rsa -N "" <<< y
