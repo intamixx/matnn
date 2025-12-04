@@ -37,6 +37,7 @@ patch ingress with VIP for external access
 
 
 Forward traffic to metallb VIP
+
 iptables -t nat -A PREROUTING -d 10.123.1.4/32 -p tcp -m tcp --dport 443 -j DNAT --to-destination 10.233.100.100:443
 
 iptables -t nat -A PREROUTING -d 10.123.1.4/32 -p tcp -m tcp --dport 80 -j DNAT --to-destination 10.233.100.100:80
