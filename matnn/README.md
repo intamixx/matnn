@@ -20,9 +20,6 @@ kubectl -n kube-system edit configmap/kube-proxy
 
 use keepalived, unicast mode
 
-nat on both nodes
-iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination 10.123.1.100:443
-
 ingress add;
 optionally: nginx.ingress.kubernetes.io/affinity-mode: "persistent"
 
@@ -39,6 +36,7 @@ patch ingress with VIP for external access
  kubectl -n ingress-nginx patch svc ingress-nginx-controller   -p '{"spec": {"externalIPs": ["10.123.1.100"]}}'
 
 
-Forward traffic to VIP
-iptables -t nat -A PREROUTING -p tcp -d 10.123.1.4 --dport 443 -j DNAT --to-destination 10.123.100.100:443
-iptables -t nat -A PREROUTING -p tcp -d 10.123.1.4 --dport 80 -j DNAT --to-destination 10.123.100.100:80
+Forward traffic to metallb VIP
+iptables -t nat -A PREROUTING -d 10.123.1.4/32 -p tcp -m tcp --dport 443 -j DNAT --to-destination 10.233.100.100:443
+iptables -t nat -A PREROUTING -d 10.123.1.4/32 -p tcp -m tcp --dport 80 -j DNAT --to-destination 10.233.100.100:80
+
