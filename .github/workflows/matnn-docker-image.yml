@@ -9,15 +9,52 @@ on:
 #    branches: [ "main" ]
 
 jobs:
-
-  build:
-
+  docker:
     runs-on: ubuntu-latest
-
+    env:
+      IMAGE: intamixx/matnn_v3
     steps:
-    - name: Clone the repository
-      run: git clone https://github.com/intamixx/matnn
-    - name: run hello
-      run: echo "Hello ${{ inputs.name }}"
-    - name: Build the Docker image
-      run: cd matnn/matnn/docker && docker build . --file Dockerfile --tag matnn_v3:$(date +%s)
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Prepare
+        id: prep
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          TS=$(date +%s)
+          REVISION=${GITHUB_SHA::8}
+          BUILD_ID="${BRANCH}-${REVISION}-${TS}"
+          LATEST_ID=latest
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            BUILD_ID=${GITHUB_REF/refs\/tags\//}
+            LATEST_ID=latest
+          fi
+          echo BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') >> $GITHUB_OUTPUT
+          echo BUILD_ID=${BUILD_ID} >> $GITHUB_OUTPUT
+          echo LATEST_ID=${LATEST_ID} >> $GITHUB_OUTPUT          
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./matnn/docker
+          file: ./matnn/docker/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.prep.outputs.BUILD_ID }}
+            ${{ env.IMAGE }}:${{ steps.prep.outputs.LATEST_ID }}
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
