@@ -6,13 +6,21 @@ metadata:
 commonLabels:
   app: matnn
 
+configMapGenerator:
+  - name: matnn-config
+    namespace: default
+    files:
+      - configs/matnn-config.ini
+      - configs/ssl-privatekey.pem
+      - configs/ssl-certificate.pem
+
 resources:
 - create-cluster-role-binding.yaml
 - create-service-account.yaml
 - create-service-prometheus-grafana.yaml
 - matnn-api-ingress.yaml
 - matnn-ingress.yaml
-- matnn-configmap.yaml
+#- matnn-configmap.yaml
 - matnn-service.yaml
 - matnn-deployment.yaml
 - matnn-metallb.yaml
