@@ -61,11 +61,11 @@ RUN useradd -ms /bin/bash web
 RUN mkdir /fastapi
 RUN wget https://raw.githubusercontent.com/intamixx/matnn/main/fastapi/main.py -O /fastapi/main.py
 
-# Install files for VueJS (app frontend)
+# Install files for ViteJS (app frontend)
 RUN cd /
 RUN git clone --depth 1 https://github.com/intamixx/matnn.git /tmp/matnn
-RUN mv /tmp/matnn/vue-app /
-RUN mv /vue-app /vuejs
+RUN mv /tmp/matnn/vite-app /
+RUN mv /vite-app /vitejs
 
 # Install files for ExpressJS (middleware)
 RUN mv /tmp/matnn/expressjs /
@@ -74,8 +74,8 @@ RUN mkdir /nodejs/uploads
 
 # Install NPM stack
 RUN cd /nodejs && npm i express ejs multer form-data node-fetch@2
-# Install NPM stack VueJS
-RUN cd /vuejs && npm install
+# Install NPM stack ViteJS
+RUN cd /vitejs && npm install
 
 # Copy ssl certs
 #COPY ssl/* /nodejs/ssl
@@ -83,7 +83,7 @@ RUN cd /vuejs && npm install
 # Ensure UID web : 1000.  runas container user in fastapi should be same.
 RUN chown web:web -R /fastapi
 RUN chown web:web -R /nodejs
-RUN chown web:web -R /vuejs
+RUN chown web:web -R /vitejs
 RUN chown web:web -R /mnt
 COPY supervisor-app.conf /etc/supervisor/conf.d
 
