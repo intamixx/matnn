@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matnn
+  namespace: default
+spec:
+  replicas: 2
