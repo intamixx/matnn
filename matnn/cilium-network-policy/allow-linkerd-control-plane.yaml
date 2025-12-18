@@ -1,0 +1,27 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-linkerd-control-plane
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels: {}
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        app: linkerd-identity
+    - matchLabels:
+        app: linkerd-destination
+    - matchLabels:
+        app: linkerd-policy
+    - matchLabels:
+        app: linkerd-proxy-injector
+  - toCIDR:
+    - "10.233.0.3/32"  # coredns service IP
+  - toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+  ingress:
+  - fromEndpoints:
+    - matchLabels: {}
