@@ -1,0 +1,35 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-linkerd-proxy-ingress
+  namespace: default
+spec:
+  endpointSelector: {}
+  ingress:
+  # Application traffic via Linkerd
+  - fromEndpoints:
+    - {}
+    toPorts:
+    - ports:
+      - port: "4143"
+        protocol: TCP
+
+  # Linkerd control plane
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: linkerd
+    toPorts:
+    - ports:
+      - port: "4190"
+        protocol: TCP
+
+  # Prometheus + probes
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: linkerd-viz
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "4191"
+        protocol: TCP
