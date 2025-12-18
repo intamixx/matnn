@@ -10,6 +10,9 @@ spec:
   completions: 1
   suspend: true
   template:
+    metadata:
+      annotations:
+        linkerd.io/inject: disabled  # Disable Linkerd injection
     spec:
       #volumes:
       #- name: data
@@ -17,7 +20,7 @@ spec:
       #    claimName: nfs-pvc
       containers:
       - name: musicnn-job
-        image: intamixx/musicnn_v2:latest
+        image: intamixx/musicnn_v3:latest
         args: ["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", "/mnt/out.tags"]
         securityContext:
           runAsUser: 1000
@@ -31,7 +34,7 @@ spec:
       volumes:
       - name: nfs
         nfs:
-          server: 10.43.3.234
+          server: 10.233.3.234
           path: /exports
       restartPolicy: Never
   backoffLimit: 1
