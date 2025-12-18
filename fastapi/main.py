@@ -279,34 +279,63 @@ def generate_job_crd(job_name, image, args):
     claim_name = confparser('nfs-server', 'claim_name')
     print (claim_name)
 
+    # Define the Job's metadata with the Linkerd annotation
     metadata = client.V1ObjectMeta(
-        generate_name=job_name, labels={"kueue.x-k8s.io/queue-name": "user-queue"}
+        generate_name=job_name,  # This will automatically generate a unique name based on the prefix
+        labels={"kueue.x-k8s.io/queue-name": "user-queue"},
+        annotations={
+            "linkerd.io/inject": "disabled"  # Disable Linkerd injection
+        }
     )
 
-    # Job container
+    # Define the container
     container = client.V1Container(
         image=image,
         name="musicnn-job",
         args=args,
-        resources=client.V1ResourceRequirements(requests={'cpu': 1, 'memory': '200Mi',} ),
+        resources=client.V1ResourceRequirements(
+            requests={'cpu': '1', 'memory': '200Mi'}
+        ),
         security_context=client.V1SecurityContext(run_as_user=1000),
-        volume_mounts=[client.V1VolumeMount(name='nfs',mount_path=mountdir)],
-        )
-    #nfsvol = client.V1NFSVolumeSource(path="/exports", server=nfs_server)
-    volume = client.V1Volume(name='nfs', persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-        claim_name=claim_name
-    ))
+        volume_mounts=[client.V1VolumeMount(name='nfs', mount_path=mountdir)]
+    )
 
-    # Job template
-    template = {"spec": {"containers": [container], "volumes": [volume], "restartPolicy": "Never"}}
-    return client.V1Job(
+    # Define the volume using PersistentVolumeClaim
+    volume = client.V1Volume(
+        name='nfs',
+        persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+            claim_name=claim_name
+        )
+    )
+
+    # Define the PodTemplateSpec (the "template" for the Job)
+    pod_template = client.V1PodTemplateSpec(
+        metadata=client.V1ObjectMeta(annotations={"linkerd.io/inject": "disabled"}),  # Disable Linkerd injection here
+        spec=client.V1PodSpec(
+            containers=[container],
+            volumes=[volume],
+            restart_policy="Never"
+        )
+    )
+
+    # Define the Job spec
+    job_spec = client.V1JobSpec(
+        parallelism=1,
+        completions=1,
+        suspend=True,  # You can set to False if you want it to run immediately
+        backoff_limit=0,
+        template=pod_template
+    )
+
+    # Create the Job
+    job = client.V1Job(
         api_version="batch/v1",
         kind="Job",
         metadata=metadata,
-        spec=client.V1JobSpec(
-            parallelism=1, completions=1, suspend=True, template=template, backoff_limit=0
-        ),
+        spec=job_spec
     )
+
+    return job
 
 def db_update(filename, job_id, start_epoch, finish_epoch, completed, tags):
     mountdir = confparser('nfs-server', 'mountdir')
