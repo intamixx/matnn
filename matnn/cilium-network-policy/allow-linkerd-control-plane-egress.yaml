@@ -1,0 +1,31 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-linkerd-control-plane-egress
+  namespace: default
+spec:
+  endpointSelector: {}
+  egress:
+  # DNS
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      - port: "53"
+        protocol: TCP
+
+  # Linkerd control plane
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: linkerd
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP
+      - port: "8086"
+        protocol: TCP
+      - port: "8090"
+        protocol: TCP
