@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-ingress-nginx-to-matnn
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      app: matnn
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: ingress-nginx
+    toPorts:
+    - ports:
+      - port: "4143"  # Linkerd proxy port
+        protocol: TCP
