@@ -1,8 +1,16 @@
 name: Matnn Docker Image CI
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - matnn/docker/Dockerfile
+      - matnn/VERSION
+
+# on:
+  # Allows you to run this workflow manually from the Actions tab
+#  workflow_dispatch:
 #  push:
 #    branches: [ "main" ]
 #  pull_request:
