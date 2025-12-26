@@ -7,6 +7,8 @@ on:
     paths:
       - matnn/docker/Dockerfile
       - matnn/VERSION
+    tags:
+      - 'v*'
 
 # on:
   # Allows you to run this workflow manually from the Actions tab
