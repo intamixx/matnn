@@ -9,5 +9,5 @@ volumeBindingMode: Immediate
 parameters:
   accessMode: "rwx"
   nfsOptions: "nfsvers=4.1"
-  numberOfReplicas: "3"
+  numberOfReplicas: "2"
   staleReplicaTimeout: "30"
