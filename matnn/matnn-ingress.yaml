@@ -19,6 +19,7 @@ spec:
     - hosts:
         - matnn-app.intamixx.uk
         - grafana.matnn-app.intamixx.uk
+        - nginxtest.matnn-app.intamixx.uk
       secretName: letsencrypt-prod
   rules:
   - host: matnn-app.intamixx.uk
@@ -39,5 +40,15 @@ spec:
         backend:
           service:
             name: prometheus-grafana
+            port:
+              number: 80
+  - host: nginxtest.matnn-app.intamixx.uk  # Grafana hostname
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-rwx-service
             port:
               number: 80
