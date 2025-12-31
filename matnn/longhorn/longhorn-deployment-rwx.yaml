@@ -8,7 +8,7 @@ spec:
   storageClassName: longhorn-rwx
   resources:
     requests:
-      storage: 2Gi
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,9 +26,18 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:latest
+          image: nginxdemos/hello:plain-text
           ports:
-            - containerPort: 80
+           - containerPort: 80
+          env:
+            - name: CONTAINER_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name  # Use Pod's hostname (usually the pod name)
+            - name: CONTAINER_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP  # Use Pod's IP
           volumeMounts:
             - name: html
               mountPath: /usr/share/nginx/html
