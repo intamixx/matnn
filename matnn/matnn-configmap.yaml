@@ -10,6 +10,10 @@ data:
     mountdir = /mnt
     claim_name = nfs-claim
     storage_volume = nfs
+    #host = 10.233.12.153
+    #mountdir = /mnt
+    #claim_name = pvc-rwx
+    #storage_volume = pvc-d73c8162-7ab0-4fb0-a8c1-7fefd00b89f3
     [dockerhub]
     image = intamixx/musicnn_v3:latest
   ssl-privatekey: |
