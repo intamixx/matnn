@@ -68,4 +68,5 @@ spec:
       - name: nfs
         persistentVolumeClaim:
           claimName: nfs-claim
+          #claimName: pvc-rwx
       restartPolicy: Always
