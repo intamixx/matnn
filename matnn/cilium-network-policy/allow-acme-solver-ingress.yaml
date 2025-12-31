@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-acme-solver-ingress
+  namespace: default  # Ensure this matches the namespace of your resources
+spec:
+  endpointSelector:
+    matchLabels:
+      {}
+  ingress:
+    - fromEntities:
+        - cluster
+        - host
+      toPorts:
+        - ports:
+            - port: "4143"  # The port used for the ACME HTTP solver communication
+              protocol: TCP
+  egress:
+    - toEntities:
+        - cluster
+        - kube-apiserver
+        - world
