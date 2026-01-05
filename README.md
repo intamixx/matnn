@@ -27,7 +27,7 @@ Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and 
 ![alt text](https://github.com/intamixx/matnn/blob/main/matnn-application-architecture.jpg?raw=true)
 
 # Submission / Upload API (POST)
-Select musical attributes for analysis by specifying tags required. This reduces time taken for analysis to complete. Select either 'genre_discogs_effnet' OR 'genre_musicnn'. Set just the filename with no options to perform a full set of predictions.
+Select musical attributes for analysis by specifying tags required. This reduces time taken for analysis to complete. Select either 'genre_discogs_effnet' OR 'genre_musicnn' OR 'genre_magnatagatune'. Set just the filename with no options to perform a full set of predictions.
 
 Shell
 ```
