@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: matnn
+  namespace: default
+  labels:
+    release: prometheus   # IMPORTANT (matches kube-prometheus-stack)
+spec:
+  selector:
+    matchLabels:
+      app: matnn
+  namespaceSelector:
+    matchNames:
+    - default
+  podMetricsEndpoints:
+  - targetPort: 8000
+    path: /metrics/
+      #relabelings:
+      # - sourceLabels: [__meta_kubernetes_pod_name]
+      #targetLabel: my_pod
