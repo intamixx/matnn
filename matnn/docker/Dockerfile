@@ -43,6 +43,7 @@ RUN apt-get install -y nodejs
 # Install FastApi, Express, NPM modules
 RUN pip install fastapi --break-system-packages
 RUN pip install uvicorn --break-system-packages
+RUN pip install prometheus-client --break-system-packages
 RUN pip install aiofiles tinydb kubernetes python-multipart --break-system-packages
 
 # Add Tini
