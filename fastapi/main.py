@@ -1,6 +1,10 @@
 from fastapi import FastAPI, Form, File, Request, UploadFile, HTTPException, status, Header, Depends
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
+#from prometheus_client import make_asgi_app, Counter
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
+from prometheus_client import make_asgi_app
 import aiofiles
 
 from kubernetes import config, client
@@ -18,6 +22,46 @@ import json
 #from typing import Optional, List
 
 app = FastAPI()
+
+#REQUEST_COUNT = Counter("http_requests_total", "Total number of HTTP requests")
+
+#@app.get("/")
+#def read_root():
+#    REQUEST_COUNT.inc()
+#    return {"message": "Hello from FastAPI with Prometheus"}
+#
+#@app.get("/metrics")
+#def metrics():
+#    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from prometheus_client import Counter
+
+REQUEST_COUNT = Counter(
+    "http_requests_total",
+    "Total number of HTTP requests",
+    ["app_name", "method", "endpoint", "http_status"]
+)
+
+class MetricsMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+
+        REQUEST_COUNT.labels(
+            app_name="webapp",
+            method=request.method,
+            endpoint=request.url.path,
+            http_status=str(response.status_code)
+        ).inc()
+
+        return response
+
+# Register middleware
+app.add_middleware(MetricsMiddleware)
+
+# Expose /metrics for Prometheus
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 config.load_incluster_config()
 #config.load_kube_config()
