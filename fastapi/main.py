@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 from prometheus_client import make_asgi_app
+from starlette.middleware.base import BaseHTTPMiddleware
 import aiofiles
 
 from kubernetes import config, client
@@ -34,9 +35,6 @@ app = FastAPI()
 #def metrics():
 #    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
-from starlette.middleware.base import BaseHTTPMiddleware
-from prometheus_client import Counter
-
 REQUEST_COUNT = Counter(
     "http_requests_total",
     "Total number of HTTP requests",
@@ -45,17 +43,29 @@ REQUEST_COUNT = Counter(
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
+        # Exclude metrics endpoint
+        EXCLUDED_PATHS = ("/metrics", "/health", "/ready", "/livez")
+
+        if request.url.path.startswith(EXCLUDED_PATHS):
+            return await call_next(request)
+
         response = await call_next(request)
+
+        endpoint = (
+            request.scope.get("route").path
+            if request.scope.get("route")
+            else request.url.path
+        )
 
         REQUEST_COUNT.labels(
             app_name="webapp",
             method=request.method,
-            endpoint=request.url.path,
+            endpoint=endpoint,
             http_status=str(response.status_code)
         ).inc()
 
         return response
-
+        
 # Register middleware
 app.add_middleware(MetricsMiddleware)
 
