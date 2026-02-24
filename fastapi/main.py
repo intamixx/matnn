@@ -24,54 +24,13 @@ import json
 
 app = FastAPI()
 
-#REQUEST_COUNT = Counter("http_requests_total", "Total number of HTTP requests")
+from prometheus_fastapi_instrumentator import Instrumentator
 
-#@app.get("/")
-#def read_root():
-#    REQUEST_COUNT.inc()
-#    return {"message": "Hello from FastAPI with Prometheus"}
-#
-#@app.get("/metrics")
-#def metrics():
-#    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+instrumentator = Instrumentator().instrument(app)
 
-REQUEST_COUNT = Counter(
-    "http_requests_total",
-    "Total number of HTTP requests",
-    ["app_name", "method", "endpoint", "http_status"]
-)
-
-class MetricsMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        # Exclude metrics endpoint
-        EXCLUDED_PATHS = ("/metrics", "/health", "/ready", "/livez")
-
-        if request.url.path.startswith(EXCLUDED_PATHS):
-            return await call_next(request)
-
-        response = await call_next(request)
-
-        endpoint = (
-            request.scope.get("route").path
-            if request.scope.get("route")
-            else request.url.path
-        )
-
-        REQUEST_COUNT.labels(
-            app_name="webapp",
-            method=request.method,
-            endpoint=endpoint,
-            http_status=str(response.status_code)
-        ).inc()
-
-        return response
-        
-# Register middleware
-app.add_middleware(MetricsMiddleware)
-
-# Expose /metrics for Prometheus
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
+@app.on_event("startup")
+async def _startup():
+    instrumentator.expose(app)
 
 config.load_incluster_config()
 #config.load_kube_config()
