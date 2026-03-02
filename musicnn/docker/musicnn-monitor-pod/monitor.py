@@ -94,13 +94,11 @@ def load_kube():
         config.load_kube_config()
         print("Loaded kubeconfig")
 
-
 def get_worker_jobs(batch_api):
     return batch_api.list_namespaced_job(
         namespace=NAMESPACE,
-        label_selector=f"jobset.sigs.k8s.io/name={JOBSET_NAME}"
+        label_selector=f"jobset.x-k8s.io/jobset-name={JOBSET_NAME}"
     ).items
-
 
 def main():
     print("Monitor starting (Python client + retry)...")
