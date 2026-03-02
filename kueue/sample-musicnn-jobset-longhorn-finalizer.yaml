@@ -1,0 +1,108 @@
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: musicnn-jobset
+  namespace: default
+  labels:
+    kueue.x-k8s.io/queue-name: user-queue
+  finalizers:
+    - jobset.finalizers.mycompany.com/webhook
+spec:
+  replicatedJobs:
+  # ------------------------- MAIN WORKER JOB -------------------------
+  - name: main
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          kueue.x-k8s.io/queue-name: user-queue
+      spec:
+        parallelism: 1
+        completions: 1
+        suspend: false
+        template:
+          metadata:
+            annotations:
+              linkerd.io/inject: "disabled"
+          spec:
+            containers:
+            - name: musicnn-job
+              image: intamixx/musicnn_v3:latest
+              args:
+                - "python3"
+                - "-m"
+                - "musicnn.tagger"
+                - "/musicnn/audio/TRWJAZW128F42760DD_test.mp3"
+                - "--model"
+                - "MSD_musicnn"
+                - "--topN"
+                - "3"
+                - "--length"
+                - "3"
+                - "--overlap"
+                - "1"
+                - "--print"
+                - "--save"
+                - "/mnt/out.tags"
+              securityContext:
+                runAsUser: 1000
+              resources:
+                requests:
+                  cpu: 1
+                  memory: "200Mi"
+              volumeMounts:
+              - name: nfs
+                mountPath: /mnt
+            volumes:
+            - name: nfs
+              persistentVolumeClaim:
+                claimName: pvc-rwx
+            restartPolicy: Never
+        backoffLimit: 1
+
+  # ------------------------- MONITOR JOB -------------------------
+  - name: monitor
+    replicas: 1
+    template:
+      spec:
+        parallelism: 1
+        completions: 1
+        suspend: false
+        template:
+          metadata:
+            annotations:
+              linkerd.io/inject: "disabled"
+          spec:
+            serviceAccountName: monitor-sa
+            containers:
+            - name: monitor
+              image: intamixx/musicnn_monitor_pod_v3:latest
+              env:
+                - name: NAMESPACE
+                  value: "default"
+                - name: JOBSET_NAME
+                  value: "musicnn-jobset"
+                - name: WEBHOOK_URL
+                  value: "https://yoursite.domain:1234"
+                - name: WEBHOOK_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: webhook-secret
+                      key: secret
+                - name: POLL_INTERVAL
+                  value: "5"
+                - name: WEBHOOK_MAX_RETRIES
+                  value: "5"
+                - name: WEBHOOK_BACKOFF
+                  value: "5"
+                - name: JOB_TIMEOUT
+                  value: "600"
+              volumeMounts:
+              - name: nfs
+                mountPath: /mnt
+            volumes:
+            - name: nfs
+              persistentVolumeClaim:
+                claimName: pvc-rwx
+            restartPolicy: Never
+        backoffLimit: 0   # Don't retry monitor pod if it fails, retries handled in Python
