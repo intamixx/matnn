@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 JobSet Monitor
-Monitors worker jobs in a JobSet and sends signed webhooks on completion/failure.
-Removes finalizer after webhook delivery.
+Monitors worker jobs in a JobSet and sends signed webhooks on completion/failure/timeout.
+Removes finalizer after webhook delivery using JSON Patch.
 """
 
 import os
@@ -113,14 +113,14 @@ def send_webhook(job_id: str, status: str):
     return False
 
 # -------------------------------
-# JobSet finalizer removal
+# JobSet finalizer removal (Option 2)
 # -------------------------------
 def remove_jobset_finalizer():
     """
-    Remove finalizer from the JobSet after webhook delivery
+    Remove finalizer from the JobSet after webhook delivery using JSON Patch.
     """
     try:
-        patch_body = [{"op": "remove", "path": "/metadata/finalizers/0"}]
+        patch_body = '[{"op":"remove","path":"/metadata/finalizers/0"}]'
         custom_api.patch_namespaced_custom_object(
             group="jobset.x-k8s.io",
             version="v1alpha2",
@@ -128,7 +128,8 @@ def remove_jobset_finalizer():
             plural="jobsets",
             name=JOBSET_NAME,
             body=patch_body,
-            _preload_content=False
+            _preload_content=False,
+            headers={"Content-Type": "application/json-patch+json"},
         )
         print(f"✅ Finalizer removed from JobSet {JOBSET_NAME}")
     except ApiException as e:
