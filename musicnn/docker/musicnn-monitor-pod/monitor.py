@@ -94,42 +94,39 @@ def load_kube():
         config.load_kube_config()
         print("Loaded kubeconfig")
 
+
 def get_worker_jobs(batch_api):
+    return batch_api.list_namespaced_job(
+        namespace=NAMESPACE,
+        label_selector=f"jobset.x-k8s.io/jobset-name={JOBSET_NAME}"
+    ).items
+
+def remove_jobset_finalizer():
     """
-    Fetch all worker jobs for the JobSet and print debug info.
-    Excludes the monitor job itself.
+    Remove the webhook finalizer from the JobSet after webhook delivery.
     """
     try:
-        jobs = batch_api.list_namespaced_job(
-            namespace=NAMESPACE,
-            label_selector=f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME}"
-        ).items
-
-        if not jobs:
-            print("No jobs found yet for JobSet:", JOBSET_NAME)
-            return []
-
-        # Debug: print all jobs and their labels
-        print("Jobs detected:")
-        for j in jobs:
-            job_name = j.metadata.name
-            labels = j.metadata.labels
-            print(f"  - {job_name}")
-            for k, v in labels.items():
-                print(f"      {k}: {v}")
-
-        # Exclude the monitor job itself
-        filtered_jobs = [
-            j for j in jobs
-            if j.metadata.labels.get("jobset.sigs.k8s.io/replicatedjob-name") != "monitor"
+        api = client.CustomObjectsApi()
+        patch_body = [
+            {
+                "op": "remove",
+                "path": "/metadata/finalizers/0"
+            }
         ]
-
-        print(f"Worker jobs count (excluding monitor): {len(filtered_jobs)}")
-        return filtered_jobs
-
+        api.patch_namespaced_custom_object(
+            group="jobset.x-k8s.io",
+            version="v1alpha2",
+            namespace=NAMESPACE,
+            plural="jobsets",
+            name=JOBSET_NAME,
+            body=patch_body,
+            _preload_content=False
+        )
+        print(f"✅ Finalizer removed from JobSet {JOBSET_NAME}")
+    except client.rest.ApiException as e:
+        print(f"❌ Failed to remove finalizer: {e}")
     except Exception as e:
-        print("Error fetching worker jobs:", str(e))
-        return []
+        print(f"❌ Unexpected error removing finalizer: {e}")
 
 def main():
     print("Monitor starting (Python client + retry)...")
@@ -169,18 +166,21 @@ def main():
             if failed > 0:
                 print("❌ Failure detected")
                 send_webhook_with_retry(job_id, FAIL_STATUS)
+                remove_jobset_finalizer()
                 sys.exit(0)
 
             # ✅ Success
             if succeeded == total:
                 print("✅ All jobs complete")
                 send_webhook_with_retry(job_id, SUCCESS_STATUS)
+                remove_jobset_finalizer()
                 sys.exit(0)
 
             # ⏱ Timeout
             if time.time() - start_time > GLOBAL_TIMEOUT_SECONDS:
                 print("⏱ Global timeout")
                 send_webhook_with_retry(job_id, TIMEOUT_STATUS)
+                remove_jobset_finalizer()
                 sys.exit(0)
 
             time.sleep(POLL_INTERVAL)
