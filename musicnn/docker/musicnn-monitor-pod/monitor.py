@@ -95,10 +95,41 @@ def load_kube():
         print("Loaded kubeconfig")
 
 def get_worker_jobs(batch_api):
-    return batch_api.list_namespaced_job(
-        namespace=NAMESPACE,
-        label_selector=f"jobset.x-k8s.io/jobset-name={JOBSET_NAME}"
-    ).items
+    """
+    Fetch all worker jobs for the JobSet and print debug info.
+    Excludes the monitor job itself.
+    """
+    try:
+        jobs = batch_api.list_namespaced_job(
+            namespace=NAMESPACE,
+            label_selector=f"jobset.sigs.k8s.io/jobset-name={JOBSET_NAME}"
+        ).items
+
+        if not jobs:
+            print("No jobs found yet for JobSet:", JOBSET_NAME)
+            return []
+
+        # Debug: print all jobs and their labels
+        print("Jobs detected:")
+        for j in jobs:
+            job_name = j.metadata.name
+            labels = j.metadata.labels
+            print(f"  - {job_name}")
+            for k, v in labels.items():
+                print(f"      {k}: {v}")
+
+        # Exclude the monitor job itself
+        filtered_jobs = [
+            j for j in jobs
+            if j.metadata.labels.get("jobset.sigs.k8s.io/replicatedjob-name") != "monitor"
+        ]
+
+        print(f"Worker jobs count (excluding monitor): {len(filtered_jobs)}")
+        return filtered_jobs
+
+    except Exception as e:
+        print("Error fetching worker jobs:", str(e))
+        return []
 
 def main():
     print("Monitor starting (Python client + retry)...")
