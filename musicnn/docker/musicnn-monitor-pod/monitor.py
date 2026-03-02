@@ -113,14 +113,11 @@ def send_webhook(job_id: str, status: str):
     return False
 
 # -------------------------------
-# JobSet finalizer removal (Option 2)
+# JobSet finalizer removal
 # -------------------------------
 def remove_jobset_finalizer():
-    """
-    Remove finalizer from the JobSet after webhook delivery using JSON Patch.
-    """
     try:
-        patch_body = '[{"op":"remove","path":"/metadata/finalizers/0"}]'
+        patch_body = {"metadata": {"finalizers": None}}
         custom_api.patch_namespaced_custom_object(
             group="jobset.x-k8s.io",
             version="v1alpha2",
@@ -128,12 +125,8 @@ def remove_jobset_finalizer():
             plural="jobsets",
             name=JOBSET_NAME,
             body=patch_body,
-            _preload_content=False,
-            headers={"Content-Type": "application/json-patch+json"},
         )
         print(f"✅ Finalizer removed from JobSet {JOBSET_NAME}")
-    except ApiException as e:
-        print(f"❌ Failed to remove finalizer: {e}")
     except Exception as e:
         print(f"❌ Unexpected error removing finalizer: {e}")
 
