@@ -169,7 +169,7 @@ def monitor_jobset():
                 send_webhook(JOBSET_NAME, "finished")
                 break
 
-            time.sleep(POLL_INTERVAL)
+        time.sleep(POLL_INTERVAL)
 
     # Remove finalizer
     remove_jobset_finalizer()
