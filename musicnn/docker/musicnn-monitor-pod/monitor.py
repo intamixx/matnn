@@ -151,24 +151,25 @@ def monitor_jobset():
 
         print(f"Progress: {succeeded}/{total} succeeded | {failed} failed")
 
-        # Check for timeout
-        elapsed = time.time() - start_time
-        if elapsed > JOB_TIMEOUT:
-            print(f"❌ JobSet monitoring timed out after {elapsed:.1f}s")
-            send_webhook(JOBSET_NAME, "timeout")
-            break
+        if WEBHOOK_URL:
+            # Check for timeout
+            elapsed = time.time() - start_time
+            if elapsed > JOB_TIMEOUT:
+                print(f"❌ JobSet monitoring timed out after {elapsed:.1f}s")
+                send_webhook(JOBSET_NAME, "timeout")
+                break
 
-        if failed > 0:
-            print(f"❌ {failed} jobs failed")
-            send_webhook(JOBSET_NAME, "failed")
-            break
+            if failed > 0:
+                print(f"❌ {failed} jobs failed")
+                send_webhook(JOBSET_NAME, "failed")
+                break
 
-        if succeeded == total:
-            print("✅ All jobs complete")
-            send_webhook(JOBSET_NAME, "finished")
-            break
+            if succeeded == total:
+                print("✅ All jobs complete")
+                send_webhook(JOBSET_NAME, "finished")
+                break
 
-        time.sleep(POLL_INTERVAL)
+            time.sleep(POLL_INTERVAL)
 
     # Remove finalizer
     remove_jobset_finalizer()
