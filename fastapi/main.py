@@ -5,7 +5,6 @@ from fastapi.responses import HTMLResponse
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 from prometheus_client import make_asgi_app
-from starlette.middleware.base import BaseHTTPMiddleware
 import aiofiles
 
 from kubernetes import config, client
@@ -66,7 +65,7 @@ def checker(tagselection: str = Form(...)):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
-async def valid_content_length(content_length: int = Header(..., lt=10000_000)):
+async def valid_content_length(content_length: int = Header(..., lt=15000_000)):
     return content_length
 @app.post("/upload")
 async def upload_file(
@@ -683,6 +682,7 @@ def submit_job(filename, tagselection):
     print (tags)
     print (webhook)
     print ("oooooooooooooo")
+
     #container_args_str = ' '.join(container_args)
     #print (container_args_str)
     # If empty checkboxes, default to genre
@@ -709,10 +709,11 @@ def submit_job(filename, tagselection):
 ######## Just to test database
     job_id = "{}-{}".format(md5, rand_id)
     try:
-        job_name="{}-{}".format(mn_args_genre_type, job_id)
+        #job_name="{}-{}".format(mn_args_genre_type, job_id)
+        job_name="m-{}".format(job_id)
     except:
         # mn_args_genre_type not set, so job_name is default for now and send a blank genre_type
-        job_name="default-{}".format(job_id)
+        job_name="d-{}".format(job_id)
         mn_args_genre_type = "-x"
     #print ("Inserting into Database")
     #print ("Current Date: {}".format(datetime.now()))
@@ -722,46 +723,214 @@ def submit_job(filename, tagselection):
 
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
     #print (cmdargs)
-
-    #return job_id
-########
-
-    #sys.exit(0)
-
-    #parser = get_parser()
-    #args, _ = parser.parse_known_args()
-
-    #cmdargs=["python3", "-m", "musicnn.tagger", "/musicnn/audio/TRWJAZW128F42760DD_test.mp3", "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", output_file]
-    #cmdargs=["python3", "-m", "musicnn.tagger", matnn_pod_nfs_file, "--model", "MSD_musicnn", "--topN", "3", "--length", "3", "--overlap", "1", "--print", "--save", result_genre_output_file]
-    #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, container_args_str]
     cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers, mn_args_webhook, mn_args_webhook_url, "-i", job_id]
     print (cmdargs)
 
     image = confparser('dockerhub', 'image')
     print (image)
-    #image="intamixx/musicnn_v2:latest"
-    #job_name="musicnn-%s-%s" % (md5, rand_id)
-    ##job_id = "{}-{}".format(md5, rand_id)
-    ##job_name="musicnn-{}".format(job_id)
 
-    #print ("Inserting into Database")
-    #print ("Current Date: {}".format(datetime.now()))
-    ##epochtime = int(datetime.now().strftime('%s'))
-    #print ("Epoch time: {}".format(epochtime))
-    ##db_update(filename, job_id, epochtime, False, tags)
+    print ("!!!!!!!!!!!!!!!!!!!!!!\n")
+    print (job_id)
+    print (job_name)
+    #config.load_kube_config()
+    crd_api = client.CustomObjectsApi()
 
-    # Generate a CRD spec
+    jobset_body = generate_jobset(
+        "default",
+        mn_args_genre_type,
+        job_name,
+        image,
+        cmdargs,
+    )
+    print ("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ\n")
+
+    print("🚀 Creating unique JobSet...")
     try:
-        crd = generate_job_crd(job_name, image, cmdargs)
-        batch_api = client.BatchV1Api()
-        #print(f"📦️ Container image selected is {image}...")
-        #print(f"⭐️ Creating sample job with prefix {job_name}...")
-        batch_api.create_namespaced_job("default", crd)
+        response = crd_api.create_namespaced_custom_object(
+            group="jobset.x-k8s.io",
+            version="v1alpha2",
+            namespace="default",
+            plural="jobsets",
+            body=jobset_body,
+        )
     except:
-        raise HTTPException(status_code=500, detail=f'Error creating CRD for {job_id}')
-        return {'detail': f'Error creating CRD for {job_id}'}
-    #print(
-    #    'Use:\n"kubectl get queue" to see queue assignment\n"kubectl get jobs" to see jobs'
-    #)
+        raise HTTPException(status_code=500, detail=f'Error creating CRD for {job_name}')
+        return {'detail': f'Error creating CRD for {job_name}'}
+
+    created_name = response["metadata"]["name"]
+    print(f"✅ JobSet created: {created_name}")
+    print("Use:")
+    print(f"  kubectl get jobsets {created_name}")
+    print("  kubectl get jobs")
+    print("  kubectl get pods")
+########
 
     return job_id
+
+
+# -------------------------------------------------
+# JobSet generator
+# -------------------------------------------------
+def generate_jobset(namespace, genretype, job_id, image, args):
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+
+    return {
+        "apiVersion": "jobset.x-k8s.io/v1alpha2",
+        "kind": "JobSet",
+        "metadata": {
+            # Kubernetes appends random suffix automatically
+            "generateName": f"{job_id}",
+            "namespace": namespace,
+            "labels": {
+                "kueue.x-k8s.io/queue-name": "user-queue"
+            },
+            "finalizers": [
+                "jobset.finalizers.mycompany.com/webhook"
+            ],
+        },
+        "spec": {
+            "replicatedJobs": [
+
+                # ---------------- MAIN WORKER ----------------
+                {
+                    "name": "main",
+                    "replicas": 1,
+                    "template": {
+                        "metadata": {
+                            "labels": {
+                                "kueue.x-k8s.io/queue-name": "user-queue"
+                            }
+                        },
+                        "spec": {
+                            "parallelism": 1,
+                            "completions": 1,
+                            "suspend": False,
+                            "template": {
+                                "metadata": {
+                                    "annotations": {
+                                        "linkerd.io/inject": "disabled"
+                                    }
+                                },
+                                "spec": {
+                                    "containers": [
+                                        {
+                                            "name": f"{job_id}",
+                                            "image": image,
+                                            "args": args,
+                                            "securityContext": {
+                                                "runAsUser": 1000
+                                            },
+                                            "resources": {
+                                                "requests": {
+                                                    "cpu": "1",
+                                                    "memory": "200Mi",
+                                                }
+                                            },
+                                            "volumeMounts": [
+                                                {
+                                                    "name": "nfs",
+                                                    "mountPath": "/mnt",
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                    "volumes": [
+                                        {
+                                            "name": "nfs",
+                                            "persistentVolumeClaim": {
+                                                "claimName": "pvc-rwx"
+                                            },
+                                        }
+                                    ],
+                                    "restartPolicy": "Never",
+                                },
+                            },
+                            "backoffLimit": 1,
+                        },
+                    },
+                },
+
+                # ---------------- MONITOR ----------------
+                {
+                    "name": "monitor",
+                    "replicas": 1,
+                    "template": {
+                        "spec": {
+                            "parallelism": 1,
+                            "completions": 1,
+                            "suspend": False,
+                            "template": {
+                                "metadata": {
+                                    "annotations": {
+                                        "linkerd.io/inject": "disabled"
+                                    }
+                                },
+                                "spec": {
+                                    "serviceAccountName": "monitor-sa",
+                                    "containers": [
+                                        {
+                                            "name": "monitor",
+                                            "image": "intamixx/musicnn_monitor_pod_v3:latest",
+                                            "env": [
+                                                # Namespace
+                                                {
+                                                    "name": "NAMESPACE",
+                                                    "value": namespace
+                                                },
+
+                                                # 🔥 Inject real JobSet name dynamically
+                                                {
+                                                    "name": "JOBSET_NAME",
+                                                    "valueFrom": {
+                                                        "fieldRef": {
+                                                            "fieldPath":
+                                                            "metadata.labels['jobset.sigs.k8s.io/jobset-name']"
+                                                        }
+                                                    }
+                                                },
+
+                                                {
+                                                    "name": "WEBHOOK_URL",
+                                                    "value": "https://yoursite.domain:1234",
+                                                },
+                                                {
+                                                    "name": "WEBHOOK_SECRET",
+                                                    "valueFrom": {
+                                                        "secretKeyRef": {
+                                                            "name": "webhook-secret",
+                                                            "key": "secret",
+                                                        }
+                                                    },
+                                                },
+                                                {"name": "POLL_INTERVAL", "value": "5"},
+                                                {"name": "WEBHOOK_MAX_RETRIES", "value": "5"},
+                                                {"name": "WEBHOOK_BACKOFF", "value": "5"},
+                                                {"name": "JOB_TIMEOUT", "value": "600"},
+                                            ],
+                                            "volumeMounts": [
+                                                {
+                                                    "name": "nfs",
+                                                    "mountPath": "/mnt",
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                    "volumes": [
+                                        {
+                                            "name": "nfs",
+                                            "persistentVolumeClaim": {
+                                                "claimName": "pvc-rwx"
+                                            },
+                                        }
+                                    ],
+                                    "restartPolicy": "Never",
+                                },
+                            },
+                            "backoffLimit": 0,
+                        },
+                    },
+                },
+            ]
+        },
+    }
