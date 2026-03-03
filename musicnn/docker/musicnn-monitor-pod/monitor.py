@@ -22,8 +22,8 @@ JOBSET_NAME = os.environ.get("JOBSET_NAME", "musicnn-jobset")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET")
 
-if not WEBHOOK_URL:
-    raise ValueError("WEBHOOK_URL environment variable is required")
+#if not WEBHOOK_URL:
+#    raise ValueError("WEBHOOK_URL environment variable is required")
 if not WEBHOOK_SECRET:
     raise ValueError("WEBHOOK_SECRET environment variable is required")
 
