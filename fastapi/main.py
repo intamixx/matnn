@@ -65,7 +65,7 @@ def checker(tagselection: str = Form(...)):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
-async def valid_content_length(content_length: int = Header(..., lt=15000_000)):
+async def valid_content_length(content_length: int = Header(..., lt=11000_000)):
     return content_length
 @app.post("/upload")
 async def upload_file(
@@ -608,7 +608,7 @@ def submit_job(filename, tagselection):
     except:
         print ("Webhook not selected")
         mn_args_webhook = "-x"
-        mn_args_webhook_url = "-x"
+        mn_args_webhook_url = ""
 
     try:
         genre = tagselection['tags']['genre_musicnn']
@@ -723,7 +723,8 @@ def submit_job(filename, tagselection):
 
     #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key]
     #print (cmdargs)
-    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers, mn_args_webhook, mn_args_webhook_url, "-i", job_id]
+    #cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers, mn_args_webhook, mn_args_webhook_url, "-i", job_id]
+    cmdargs=["/musicnn/run.sh", "-f", matnn_pod_nfs_file, mn_args_genre, mn_args_genre_type, mn_args_bpm, mn_args_key, mn_args_classifiers, "-i", job_id]
     print (cmdargs)
 
     image = confparser('dockerhub', 'image')
@@ -741,6 +742,7 @@ def submit_job(filename, tagselection):
         job_name,
         image,
         cmdargs,
+        mn_args_webhook_url,
     )
     print ("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ\n")
 
@@ -771,7 +773,12 @@ def submit_job(filename, tagselection):
 # -------------------------------------------------
 # JobSet generator
 # -------------------------------------------------
-def generate_jobset(namespace, genretype, job_id, image, args):
+def generate_jobset(namespace, genretype, job_id, image, args, webhook_url):
+
+    mountdir = confparser('nfs-server', 'mountdir')
+    print (mountdir)
+    claim_name = confparser('nfs-server', 'claim_name')
+    print (claim_name)
 
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
 
@@ -830,7 +837,7 @@ def generate_jobset(namespace, genretype, job_id, image, args):
                                             "volumeMounts": [
                                                 {
                                                     "name": "nfs",
-                                                    "mountPath": "/mnt",
+                                                    "mountPath": mountdir,
                                                 }
                                             ],
                                         }
@@ -839,7 +846,7 @@ def generate_jobset(namespace, genretype, job_id, image, args):
                                         {
                                             "name": "nfs",
                                             "persistentVolumeClaim": {
-                                                "claimName": "pvc-rwx"
+                                                "claimName": claim_name
                                             },
                                         }
                                     ],
@@ -879,7 +886,7 @@ def generate_jobset(namespace, genretype, job_id, image, args):
                                                     "value": namespace
                                                 },
 
-                                                # 🔥 Inject real JobSet name dynamically
+                                                # Inject real JobSet name dynamically
                                                 {
                                                     "name": "JOBSET_NAME",
                                                     "valueFrom": {
@@ -892,7 +899,11 @@ def generate_jobset(namespace, genretype, job_id, image, args):
 
                                                 {
                                                     "name": "WEBHOOK_URL",
-                                                    "value": "https://yoursite.domain:1234",
+                                                    "value": webhook_url,
+                                                },
+                                                {
+                                                    "name": "JOB_ID",
+                                                    "value": job_id,
                                                 },
                                                 {
                                                     "name": "WEBHOOK_SECRET",
@@ -911,7 +922,7 @@ def generate_jobset(namespace, genretype, job_id, image, args):
                                             "volumeMounts": [
                                                 {
                                                     "name": "nfs",
-                                                    "mountPath": "/mnt",
+                                                    "mountPath": mountdir,
                                                 }
                                             ],
                                         }
@@ -920,7 +931,7 @@ def generate_jobset(namespace, genretype, job_id, image, args):
                                         {
                                             "name": "nfs",
                                             "persistentVolumeClaim": {
-                                                "claimName": "pvc-rwx"
+                                                "claimName": claim_name
                                             },
                                         }
                                     ],
