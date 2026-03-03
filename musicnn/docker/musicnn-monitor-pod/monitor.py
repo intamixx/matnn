@@ -19,6 +19,7 @@ from kubernetes.client.rest import ApiException
 # -------------------------------
 NAMESPACE = os.environ.get("NAMESPACE", "default")
 JOBSET_NAME = os.environ.get("JOBSET_NAME", "musicnn-jobset")
+JOB_ID = os.environ.get("JOB_ID")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET")
 
@@ -158,7 +159,7 @@ def monitor_jobset():
         if elapsed > JOB_TIMEOUT:
             print(f"❌ JobSet monitoring timed out after {elapsed:.1f}s")
             if WEBHOOK_URL:
-                send_webhook(JOBSET_NAME, "timeout")
+                send_webhook(JOB_ID, "timeout")
             break
 
         # --------------------------------
@@ -167,7 +168,7 @@ def monitor_jobset():
         if failed > 0:
             print(f"❌ {failed} jobs failed")
             if WEBHOOK_URL:
-                send_webhook(JOBSET_NAME, "failed")
+                send_webhook(JOB_ID, "failed")
             break
 
         # --------------------------------
@@ -176,7 +177,7 @@ def monitor_jobset():
         if succeeded == total:
             print("✅ All jobs complete")
             if WEBHOOK_URL:
-                send_webhook(JOBSET_NAME, "finished")
+                send_webhook(JOB_ID, "finished")
             else:
                 print("No WEBHOOK_URL set — exiting cleanly.")
             break
