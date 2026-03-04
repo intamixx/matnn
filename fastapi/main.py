@@ -740,6 +740,7 @@ def submit_job(filename, tagselection):
         "default",
         mn_args_genre_type,
         job_name,
+        job_id,
         image,
         cmdargs,
         mn_args_webhook_url,
@@ -763,8 +764,6 @@ def submit_job(filename, tagselection):
     print(f"✅ JobSet created: {created_name}")
     print("Use:")
     print(f"  kubectl get jobsets {created_name}")
-    print("  kubectl get jobs")
-    print("  kubectl get pods")
 ########
 
     return job_id
@@ -773,7 +772,7 @@ def submit_job(filename, tagselection):
 # -------------------------------------------------
 # JobSet generator
 # -------------------------------------------------
-def generate_jobset(namespace, genretype, job_id, image, args, webhook_url):
+def generate_jobset(namespace, genretype, job_name, job_id, image, args, webhook_url):
 
     mountdir = confparser('nfs-server', 'mountdir')
     print (mountdir)
