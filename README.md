@@ -11,7 +11,7 @@ Vite App - [https://matnn-app.intamixx.uk](https://matnn-app.intamixx.uk)
 Provide a simple web frontend for the API using nodejs, expressjs, multer, fetch etc
 Kueue scheduler is controlled and queried by fastapi backend.
 
-Matnn (Music Audio Tagger Neural Net) is a rest compliant music tag service utilizing a batch queuing system (Kueue) running on a Kubernetes cluster.
+Matnn (Music Audio Tagger Neural Net) is a rest compliant music tag service utilizing a batch queuing system (Kueue) with Jobset running on a Kubernetes cluster.
 Enhance music metadata to improve music discoverability for any use case including music libraries, streaming, song selection.
 
 Matnn utilizes the Discogs-EffNet model from Essentia to predict music classification, BPM (Beats per minute), tonal/key scale and approachability/engagement from over 400 genres of music. Musicnn and Magnatagatune are also offered as prediction models from 50 genres / styles of music.
@@ -21,7 +21,7 @@ To upload your music, use either the simple web form or the CLI driven API servi
 Currently music files must be MP3 format and under 10 MB.
 
 Uses [discogs-effnet](https://essentia.upf.edu/models.html#discogs-effnet) or [musicnn](https://github.com/jordipons/musicnn) or [magnatagatune](https://mirg.city.ac.uk/codeapps/the-magnatagatune-dataset) to determine genres of music uploaded using API or website.
-Uses [Kueue](https://kueue.sigs.k8s.io) to schedule musicnn pods work loads and return result to API.
+Uses [Kueue](https://kueue.sigs.k8s.io) and [Jobset](https://jobset.sigs.k8s.io) to schedule musicnn work loads and return result to API.
 
 # Application Architecture
 ![alt text](https://github.com/intamixx/matnn/blob/main/matnn-application-architecture.jpg?raw=true)
