@@ -786,7 +786,7 @@ def generate_jobset(namespace, genretype, job_name, job_id, image, args, webhook
         "kind": "JobSet",
         "metadata": {
             # Kubernetes appends random suffix automatically
-            "generateName": f"{job_id}",
+            "generateName": f"{job_name}",
             "namespace": namespace,
             "labels": {
                 "kueue.x-k8s.io/queue-name": "user-queue"
@@ -821,7 +821,7 @@ def generate_jobset(namespace, genretype, job_name, job_id, image, args, webhook
                                 "spec": {
                                     "containers": [
                                         {
-                                            "name": f"{job_id}",
+                                            "name": f"{job_name}",
                                             "image": image,
                                             "args": args,
                                             "securityContext": {
