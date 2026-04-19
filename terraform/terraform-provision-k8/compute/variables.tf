@@ -1,0 +1,10 @@
+variable "server_names" { type = list(string) }
+variable "subnet_id" { type = string }
+variable "public_ip_ids" { type = map(string) }
+variable "resource_group_name" { type = string }
+variable "location" { type = string }
+variable "tags" { type = map(string) }
+variable "admin_username" { type = string }
+variable "ssh_public_key_path" { type = string }
+variable "ssh_identity_file" { type = string }
+variable "custom_data_template" { type = string }
