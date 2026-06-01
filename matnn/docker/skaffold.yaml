@@ -1,0 +1,18 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: matnn
+
+build:
+  local:
+    push: true
+
+  tagPolicy:
+    gitCommit: {}
+
+  artifacts:
+    - image: intamixx/matnn_v3
+      context: .
+      docker:
+        dockerfile: Dockerfile
