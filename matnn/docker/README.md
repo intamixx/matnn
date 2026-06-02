@@ -2,7 +2,7 @@ https://medium.com/@michamarszaek/skaffold-a-new-way-for-deploying-applications-
 
 https://oneuptime.com/blog/post/2026-03-06-use-flux-cd-skaffold-development-workflow/view
 
-'''
+```
 curl -s https://fluxcd.io/install.sh | sudo bash
 flux
 flux check --pre
@@ -23,4 +23,4 @@ skaffold init
 skaffold dev
 skaffold build --file-output=artifacts.json
 skaffold test --build-artifacts artifacts.json
-'''
+```
