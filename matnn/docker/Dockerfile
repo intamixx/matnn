@@ -92,3 +92,7 @@ COPY supervisor-app.conf /etc/supervisor/conf.d
 # Supervisor
 RUN mkdir -p /var/log/supervisor
 CMD ["/usr/bin/supervisord"]
+
+EXPOSE 8000
+EXPOSE 8090
+EXPOSE 9090
