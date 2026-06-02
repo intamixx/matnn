@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --allow-downgrades --allow-change-held-
         wget \
         ca-certificates \
         python${PYTHON_VERSION} \
+        python${PYTHON_VERSION}-setuptools \
         python${PYTHON_VERSION}-dev
 
 RUN curl -L -o cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2004-11-8-local_11.8.0-520.61.05-1_amd64.deb
