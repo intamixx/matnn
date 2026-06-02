@@ -1,0 +1,33 @@
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: "python exists"
+    command: "python3"
+    args: ["--version"]
+    expectedOutput:
+      - "Python"
+  - name: "musicnn prediction test"
+    command: "/musicnn/run.sh"
+    args:
+      - -f
+      - audio/joram-moments_of_clarity-08-solipsism-59-88.mp3
+      - -g
+      - discogseffnet
+    expectedOutput:
+      - "plotting..."
+      - "Drum n Bass"
+      - "Jungle"
+      - "Hardcore"
+
+fileExistenceTests:
+- name: 'musicnn'
+  path: '/musicnn/run.sh'
+  shouldExist: true
+  permissions: '-rwxr-x---'
+  uid: 1000
+  gid: 1000
+  isExecutableBy: 'owner'
+
+metadataTest:
+  entrypoint:  ["/tini", "--"]
+  cmd: ["/musicnn/run.sh"]
