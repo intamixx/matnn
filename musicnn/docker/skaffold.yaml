@@ -1,0 +1,23 @@
+apiVersion: skaffold/v4beta14
+kind: Config
+
+metadata:
+  name: musicnn
+
+build:
+  local:
+    push: false
+
+  tagPolicy:
+    gitCommit: {}
+
+  artifacts:
+    - image: intamixx/musicnn_v3
+      context: .
+      docker:
+        dockerfile: Dockerfile
+
+test:
+  - image: intamixx/musicnn_v3
+    structureTests:
+      - "./tests/structure-test.yaml"
