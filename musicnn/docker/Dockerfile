@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --allow-downgrades --allow-change-held-
         wget \
         ca-certificates \
         python${PYTHON_VERSION} \
+        python${PYTHON_VERSION}-setuptools \
         python${PYTHON_VERSION}-dev
 
 #RUN if [[ "${PYTHON_VERSION}" == "3" ]]; then \
