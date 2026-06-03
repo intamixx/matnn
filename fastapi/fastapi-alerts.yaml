@@ -1,0 +1,68 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: fastapi-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+  - name: fastapi.rules
+    rules:
+
+    - alert: FastAPIHighErrorRate
+      expr: |
+        sum(rate(http_requests_total{status=~"5.."}[5m]))
+        /
+        sum(rate(http_requests_total[5m])) > 0.05
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "FastAPI high error rate"
+        description: "5xx error rate > 5% for 2 minutes"
+
+    - alert: FastAPIHighErrorRate404
+      expr: |
+        sum(rate(http_requests_total{status=~"4.."}[5m]))
+        /
+        sum(rate(http_requests_total[5m])) > 0.05
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "FastAPI high error rate 404"
+        description: "4xx error rate > 5% for 2 minutes"
+
+
+    - alert: FastAPIHighLatencyP95
+      expr: |
+        histogram_quantile(0.95,
+          sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+        ) > 1.5
+      for: 3m
+      labels:
+        severity: warning
+      annotations:
+        summary: "FastAPI high latency"
+        description: "p95 latency > 1.5s"
+
+    - alert: FastAPINoTraffic
+      expr: |
+        sum(rate(http_requests_total[10m])) < 0.01
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "FastAPI no traffic"
+        description: "No traffic for 5 minutes"
+
+    - alert: FastAPIMetricsDown
+      expr: |
+        up{job=~".*matnn.*"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "FastAPI metrics down"
+        description: "Prometheus cannot scrape FastAPI"
