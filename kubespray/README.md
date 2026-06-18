@@ -18,3 +18,9 @@ Server Version: v1.30.4
 
 # git status
 HEAD detached at v2.28.0
+
+# cilium version
+cilium-cli: v0.18.3 compiled with go1.24.2 on linux/amd64
+cilium image (default): v1.17.2
+cilium image (stable): v1.19.5
+cilium image (running): 1.19.5
