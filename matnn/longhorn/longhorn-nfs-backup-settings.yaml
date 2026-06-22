@@ -1,0 +1,13 @@
+# Configure Longhorn to use NFS as the backup target
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: longhorn-default-resource
+  namespace: longhorn-system
+data:
+  default-resource.yaml: |
+    # NFS URL format: nfs://server-ip:/exported/path
+    "backup-target": "nfs://10.233.3.234:/exports"
+    # NFS typically does not require credentials
+    "backup-target-credential-secret": ""
+    "backupstore-poll-interval": "180"
