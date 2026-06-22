@@ -1,0 +1,16 @@
+# Restore a volume from a backup
+apiVersion: longhorn.io/v1beta2
+kind: Volume
+metadata:
+  name: matnn-database-volume
+  namespace: longhorn-system
+spec:
+  # Size must be the exact original volume size in bytes
+  size: "111149056"  # 50Gi in bytes
+  # Number of replicas for the restored volume
+  numberOfReplicas: 3
+  # Specify the backup URL to restore from
+  fromBackup: "nfs://10.233.3.234:/exports?backup=pvc-matnnfull-backup-20260622&volume=pvc-89c766df-2fc4-430f-a1b6-c83c52395b26"
+  # Frontend and data engine for the restored volume
+  frontend: blockdev
+  dataEngine: v1
