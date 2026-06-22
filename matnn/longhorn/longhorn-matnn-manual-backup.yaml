@@ -1,0 +1,22 @@
+# Create a manual backup of a specific Longhorn volume
+apiVersion: longhorn.io/v1beta2
+kind: Backup
+metadata:
+  # Unique name for this backup
+  name: pvc-matnnfull-backup-20260622
+  namespace: longhorn-system
+  labels:
+    # This label tells Longhorn which volume owns the snapshot
+    backup-volume: pvc-89c766df-2fc4-430f-a1b6-c83c52395b26
+    # Labels help organize and filter backups
+    app: matnn-tinydb
+    backup-type: manual
+spec:
+  # Use incremental backup mode unless you need to force a full backup
+  backupMode: full
+  # Name of the snapshot to backup (create snapshot first)
+  snapshotName: snap-471627df840440b8
+  # Labels to attach to the backup in the backup target
+  labels:
+    environment: production
+    created-by: kubectl
