@@ -13,6 +13,10 @@
         kubectl rollout status deployment/kueue-controller-manager \
           -n kueue-system \
           --timeout=300s
+
+    #- name: Wait for Kueue controller pod to be Ready
+    #  shell: |
+    #    kubectl wait --namespace=kueue-system --for=condition=Ready pod -l control-plane=controller-manager --timeout=300s
         
     - name: initialize kueue queue
       shell: kubectl apply --server-side -f https://raw.githubusercontent.com/intamixx/matnn/refs/heads/main/kueue/single-clusterqueue-setup-14.4.yaml --force-conflicts >> queue.log
