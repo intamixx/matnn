@@ -7,10 +7,6 @@
       args:
         chdir: $HOME
         creates: kueue.log
-
-    - name: Sleep for 60 seconds and continue with play
-      wait_for:
-        timeout: 60
         
     - name: Wait for Kueue controller deployment to be ready
       shell: |
