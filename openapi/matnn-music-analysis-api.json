@@ -1,0 +1,252 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MATNN Music Analysis API",
+    "description": "API for uploading audio files and retrieving music analysis results.\n\nWorkflow:\n  1. Upload an audio file.\n  2. Poll the status endpoint until processing completes.\n  3. Retrieve the prediction results.\n",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://matnn-app.intamixx.uk"
+    }
+  ],
+  "paths": {
+    "/api/upload": {
+      "post": {
+        "summary": "Upload audio for analysis",
+        "description": "Upload an audio file for analysis.\n\nSpecify only the analysis options you require to reduce processing time.\n\nChoose **only one** of:\n- genre_discogs_effnet\n- genre_musicnn\n- genre_magnatagatune\n\nOmitting all options performs a full analysis.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Audio file to analyse"
+                  },
+                  "bpm": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "key": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "genre_discogs_effnet": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "genre_musicnn": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "genre_magnatagatune": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "classifiers": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/api/status/{id}": {
+      "get": {
+        "summary": "Get processing status",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID returned from upload."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        }
+      }
+    },
+    "/api/result/{id}": {
+      "get": {
+        "summary": "Get prediction results",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID returned from upload."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analysis results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Result not available"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UploadResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "01f436c22d490885a90853d7d048c5ff-ntrh9"
+          },
+          "status": {
+            "type": "string",
+            "example": "Successfully uploaded audio.mp3"
+          }
+        }
+      },
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string",
+            "example": "Successful Job discogseffnet-01f436c22d490885a90853d7d048c5ff-ntrh9"
+          },
+          "started_at": {
+            "type": "string",
+            "example": "08-12-2023 03:36:25"
+          },
+          "completed_at": {
+            "type": "string",
+            "nullable": true,
+            "example": "08-12-2023 03:41:19"
+          }
+        }
+      },
+      "ResultResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "audiofile": {
+            "type": "string",
+            "example": "audio.mp3"
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "result": {
+            "$ref": "#/components/schemas/AnalysisResult"
+          }
+        }
+      },
+      "AnalysisResult": {
+        "type": "object",
+        "properties": {
+          "genre": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Drum n Bass",
+              "Halftime",
+              "Dark Ambient"
+            ]
+          },
+          "bpm": {
+            "type": "string",
+            "example": "174.3"
+          },
+          "key": {
+            "type": "string",
+            "example": "Ab Minor"
+          },
+          "classifiers": {
+            "$ref": "#/components/schemas/Classifiers"
+          }
+        }
+      },
+      "Classifiers": {
+        "type": "object",
+        "properties": {
+          "approachability": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "engagement": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
