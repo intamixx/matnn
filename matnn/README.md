@@ -42,3 +42,11 @@ iptables -t nat -A PREROUTING -d 10.123.1.4/32 -p tcp -m tcp --dport 443 -j DNAT
 
 iptables -t nat -A PREROUTING -d 10.123.1.4/32 -p tcp -m tcp --dport 80 -j DNAT --to-destination 10.233.100.100:80
 
+
+
+kubectl auth can-i create jobsets.jobset.x-k8s.io  -n default  --as=system:serviceaccount:default:default
+
+kubectl auth can-i get localqueues.kueue.x-k8s.io  -n default  --as=system:serviceaccount:default:default
+
+kubectl get clusterrole kueue-batch-admin-role -o yaml
+kubectl get clusterrolebinding matnn-clusterrole -o yaml
