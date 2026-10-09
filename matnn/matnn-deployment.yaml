@@ -70,3 +70,5 @@ spec:
           claimName: nfs-claim
           #claimName: pvc-rwx
       restartPolicy: Always
+      serviceAccount: matnn-jobset-submitter
+      serviceAccountName: matnn-jobset-submitter
