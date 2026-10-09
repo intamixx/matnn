@@ -15,13 +15,14 @@ configMapGenerator:
       - configs/ssl-certificate.pem
 
 resources:
-- create-cluster-role-binding.yaml
-- create-service-account.yaml
+#- create-cluster-role-binding.yaml
+#- create-service-account.yaml
 - create-service-prometheus-grafana.yaml
 - matnn-api-ingress.yaml
 - matnn-ingress.yaml
 - matnn-webhook-secret.yaml
 - matnn-monitor-sa.yaml
+- matnn-rbac-lockdown.yaml
 #- matnn-configmap.yaml
 - matnn-service.yaml
 - matnn-deployment.yaml
