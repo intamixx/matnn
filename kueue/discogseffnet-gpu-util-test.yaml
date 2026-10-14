@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: discogseffnet-gpu-util-test
+  namespace: default
+spec:
+  runtimeClassName: nvidia
+  restartPolicy: Never
+  activeDeadlineSeconds: 300
+  containers:
+    - name: benchmark
+      image: intamixx/musicnn_v3_gpu:latest
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          echo "START_TIME=$(date -Is)"
+          /musicnn/run.sh -f /musicnn/audio/TRWJAZW128F42760DD_test.mp3 -g discogseffnet -b
+          rc=$?
+          echo "INFERENCE_EXIT_CODE=$rc"
+          echo "END_TIME=$(date -Is)"
+          sleep 60
+          exit "$rc"
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+        requests:
+          nvidia.com/gpu: 1
