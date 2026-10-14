@@ -50,5 +50,7 @@ kubectl auth can-i get localqueues.kueue.x-k8s.io  -n default  --as=system:servi
 
 kubectl auth can-i create jobsets.jobset.x-k8s.io   -n default   --as=system:serviceaccount:default:matnn-jobset-submitter
 
+kubectl get deployment matnn -n default -o jsonpath='{.spec.template.spec.serviceAccountName}{"\n"}'
+
 kubectl get clusterrole kueue-batch-admin-role -o yaml
 kubectl get clusterrolebinding matnn-clusterrole -o yaml
