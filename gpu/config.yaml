@@ -1,0 +1,32 @@
+# /etc/containerd/config.d/99-nvidia.toml
+
+version = 3
+
+[plugins]
+
+  [plugins."io.containerd.cri.v1.runtime"]
+
+    [plugins."io.containerd.cri.v1.runtime".cni]
+      bin_dirs = ["/var/lib/kubesolo/containerd/cni/plugins"]
+      conf_dir = "/etc/cni/net.d"
+
+    [plugins."io.containerd.cri.v1.runtime".containerd]
+      default_runtime_name = "crun"
+
+      [plugins."io.containerd.cri.v1.runtime".containerd.runtimes]
+
+        [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.crun]
+          runtime_type = "io.containerd.runc.v2"
+          snapshotter = "overlayfs"
+
+          [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.crun.options]
+            BinaryName = "/var/lib/kubesolo/containerd/crun"
+            SystemdCgroup = true
+
+        [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.nvidia]
+          runtime_type = "io.containerd.runc.v2"
+          snapshotter = "overlayfs"
+
+          [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.nvidia.options]
+            BinaryName = "/usr/bin/nvidia-container-runtime"
+            SystemdCgroup = true
