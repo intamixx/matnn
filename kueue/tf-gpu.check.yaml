@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tf-gpu-check
+spec:
+  restartPolicy: Never
+  runtimeClassName: nvidia
+  containers:
+    - name: tensorflow-check
+      image: intamixx/musicnn_v3_gpu
+      command:
+        - python3
+        - -c
+        - |
+          import tensorflow as tf
+          print("TensorFlow:", tf.__version__)
+          print("Built with CUDA:", tf.test.is_built_with_cuda())
+          print("Build info:", tf.sysconfig.get_build_info())
+          print("GPUs:", tf.config.list_physical_devices("GPU"))
+      resources:
+        limits:
+          nvidia.com/gpu: 1
