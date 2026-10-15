@@ -1,0 +1,447 @@
+# docker build --progress=plain   --build-arg TF_VERSION=2.21.0   --build-arg CUDA_VERSION=12.8.1   --build-arg CUDNN_VERSION=9.3.0   --build-arg JOBS=4   -t musicnn-tf-cuda:2.21.0 .
+# syntax=docker/dockerfile:1.7
+FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG TF_VERSION=2.21.0
+ARG CUDA_VERSION=12.8.1
+ARG CUDNN_VERSION=9.3.0
+# Bazel wants sm_XXX / compute_XXX, not "12.0".
+# The bundled clang cannot target sm_120 ("unsupported CUDA gpu architecture"),
+# so build sm_90 SASS plus compute_90 PTX. Blackwell (RTX 50xx) GPUs JIT the
+# PTX at first use (needs driver >= 570; the JIT cache lives in ~/.nv).
+ARG CUDA_COMPUTE_CAPABILITIES=sm_90,compute_90
+ARG BAZELISK_VERSION=v1.26.0
+ARG JOBS=4
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TF_VERSION=${TF_VERSION} \
+    HERMETIC_CUDA_VERSION=${CUDA_VERSION} \
+    HERMETIC_CUDA_UMD_VERSION=${CUDA_VERSION} \
+    HERMETIC_CUDNN_VERSION=${CUDNN_VERSION} \
+    HERMETIC_CUDA_COMPUTE_CAPABILITIES=${CUDA_COMPUTE_CAPABILITIES} \
+    TF_CUDA_VERSION=12.8 \
+    TF_CUDNN_VERSION=9 \
+    TF_NEED_CUDA=1 \
+    TF_NEED_ROCM=0 \
+    TF_CUDA_CLANG=1 \
+    CC=/usr/bin/clang-18 \
+    CXX=/usr/bin/clang++-18 \
+    PYTHON_BIN_PATH=/usr/bin/python3 \
+    PYTHON_LIB_PATH=/usr/local/lib/python3.10/dist-packages \
+    PYTHON_CONFIGURE_OPTS="--enable-shared" \
+    TF_ENABLE_ONEDNN_OPTS=0 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TF_FORCE_GPU_ALLOW_GROWTH=true \
+    HERMETIC_NCCL_VERSION=2.27.7
+
+ENV PATH="/usr/local/bin:/usr/local/cuda/bin:${PATH}" \
+    LD_LIBRARY_PATH="/usr/local/lib:/usr/local/cuda/lib64"
+
+# -------------------------------------------------------------------
+# 1. System dependencies (unversioned "clang" removed; 18 comes from step 2)
+# -------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    file \
+    git \
+    gnupg \
+    lsb-release \
+    ninja-build \
+    pkg-config \
+    software-properties-common \
+    wget \
+    zip \
+    unzip \
+    zlib1g-dev \
+    python3 \
+    python3-dev \
+    python3-pip \
+    python3-venv \
+    python3-setuptools \
+    python3-wheel \
+    libatlas-base-dev \
+    libblas-dev \
+    liblapack-dev \
+    libeigen3-dev \
+    libfftw3-dev \
+    libyaml-dev \
+    libyaml-cpp-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libavutil-dev \
+    libswresample-dev \
+    libavfilter-dev \
+    libavdevice-dev \
+    libsamplerate0-dev \
+    libtag1-dev \
+    libchromaprint-dev \
+    libcurl4-openssl-dev \
+    libsndfile1-dev \
+    libflac-dev \
+    libogg-dev \
+    libvorbis-dev \
+    libmp3lame-dev \
+    libopenblas-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# -------------------------------------------------------------------
+# 2. Clang 18 and Bazelisk (pinned; Bazelisk honours TF's .bazelversion)
+# -------------------------------------------------------------------
+RUN wget -q https://apt.llvm.org/llvm.sh -O /tmp/llvm.sh \
+    && chmod +x /tmp/llvm.sh \
+    && /tmp/llvm.sh 18 \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends clang-18 lld-18 \
+    && rm -rf /var/lib/apt/lists/* /tmp/llvm.sh \
+    && test -x /usr/bin/clang-18 \
+    && test -x /usr/bin/clang++-18
+
+RUN wget -q \
+    "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-linux-amd64" \
+    -O /usr/local/bin/bazel \
+    && chmod +x /usr/local/bin/bazel
+
+# -------------------------------------------------------------------
+# 3. Python build dependencies
+# -------------------------------------------------------------------
+RUN python3 -m pip install --upgrade \
+    pip \
+    setuptools \
+    wheel \
+    packaging \
+    numpy \
+    six \
+    pyyaml \
+    requests \
+    keras_preprocessing \
+    opt_einsum \
+    grpcio \
+    protobuf
+
+# -------------------------------------------------------------------
+# 4. TensorFlow source
+# -------------------------------------------------------------------
+WORKDIR /opt
+
+RUN git clone --depth 1 --branch "v${TF_VERSION}" \
+    https://github.com/tensorflow/tensorflow.git /opt/tensorflow
+
+WORKDIR /opt/tensorflow
+
+# -------------------------------------------------------------------
+# 5. Fix the TensorFlow 2.21 LLVM archive checksum handling.
+#
+# The pinned SHA-256 in this release does not match the valid archive
+# returned by GitHub. Accept either of the two hashes identified by
+# the upstream TensorFlow Serving fix. All other hashes are rejected.
+#
+# Upstream reference:
+# tensorflow/serving commit b6771369065f59c6385ac98d81c009a5ab780ab6
+# -------------------------------------------------------------------
+RUN python3 - <<'PY'
+from pathlib import Path
+
+p = Path("third_party/xla/third_party/repo.bzl")
+if not p.is_file():
+    raise SystemExit(f"Expected LLVM repository rule not found: {p}")
+
+s = p.read_text()
+
+old = '''ctx.download_and_extract(
+            url = ctx.attr.urls,
+            sha256 = ctx.attr.sha256,
+            type = ctx.attr.type,
+            stripPrefix = ctx.attr.strip_prefix,
+        )'''
+
+new = '''if ctx.attr.sha256 == "3f986184ee126677dbd77edb16d6b82c057ec869fefd7a9871979941e52e837a":
+            res = ctx.download(url = ctx.attr.urls, output = "llvm.tar.gz")
+            if res.sha256 not in [
+                "3f986184ee126677dbd77edb16d6b82c057ec869fefd7a9871979941e52e837a",
+                "00b1077e029fa57e6f2d9ac24936a49acf23ebc051b04f487131116258be6248",
+            ]:
+                fail("Invalid LLVM_SHA256: " + res.sha256)
+            ctx.extract(archive = "llvm.tar.gz", stripPrefix = ctx.attr.strip_prefix)
+            ctx.delete("llvm.tar.gz")
+        else:
+            ctx.download_and_extract(
+                url = ctx.attr.urls,
+                sha256 = ctx.attr.sha256,
+                type = ctx.attr.type,
+                stripPrefix = ctx.attr.strip_prefix,
+            )'''
+
+if old not in s:
+    raise SystemExit(
+        "LLVM patch context did not match. Refusing to change the "
+        "checksum logic; inspect the pinned TensorFlow source revision."
+    )
+
+p.write_text(s.replace(old, new, 1))
+print(f"Applied verified LLVM archive fix to {p}")
+PY
+
+# -------------------------------------------------------------------
+# 6. Configure TensorFlow.
+#
+# Version variables are supplied through ENV. The remaining answers
+# are: local CUDA path, local cuDNN path, local NCCL path (blank),
+# Clang path, optimisation flags, and "N" to the final prompt.
+# -------------------------------------------------------------------
+RUN case "${CUDA_COMPUTE_CAPABILITIES}" in \
+      *sm_*|*compute_*) ;; \
+      *) echo "CUDA_COMPUTE_CAPABILITIES='${CUDA_COMPUTE_CAPABILITIES}' must look like sm_120,compute_120" >&2; exit 1 ;; \
+    esac \
+    && printf '%s\n' \
+    "" \
+    "" \
+    "" \
+    "/usr/bin/clang-18" \
+    "-Wno-sign-compare" \
+    "N" \
+    | ./configure \
+    && echo "===== Generated CUDA configuration =====" \
+    && cat .tf_configure.bazelrc \
+    && grep -F "HERMETIC_CUDA_VERSION=\"${CUDA_VERSION}\"" .tf_configure.bazelrc \
+    && grep -F "HERMETIC_CUDNN_VERSION=\"${CUDNN_VERSION}\"" .tf_configure.bazelrc \
+    && grep -F "HERMETIC_CUDA_COMPUTE_CAPABILITIES=\"${CUDA_COMPUTE_CAPABILITIES}\"" .tf_configure.bazelrc
+
+# -------------------------------------------------------------------
+# 7. Build wheel + C++ shared libraries in ONE invocation, then copy
+#    the outputs out of Bazel's tree.
+#
+# The Bazel cache is a BuildKit cache mount, so it is NOT part of the
+# image layer: bazel-bin points into it and disappears after this RUN.
+# Everything needed later must therefore be copied out in this same RUN.
+# Command-line --repo_env flags override the sm_60..compute_90 default
+# that --config=cuda_clang injects from .bazelrc.
+# -------------------------------------------------------------------
+# XLA's embed_gpu_specs genrule shells out to xxd (not in the CUDA base image).
+# Installed here rather than in step 1 so earlier layers stay cached.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends xxd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Optional quick diagnostic (docker build --build-arg CUPTI_DEBUG=1 ...):
+# builds only the target that failed on cupti.h, prints how Bazel laid out the
+# CUPTI headers, then stops. Takes minutes instead of hours.
+ARG CUPTI_DEBUG=0
+RUN --mount=type=cache,target=/root/.cache/bazel,sharing=locked \
+    if [ "${CUPTI_DEBUG}" = "1" ]; then \
+      bazel build --config=cuda --config=cuda_wheel --jobs=${JOBS} \
+        --verbose_failures \
+        --repo_env=CC=/usr/bin/clang-18 \
+        --repo_env=CXX=/usr/bin/clang++-18 \
+        --repo_env=HERMETIC_CUDA_VERSION=${CUDA_VERSION} \
+        --repo_env=HERMETIC_CUDNN_VERSION=${CUDNN_VERSION} \
+        --repo_env=HERMETIC_CUDA_COMPUTE_CAPABILITIES=${CUDA_COMPUTE_CAPABILITIES} \
+        @xla//xla/backends/profiler/gpu:cuda_version_variants 2>&1 | tail -n 40; \
+      OB="$(bazel info output_base 2>/dev/null)"; \
+      echo "===== output_base: ${OB}"; \
+      echo "===== external/cuda_cupti"; ls "${OB}/external/cuda_cupti" 2>&1 | head -n 20; \
+      echo "===== external/local_config_cuda/cuda"; ls "${OB}/external/local_config_cuda/cuda" 2>&1 | head -n 40; \
+      echo "===== cupti_headers rule"; \
+      grep -n -B2 -A14 'cupti_headers' "${OB}/external/local_config_cuda/cuda/BUILD" 2>&1 | head -n 60; \
+      echo "===== cupti.h locations"; \
+      find -L "${OB}/external/cuda_cupti" "${OB}/external/local_config_cuda" -name cupti.h 2>/dev/null | head; \
+      exit 1; \
+    fi
+
+RUN --mount=type=cache,target=/root/.cache/bazel,sharing=locked \
+    set -eux; \
+    bazel build \
+      --config=cuda \
+      --config=cuda_wheel \
+      --jobs=${JOBS} \
+      --repo_env=CC=/usr/bin/clang-18 \
+      --repo_env=CXX=/usr/bin/clang++-18 \
+      --repo_env=HERMETIC_CUDA_VERSION=${CUDA_VERSION} \
+      --repo_env=HERMETIC_CUDNN_VERSION=${CUDNN_VERSION} \
+      --repo_env=HERMETIC_CUDA_COMPUTE_CAPABILITIES=${CUDA_COMPUTE_CAPABILITIES} \
+      //tensorflow/tools/pip_package:wheel; \
+    BB="$(bazel info bazel-bin)"; \
+    echo "bazel-bin = ${BB}"; \
+    mkdir -p /opt/wheels /usr/local/lib /usr/local/include/tensorflow; \
+    find -L "${BB}/tensorflow/tools/pip_package" -type f -name '*.whl' \
+      -exec cp -v '{}' /opt/wheels/ \; ; \
+    test -n "$(ls /opt/wheels/*.whl 2>/dev/null)"
+
+# -------------------------------------------------------------------
+# 8. Install headers (source trees, non-generated)
+# -------------------------------------------------------------------
+RUN set -eux; \
+    cp -a /opt/tensorflow/tensorflow/core /usr/local/include/tensorflow/; \
+    cp -a /opt/tensorflow/tensorflow/cc   /usr/local/include/tensorflow/; \
+    cp -a /opt/tensorflow/tensorflow/c    /usr/local/include/tensorflow/; \
+    cp -a /opt/tensorflow/third_party     /usr/local/include/tensorflow/; \
+    ldconfig
+
+ENV LIBRARY_PATH="/usr/local/lib" \
+    CPLUS_INCLUDE_PATH="/usr/local/include/tensorflow:/usr/local/include"
+
+# -------------------------------------------------------------------
+# 9. Install the TensorFlow Python wheel
+# -------------------------------------------------------------------
+RUN set -eux; \
+    cd /tmp; \
+    WHEEL="$(ls /opt/wheels/*.whl | head -n1)"; \
+    python3 -m pip install "${WHEEL}"; \
+    python3 -c 'import tensorflow as tf; print("TensorFlow:", tf.__version__)'; \
+    TFDIR="$(python3 -c 'import os, tensorflow as tf; print(os.path.dirname(tf.__file__))')"; \
+    find "${TFDIR}" -maxdepth 2 -name 'libtensorflow*.so*' -print \
+      -exec ln -sf '{}' /usr/local/lib/ \; ; \
+    test -e /usr/local/lib/libtensorflow_framework.so.2; \
+    ln -sf libtensorflow_framework.so.2 /usr/local/lib/libtensorflow_framework.so; \
+    if [ -e /usr/local/lib/libtensorflow_cc.so.2 ]; then \
+      ln -sf libtensorflow_cc.so.2 /usr/local/lib/libtensorflow_cc.so; \
+    fi; \
+    ln -sf libtensorflow_framework.so.2 /usr/local/lib/libtensorflow.so; \
+    if [ -d "${TFDIR}/include" ]; then \
+      cp -a "${TFDIR}/include/." /usr/local/include/; \
+    fi; \
+    ldconfig; \
+    ls -l /usr/local/lib | grep libtensorflow
+
+# -------------------------------------------------------------------
+# 10. Build Essentia with TensorFlow support
+# -------------------------------------------------------------------
+WORKDIR /opt
+
+RUN git clone --depth 1 \
+    https://github.com/MTG/essentia.git /opt/essentia
+
+WORKDIR /opt/essentia
+
+RUN python3 -m pip install --upgrade numpy six pyyaml
+
+# Essentia master needs FFmpeg >= 7.1 (AVCodecContext::ch_layout and
+# avcodec_get_supported_config); Ubuntu 22.04 only ships FFmpeg 4.4. Build a
+# newer FFmpeg into /usr/local, which pkg-config and the compiler search before
+# /usr, so Essentia picks it up instead of the apt -dev packages.
+ARG FFMPEG_VERSION=7.1.1
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends nasm; \
+    rm -rf /var/lib/apt/lists/*; \
+    git clone --depth 1 --branch "n${FFMPEG_VERSION}" \
+      https://github.com/FFmpeg/FFmpeg.git /opt/ffmpeg-src; \
+    cd /opt/ffmpeg-src; \
+    ./configure --prefix=/usr/local --enable-shared --disable-static \
+      --disable-doc --enable-libmp3lame --enable-libvorbis; \
+    make -j"${JOBS}"; \
+    make install; \
+    ldconfig; \
+    cd /; rm -rf /opt/ffmpeg-src; \
+    pkg-config --modversion libavcodec libavformat libavutil libswresample; \
+    test "$(pkg-config --modversion libavcodec | cut -d. -f1)" -ge 61
+
+# Essentia has no --tensorflow-include/--tensorflow-lib options. It finds
+# TensorFlow through pkg-config (package "tensorflow"). Its own helper
+# (setup_from_python.sh) writes that file, but it links -l_pywrap_tensorflow_internal,
+# which this wheel does not ship, so write the .pc by hand against the
+# libtensorflow_cc / libtensorflow_framework libraries, which contain the C API.
+RUN mkdir -p /usr/local/lib/pkgconfig \
+    && printf '%s\n' \
+      'Name: tensorflow' \
+      'Description: TensorFlow C API from the locally built wheel' \
+      "Version: ${TF_VERSION}" \
+      'Libs: -L/usr/local/lib -ltensorflow_cc -ltensorflow_framework' \
+      'Cflags: -I/usr/local/include/tensorflow -I/usr/local/include' \
+      > /usr/local/lib/pkgconfig/tensorflow.pc \
+    && pkg-config --modversion --cflags --libs tensorflow
+
+RUN python3 waf configure \
+    --mode=release \
+    --with-python \
+    --pythondir=/usr/local/lib/python3.10/dist-packages \
+    --pythonarchdir=/usr/local/lib/python3.10/dist-packages \
+    --with-tensorflow
+
+RUN python3 waf build -j "${JOBS}" \
+    && python3 waf install \
+    && ldconfig \
+    && cd /tmp \
+    && python3 -c "import essentia, essentia.standard as es; print('essentia', essentia.__version__, 'from', essentia.__file__); es.MonoLoader; es.TensorflowPredict2D; es.TensorflowPredictEffnetDiscogs"
+
+# -------------------------------------------------------------------
+# 11. Install MusicNN and the application
+# -------------------------------------------------------------------
+WORKDIR /opt
+
+# musicnn 0.1.0 declares numpy<1.17, which pip tries to compile from source
+# (and fails on Python 3.10) and which would also conflict with TensorFlow 2.21.
+# Install its real dependencies separately and skip its pins with --no-deps.
+RUN python3 -m pip install --upgrade \
+    librosa \
+    soundfile \
+    scipy \
+    scikit-learn \
+    cog \
+    pandas \
+    seaborn \
+    matplotlib \
+    && python3 -m pip install --no-deps musicnn tf-keras
+
+# TensorFlow 2.21 ships Keras 3, which no longer provides tf.compat.v1.layers
+# (used by the musicnn / magnatagatune models). tf-keras (installed --no-deps so
+# pip cannot replace the locally built TensorFlow) plus this flag restores it.
+ENV TF_USE_LEGACY_KERAS=1
+RUN cd /tmp && python3 -c "import tensorflow as tf; tf.compat.v1.layers.batch_normalization; print('legacy keras OK')"
+
+# Add Tini
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+
+# Install musicnn
+RUN cd /
+RUN pwd
+RUN git clone https://github.com/jordipons/musicnn.git
+COPY musicnn/setup.py /opt/musicnn
+RUN pwd
+RUN ls -la
+RUN cd /opt/musicnn && python3 setup.py install
+
+# Install essentia scripts and models
+RUN cd /
+RUN git clone https://github.com/intamixx/matnn.git /tmp/matnn
+RUN mv -v /tmp/matnn/musicnn/* /opt/musicnn
+# Get discogs effnet models
+
+RUN cd /opt/musicnn
+RUN curl -L -o /opt/musicnn/discogs-effnet-bs64-1.pb "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb"
+RUN curl -L -o /opt/musicnn/genre_discogs400-discogs-effnet-1.pb "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb"
+RUN cd /opt/musicnn/approach-engage
+RUN mkdir -p /opt/musicnn/approach-engage/models
+RUN cd /opt/musicnn/approach-engage/models
+RUN curl -L -o /opt/musicnn/approach-engage/models/discogs-effnet-bs64-1.pb "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/approachability-2class.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_2c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/engagement-2class.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_2c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/approachability-3class.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_3c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/engagement-3class.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_3c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/approachability-regression.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_regression-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/engagement-regression.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_regression-discogs-effnet-1.pb"
+
+# Add web user with uid 1000
+
+RUN useradd -ms /bin/bash web
+
+# Change permissions to web
+
+RUN chown web:web -Rv /opt/musicnn
+RUN chmod 750 -Rv /opt/musicnn/*.py
+RUN chmod 750 -Rv /opt/musicnn/*.sh
+
+WORKDIR "/opt/musicnn"
+CMD ["/opt/musicnn/run.sh"]
