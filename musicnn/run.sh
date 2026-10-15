@@ -89,7 +89,7 @@ launch_webhook()
         #if $webhook && [[ $result -eq 0 ]] ; then
         if $webhook; then
                 echo "Webhook destination URL: ${webhook_url}"
-                cmdstr="python3 /musicnn/webhook.py ${webhook_url} ${job_id} ${result}"
+                cmdstr="python3 /opt/musicnn/webhook.py ${webhook_url} ${job_id} ${result}"
                 WEBHOOK=`bash -c "${cmdstr}"`
                 echo "${WEBHOOK}" | tee -a "${BASEDIR}/webhook.log"
         fi
@@ -126,7 +126,7 @@ if ${genre}; then
                 ;;
         discogseffnet)
                 echo "Discogs-effnet Genre tag required"
-                cmdstr="python3 /musicnn/genre-discogs-effnet.py -f '${filename}'"
+                cmdstr="python3 /opt/musicnn/genre-discogs-effnet.py -f '${filename}'"
                 GENRE=`bash -c "${cmdstr}"`
                 echo "$GENRE" | tee -a "${filename}.genre"
                 ;;
@@ -134,7 +134,7 @@ if ${genre}; then
 fi
 if ${bpm}; then
                 echo "Bpm tag required"
-                cmdstr="python3 /musicnn/bpm.py -f '${filename}'"
+                cmdstr="python3 /opt/musicnn/bpm.py -f '${filename}'"
                 BPM=`bash -c "${cmdstr}"`
                 BPMROUND=`printf "%.1f\n" "$BPM"`
                 echo "BPM is $BPMROUND"
@@ -142,15 +142,15 @@ if ${bpm}; then
 fi
 if ${key}; then
                 echo "Key tag required"
-                cmdstr="python3 /musicnn/key-scale.py -f '${filename}'"
+                cmdstr="python3 /opt/musicnn/key-scale.py -f '${filename}'"
                 KEY_SCALE=`bash -c "${cmdstr}"`
                 echo "Key Scale is $KEY_SCALE"
                 echo "$KEY_SCALE" | tee -a "${filename}.key"
 fi
 if ${appr_engage}; then
                 echo "Approachability / Engagement tag required"
-                cd /musicnn/approach-engage
-                cmdstr="python3 /musicnn/approach-engage/approachability-engagement.py -f '${filename}'"
+                cd /opt/musicnn/approach-engage
+                cmdstr="python3 /opt/musicnn/approach-engage/approachability-engagement.py -f '${filename}'"
                 APPR_ENGAGE=`bash -c "${cmdstr}"`
                 echo "Approach / Engagement is $APPR_ENGAGE"
                 echo "$APPR_ENGAGE" | tee -a "${filename}.ae"
