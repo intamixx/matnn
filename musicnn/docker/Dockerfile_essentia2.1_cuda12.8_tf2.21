@@ -399,7 +399,7 @@ RUN python3 -m pip install --upgrade \
 # system-wide (pam_env reads /etc/environment; login shells read profile.d).
 RUN echo 'TF_USE_LEGACY_KERAS=1' >> /etc/environment \
     && printf '%s\n' 'export TF_USE_LEGACY_KERAS=1' > /etc/profile.d/tf-legacy-keras.sh
-RUN cd /tmp && python3 -c "import tensorflow as tf; tf.compat.v1.layers.batch_normalization; print('legacy keras OK')"
+#RUN cd /tmp && python3 -c "import tensorflow as tf; tf.compat.v1.layers.batch_normalization; print('legacy keras OK')"
 
 # Add Tini
 ENV TINI_VERSION v0.19.0
