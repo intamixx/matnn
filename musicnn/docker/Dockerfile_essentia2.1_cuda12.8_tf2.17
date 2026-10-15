@@ -1,0 +1,188 @@
+# docker build -f Dockerfile.ngc -t musicnn-ngc .
+FROM nvcr.io/nvidia/tensorflow:25.02-tf2-py3
+# NVIDIA's last NGC TensorFlow image: TF 2.17.0, Keras 3.3.2, CUDA 12.8,
+# Python 3.12, Ubuntu 24.04, with TensorFlow already built for Blackwell.
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG FFMPEG_VERSION=7.1.1
+ARG JOBS=4
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_BREAK_SYSTEM_PACKAGES=1 \
+    PYTHONUNBUFFERED=1 \
+    TF_FORCE_GPU_ALLOW_GROWTH=true
+
+# -------------------------------------------------------------------
+# 1. System dependencies for FFmpeg and Essentia
+#    (no libav*-dev: FFmpeg is built from source in step 2)
+# -------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    wget \
+    ca-certificates \
+    cmake \
+    git \
+    nasm \
+    pkg-config \
+    python3-dev \
+    libeigen3-dev \
+    libfftw3-dev \
+    libyaml-dev \
+    libsamplerate0-dev \
+    libtag1-dev \
+    libchromaprint-dev \
+    libmp3lame-dev \
+    libvorbis-dev \
+    libogg-dev \
+    libflac-dev \
+    libsndfile1-dev \
+    libcurl4-openssl-dev \
+    libopenblas-dev \
+    zlib1g-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# -------------------------------------------------------------------
+# 2. FFmpeg 7.1 (Essentia master needs >= 7.1; Ubuntu 24.04 ships 6.1)
+# -------------------------------------------------------------------
+RUN set -eux; \
+    git clone --depth 1 --branch "n${FFMPEG_VERSION}" \
+      https://github.com/FFmpeg/FFmpeg.git /opt/ffmpeg-src; \
+    cd /opt/ffmpeg-src; \
+    ./configure --prefix=/usr/local --enable-shared --disable-static \
+      --disable-doc --enable-libmp3lame --enable-libvorbis; \
+    make -j"${JOBS}"; \
+    make install; \
+    ldconfig; \
+    cd /; rm -rf /opt/ffmpeg-src; \
+    pkg-config --modversion libavcodec libavformat libavutil libswresample; \
+    test "$(pkg-config --modversion libavcodec | cut -d. -f1)" -ge 61
+
+# -------------------------------------------------------------------
+# 3. Expose the image's TensorFlow libraries to Essentia
+#    (symlinks, so Python's TensorFlow and Essentia share one copy)
+# -------------------------------------------------------------------
+RUN set -eux; \
+    cd /tmp; \
+    TFDIR="$(python3 -c 'import os, tensorflow as tf; print(os.path.dirname(tf.__file__))' 2>/dev/null | tail -n1)"; \
+    echo "TFDIR=${TFDIR}"; \
+    test -e "${TFDIR}/libtensorflow_cc.so.2"; \
+    test -e "${TFDIR}/libtensorflow_framework.so.2"; \
+    ln -sf "${TFDIR}/libtensorflow_cc.so.2"        /usr/local/lib/libtensorflow_cc.so.2; \
+    ln -sf "${TFDIR}/libtensorflow_framework.so.2" /usr/local/lib/libtensorflow_framework.so.2; \
+    ln -sf libtensorflow_cc.so.2        /usr/local/lib/libtensorflow_cc.so; \
+    ln -sf libtensorflow_framework.so.2 /usr/local/lib/libtensorflow_framework.so; \
+    ldconfig
+
+# -------------------------------------------------------------------
+# 4. Essentia (C++ library + Python bindings + TensorFlow support)
+#    Uses the TensorFlow C API headers that ship inside the Essentia repo.
+# -------------------------------------------------------------------
+WORKDIR /opt
+RUN git clone --depth 1 https://github.com/MTG/essentia.git /opt/essentia
+
+RUN set -eux; \
+    test -d /opt/essentia/src/3rdparty/tensorflow/c; \
+    mkdir -p /usr/local/include/tensorflow /usr/local/lib/pkgconfig; \
+    cp -a /opt/essentia/src/3rdparty/tensorflow/c /usr/local/include/tensorflow/c; \
+    printf '%s\n' \
+      'Name: tensorflow' \
+      'Description: TensorFlow C API from the NGC TensorFlow image' \
+      'Version: 2.17.0' \
+      'Libs: -L/usr/local/lib -ltensorflow_cc -ltensorflow_framework' \
+      'Cflags: -I/usr/local/include/tensorflow -I/usr/local/include' \
+      > /usr/local/lib/pkgconfig/tensorflow.pc; \
+    pkg-config --modversion tensorflow
+
+WORKDIR /opt/essentia
+RUN set -eux; \
+    cd /tmp; \
+    TFDIR="$(python3 -c 'import os, tensorflow as tf; print(os.path.dirname(tf.__file__))' 2>/dev/null | tail -n1)"; \
+    PYDIR="$(dirname "${TFDIR}")"; \
+    echo "Python packages dir: ${PYDIR}"; \
+    cd /opt/essentia; \
+    python3 waf configure \
+      --mode=release \
+      --with-python \
+      --pythondir="${PYDIR}" \
+      --pythonarchdir="${PYDIR}" \
+      --with-tensorflow; \
+    python3 waf build -j "${JOBS}"; \
+    python3 waf install; \
+    ldconfig; \
+    cd /tmp; \
+    python3 -c "import essentia, essentia.standard as es; print('essentia', essentia.__version__, 'from', essentia.__file__); es.MonoLoader; es.TensorflowPredict2D; es.TensorflowPredictEffnetDiscogs"
+
+# -------------------------------------------------------------------
+# 5. Python packages
+#    - "numpy<2": the NGC TensorFlow build needs NumPy 1.x
+#    - musicnn is installed --no-deps because it pins numpy<1.17
+#    - tf-keras + TF_USE_LEGACY_KERAS restore tf.compat.v1.layers (Keras 3 has no
+#      equivalent); installed --no-deps so pip cannot replace the image's TensorFlow
+# -------------------------------------------------------------------
+WORKDIR /opt
+RUN python3 -m pip install "numpy<2" librosa soundfile scipy scikit-learn matplotlib seaborn cog \
+    && python3 -m pip install --no-deps musicnn "tf-keras==2.17.*"
+
+ENV TF_USE_LEGACY_KERAS=1
+RUN cd /tmp && python3 -c "import tensorflow as tf; tf.compat.v1.layers.batch_normalization; print('legacy keras OK')"
+ENV TF_CPP_MIN_LOG_LEVEL=0
+
+# -------------------------------------------------------------------
+# 11. Install MusicNN and the application
+# -------------------------------------------------------------------
+WORKDIR /opt
+
+# Add Tini
+ENV TINI_VERSION=v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+
+# Install musicnn
+RUN cd /
+RUN pwd
+RUN git clone https://github.com/jordipons/musicnn.git
+COPY musicnn/setup.py /opt/musicnn
+RUN pwd
+RUN ls -la
+RUN cd /opt/musicnn && python3 setup.py install
+
+# Install essentia scripts and models
+RUN cd /
+RUN git clone https://github.com/intamixx/matnn.git /tmp/matnn
+RUN mv -v /tmp/matnn/musicnn/* /opt/musicnn
+COPY musicnn/run.sh /opt/musicnn
+# Get discogs effnet models
+
+RUN cd /opt/musicnn
+RUN curl -L -o /opt/musicnn/discogs-effnet-bs64-1.pb "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb"
+RUN curl -L -o /opt/musicnn/genre_discogs400-discogs-effnet-1.pb "https://essentia.upf.edu/models/classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb"
+RUN cd /opt/musicnn/approach-engage
+RUN mkdir -p /opt/musicnn/approach-engage/models
+RUN cd /opt/musicnn/approach-engage/models
+RUN curl -L -o /opt/musicnn/approach-engage/models/discogs-effnet-bs64-1.pb "https://essentia.upf.edu/models/feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/approachability-2class.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_2c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/engagement-2class.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_2c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/approachability-3class.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_3c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/engagement-3class.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_3c-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/approachability-regression.pb "https://essentia.upf.edu/models/classification-heads/approachability/approachability_regression-discogs-effnet-1.pb"
+RUN curl -L -o /opt/musicnn/approach-engage/models/engagement-regression.pb "https://essentia.upf.edu/models/classification-heads/engagement/engagement_regression-discogs-effnet-1.pb"
+
+COPY musicnn/genre-discogs-effnet.py /opt/musicnn
+# Add web user with uid 1000
+
+RUN useradd -ms /bin/bash web
+
+# Change permissions to web
+
+RUN chown web:web -Rv /opt/musicnn
+RUN chmod 750 -Rv /opt/musicnn/*.py
+RUN chmod 750 -Rv /opt/musicnn/*.sh
+
+WORKDIR "/opt/musicnn"
+CMD ["/opt/musicnn/run.sh"]
