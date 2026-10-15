@@ -395,7 +395,10 @@ RUN python3 -m pip install --upgrade \
 # TensorFlow 2.21 ships Keras 3, which no longer provides tf.compat.v1.layers
 # (used by the musicnn / magnatagatune models). tf-keras (installed --no-deps so
 # pip cannot replace the locally built TensorFlow) plus this flag restores it.
-ENV TF_USE_LEGACY_KERAS=1
+# `su -`, sudo and login shells discard Docker ENV values, so also set it
+# system-wide (pam_env reads /etc/environment; login shells read profile.d).
+RUN echo 'TF_USE_LEGACY_KERAS=1' >> /etc/environment \
+    && printf '%s\n' 'export TF_USE_LEGACY_KERAS=1' > /etc/profile.d/tf-legacy-keras.sh
 RUN cd /tmp && python3 -c "import tensorflow as tf; tf.compat.v1.layers.batch_normalization; print('legacy keras OK')"
 
 # Add Tini
