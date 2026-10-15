@@ -128,9 +128,12 @@ WORKDIR /opt
 RUN python3 -m pip install "numpy<2" librosa soundfile scipy scikit-learn matplotlib seaborn cog \
     && python3 -m pip install --no-deps musicnn "tf-keras==2.17.*"
 
-ENV TF_USE_LEGACY_KERAS=1
-RUN cd /tmp && python3 -c "import tensorflow as tf; tf.compat.v1.layers.batch_normalization; print('legacy keras OK')"
 ENV TF_CPP_MIN_LOG_LEVEL=0
+# `su -`, sudo and login shells discard Docker ENV values, so also set it
+# system-wide (pam_env reads /etc/environment; login shells read profile.d).
+RUN echo 'TF_USE_LEGACY_KERAS=1' >> /etc/environment \
+    && printf '%s\n' 'export TF_USE_LEGACY_KERAS=1' > /etc/profile.d/tf-legacy-keras.sh
+RUN cd /tmp && python3 -c "import tensorflow as tf; tf.compat.v1.layers.batch_normalization; print('legacy keras OK')"
 
 # -------------------------------------------------------------------
 # 11. Install MusicNN and the application
