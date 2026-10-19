@@ -50,6 +50,13 @@ spec:
           successThreshold: 1
           failureThreshold: 3
           timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi
       volumes:
       - name: config-volume
         configMap:
