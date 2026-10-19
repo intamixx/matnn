@@ -1,0 +1,27 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: matnn-vpa
+  namespace: default
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: matnn
+
+  updatePolicy:
+    updateMode: Recreate
+
+  resourcePolicy:
+    containerPolicies:
+      - containerName: matnn
+        controlledResources:
+          - cpu
+          - memory
+        controlledValues: RequestsAndLimits
+        minAllowed:
+          cpu: 100m
+          memory: 256Mi
+        maxAllowed:
+          cpu: "1"
+          memory: 1Gi
