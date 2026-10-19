@@ -54,3 +54,26 @@ kubectl get deployment matnn -n default -o jsonpath='{.spec.template.spec.servic
 
 kubectl get clusterrole kueue-batch-admin-role -o yaml
 kubectl get clusterrolebinding matnn-clusterrole -o yaml
+
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl top nodes
+kubectl get apiservice v1beta1.metrics.k8s.io
+kubectl patch deployment metrics-server -n kube-system --type='json' -p='[
+  {"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--kubelet-insecure-tls"}
+]'
+
+kubectl apply -f ./matnn-vpa.yaml
+kubectl get vpa
+kubectl logs  vpa/matnn-vpa
+kubectl describe vpa matnn-vpa -n default
+
+kubectl get pods -n default -l app=matnn   -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{range .spec.containers[*]}{.name}{" requests="}{.resources.requests}{" limits="}{.resources.limits}{"\n"}{end}{end}'
+
+kubectl get deployment vpa-updater -n kube-system   -o jsonpath='{.spec.template.spec.containers[0].args}' 
+
+kubectl get deployment matnn -n default   -o jsonpath='{.spec.template.spec.containers[?(@.name=="matnn")].resources}{"\n"}'
+
+kubectl get pod -n default -l app=matnn   -o custom-columns='POD:.metadata.name,CPU_REQUEST:.spec.containers[0].resources.requests.cpu,MEM_REQUEST:.spec.containers[0].resources.requests.memory,CPU_LIMIT:.spec.containers[0].resources.limits.cpu,MEM_LIMIT:.spec.containers[0].resources.limits.memory'imits.cpu,MEM_LIMIT:.spec.containers[0].resources.limits.memory'
+
+kubectl logs -n kube-system   deployment/vpa-admission-controller   --since=30m --tail=250   | grep -Ei 'matnn|recommend|patch|error|fail|limit'
