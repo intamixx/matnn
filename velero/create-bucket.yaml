@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-velero-bucket
+  namespace: velero
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: mc
+          image: cgr.dev/chainguard/minio-client:latest
+          args:
+            - mb
+            - --ignore-existing
+            - local/velero-backups
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-password
+            - name: MC_HOST_local
+              value: http://$(MINIO_ROOT_USER):$(MINIO_ROOT_PASSWORD)@minio.velero.svc:9000
